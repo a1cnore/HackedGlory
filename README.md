@@ -1,5 +1,7 @@
 # HackedGlory
 
+![Rank UI Screenshot](trophy.png)
+
 ## Feature Overview
 
 Current status at a glance:
