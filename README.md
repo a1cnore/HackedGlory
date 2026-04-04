@@ -181,21 +181,6 @@ If your goal is:
 - "I want to see sample outputs": browse [`reports/decoded_matches/`](reports/decoded_matches) and [`mitm/matches/`](mitm/matches)
 - "I want machine-readable artifacts": browse [`reports/generated/`](reports/generated)
 
-## Safety And Scope
-
-This repository makes the most sense in a controlled environment you own and understand.
-
-The reports already distinguish between passive static analysis, local mocking, and active interception. If you extend the work, keep the scope explicit and controlled. The repo is best treated as a preservation and research archive, not as end-user software.
-
-## Suggested Next Cleanup
-
-The repo is already useful, but if it evolves further the next improvements would be:
-
-- a top-level setup guide that lists exact prerequisites
-- a single index page for the most important reports
-- clearer separation between historical hypotheses and current conclusions
-- optional packaging for the most reusable decoding scripts
-
 ## License
 
 No license file is currently included. Until one is added, treat the contents as all rights reserved by default.
