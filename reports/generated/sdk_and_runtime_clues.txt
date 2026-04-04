@@ -1,0 +1,39 @@
+        name           0x101440aa4 AdjustTestOptions
+        name           0x101440aa4 AdjustTestOptions
+        name           0x101440ab8 Adjust
+        name           0x101440ab8 Adjust
+            name    0x101439ed7 setAdjustDelegate:
+            name    0x101439ebd setAdjustConfig:
+            type      0x101441dfc @"NSObject<AdjustDelegate>"
+            attributes 0x10142fc73 T@"NSObject<AdjustDelegate>",W,N,V_adjustDelegate
+        name           0x101440b51 ADJAdjustFactory
+        name           0x101440b51 ADJAdjustFactory
+            name    0x101439ebd setAdjustConfig:
+            name    0x10143c9aa getUrlSessionConfiguration
+            name    0x10143cb1e saveJsonResponse:responseData:
+            name    0x10143c759 sendNSURLSessionRequest:prefixErrorMessage:suffixErrorMessage:activityPackage:responseDataHandler:
+            name    0x10143c7bc sendNSURLConnectionRequest:prefixErrorMessage:suffixErrorMessage:activityPackage:responseDataHandler:
+            type      0x101441dfc @"NSObject<AdjustDelegate>"
+            attributes 0x1014321be T@"NSObject<AdjustDelegate>",W,N,V_delegate
+            name    0x10143a5c5 clearAdjustStuff
+            type      0x1014423ad @"FMDatabaseQueue"
+            name    0x10143f78e getSchema
+            name    0x10143f6ee getTableSchema:
+        name           0x101440dba FMDatabaseQueue
+        name           0x101440dba FMDatabaseQueue
+        name           0x101440e44 Amplitude
+            name    0x101440384 sslPinningEnabled
+            name    0x101440396 setSslPinningEnabled:
+            name      0x1014404e5 _sslPinningEnabled
+            name       0x101435ae4 sslPinningEnabled
+            attributes 0x101435af6 TB,N,V_sslPinningEnabled
+        name           0x101440e44 Amplitude
+    0x101438b4e setAdjustsFontSizeToFitWidth:
+    0x101439ebd setAdjustConfig:
+    0x101439ed7 setAdjustDelegate:
+    0x10143a5c5 clearAdjustStuff
+    0x10143c759 sendNSURLSessionRequest:prefixErrorMessage:suffixErrorMessage:activityPackage:responseDataHandler:
+    0x10143c7bc sendNSURLConnectionRequest:prefixErrorMessage:suffixErrorMessage:activityPackage:responseDataHandler:
+    0x10143c9aa getUrlSessionConfiguration
+    0x10143cb1e saveJsonResponse:responseData:
+    0x10143f6ee getTableSchema:

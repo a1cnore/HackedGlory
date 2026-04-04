@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vainglory Match Dashboard</title>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#1a1a2e;--bg2:#16213e;--bg3:#0f3460;
+    --blue:#00d4ff;--red:#ff4757;
+    --text:#e0e0e0;--dim:#6b7b8d;--gold:#ffd32a;
+    --green:#0be881;--panel:#1e2a3a;--border:#2a3a4a;
+  }
+  html{font-size:14px}
+  body{
+    background:var(--bg);color:var(--text);
+    font-family:'SF Mono','Fira Code','Cascadia Code',monospace;
+    min-height:100vh;overflow-x:hidden;
+  }
+
+  /* ── Header ── */
+  .header{
+    background:linear-gradient(135deg,var(--bg2),var(--bg3));
+    border-bottom:2px solid var(--blue);
+    padding:16px 24px;display:flex;align-items:center;gap:24px;flex-wrap:wrap;
+  }
+  .header h1{
+    font-size:1.3rem;color:var(--blue);letter-spacing:2px;text-transform:uppercase;
+    white-space:nowrap;
+  }
+  .header-stats{display:flex;gap:20px;flex-wrap:wrap}
+  .header-stat{display:flex;flex-direction:column;align-items:center;min-width:80px}
+  .header-stat .label{font-size:.65rem;color:var(--dim);text-transform:uppercase;letter-spacing:1px}
+  .header-stat .value{font-size:1.1rem;font-weight:700;color:#fff}
+  .header-stat .value.mode{color:var(--gold);font-size:.85rem}
+
+  .status-dot{
+    width:8px;height:8px;border-radius:50%;background:var(--green);
+    display:inline-block;margin-left:auto;
+    animation:pulse 2s ease-in-out infinite;
+  }
+  .status-dot.error{background:var(--red);animation:none}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+  /* ── Layout ── */
+  .grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    grid-template-rows:auto auto auto;
+    gap:12px;padding:12px;max-width:1600px;margin:0 auto;
+  }
+  .panel{
+    background:var(--panel);border:1px solid var(--border);
+    border-radius:8px;overflow:hidden;
+  }
+  .panel-title{
+    font-size:.75rem;text-transform:uppercase;letter-spacing:2px;
+    color:var(--dim);padding:10px 14px 6px;border-bottom:1px solid var(--border);
+    background:rgba(0,0,0,.2);
+  }
+  .panel-body{padding:10px 14px}
+
+  /* Scoreboard spans full width */
+  .scoreboard-panel{grid-column:1/-1}
+  /* Map spans left column */
+  .map-panel{grid-column:1;grid-row:2/4}
+  /* Events right side */
+  .events-panel{grid-column:2;grid-row:2}
+  /* Stats right side */
+  .stats-panel{grid-column:2;grid-row:3}
+  /* Opcodes full width */
+  .opcodes-panel{grid-column:1/-1}
+
+  /* ── Scoreboard Table ── */
+  .scoreboard{width:100%;border-collapse:collapse}
+  .scoreboard th{
+    font-size:.65rem;text-transform:uppercase;letter-spacing:1px;
+    color:var(--dim);text-align:right;padding:4px 10px;font-weight:400;
+  }
+  .scoreboard th:first-child{text-align:left}
+  .scoreboard td{padding:5px 10px;text-align:right;font-size:.85rem}
+  .scoreboard td:first-child{text-align:left;font-weight:700}
+  .scoreboard tr.blue td:first-child{color:var(--blue)}
+  .scoreboard tr.red td:first-child{color:var(--red)}
+  .scoreboard tr.blue td{border-bottom:1px solid rgba(0,212,255,.1)}
+  .scoreboard tr.red td{border-bottom:1px solid rgba(255,71,87,.1)}
+  .team-header{
+    padding:4px 10px;font-size:.7rem;font-weight:700;
+    letter-spacing:2px;text-transform:uppercase;
+  }
+  .team-header.blue{background:rgba(0,212,255,.15);color:var(--blue)}
+  .team-header.red{background:rgba(255,71,87,.15);color:var(--red)}
+
+  /* ── Map ── */
+  .map-container{position:relative;width:100%;aspect-ratio:2.4/1;min-height:220px}
+  .map-canvas{width:100%;height:100%;display:block;border-radius:4px}
+
+  /* ── Events ── */
+  .events-list{
+    max-height:280px;overflow-y:auto;font-size:.8rem;
+    scrollbar-width:thin;scrollbar-color:var(--border) transparent;
+  }
+  .event-row{
+    padding:4px 0;border-bottom:1px solid rgba(255,255,255,.04);
+    display:flex;gap:10px;
+  }
+  .event-time{color:var(--dim);min-width:50px;text-align:right}
+  .event-text{color:var(--text)}
+
+  /* ── Stat Bars ── */
+  .stat-player{margin-bottom:10px}
+  .stat-player-name{font-size:.75rem;margin-bottom:3px;font-weight:600}
+  .stat-player-name.blue{color:var(--blue)}
+  .stat-player-name.red{color:var(--red)}
+  .stat-row{display:flex;align-items:center;gap:6px;margin-bottom:2px}
+  .stat-label{font-size:.6rem;color:var(--dim);width:36px;text-align:right;flex-shrink:0}
+  .stat-bar-bg{
+    flex:1;height:10px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden;
+  }
+  .stat-bar{height:100%;border-radius:3px;transition:width .8s ease}
+  .stat-bar.blue{background:linear-gradient(90deg,var(--blue),rgba(0,212,255,.5))}
+  .stat-bar.red{background:linear-gradient(90deg,var(--red),rgba(255,71,87,.5))}
+  .stat-val{font-size:.65rem;color:var(--dim);width:44px;text-align:right;flex-shrink:0}
+
+  /* ── Opcodes ── */
+  .opcode-grid{display:flex;flex-wrap:wrap;gap:6px}
+  .opcode-chip{
+    background:rgba(255,255,255,.05);border:1px solid var(--border);
+    border-radius:4px;padding:3px 8px;font-size:.7rem;
+    display:flex;gap:8px;
+  }
+  .opcode-chip .op{color:var(--blue)}
+  .opcode-chip .ct{color:var(--dim)}
+
+  /* ── Error ── */
+  .error-banner{
+    text-align:center;padding:40px;color:var(--red);font-size:1.1rem;
+  }
+
+  /* ── Responsive ── */
+  @media(max-width:900px){
+    .grid{grid-template-columns:1fr}
+    .scoreboard-panel,.map-panel,.events-panel,.stats-panel,.opcodes-panel{
+      grid-column:1;grid-row:auto;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Vainglory Match Tracker</h1>
+  <div class="header-stats">
+    <div class="header-stat">
+      <span class="label">Match ID</span>
+      <span class="value" id="h-match-id">--</span>
+    </div>
+    <div class="header-stat">
+      <span class="label">Game Mode</span>
+      <span class="value mode" id="h-game-mode">--</span>
+    </div>
+    <div class="header-stat">
+      <span class="label">Duration</span>
+      <span class="value" id="h-duration">--:--</span>
+    </div>
+    <div class="header-stat">
+      <span class="label">Messages</span>
+      <span class="value" id="h-messages">0</span>
+    </div>
+    <div class="header-stat">
+      <span class="label">File Size</span>
+      <span class="value" id="h-filesize">0 KB</span>
+    </div>
+  </div>
+  <span class="status-dot" id="status-dot"></span>
+</div>
+
+<div class="grid">
+  <!-- Scoreboard -->
+  <div class="panel scoreboard-panel">
+    <div class="panel-title">Scoreboard</div>
+    <div class="panel-body" id="scoreboard-body">
+      <table class="scoreboard">
+        <thead>
+          <tr>
+            <th style="text-align:left">Player</th>
+            <th>Gold</th>
+            <th>XP</th>
+            <th>Speed</th>
+            <th>Position</th>
+            <th>Moves</th>
+          </tr>
+        </thead>
+        <tbody id="scoreboard-rows"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Map -->
+  <div class="panel map-panel">
+    <div class="panel-title">Position Map (ARAL Lane)</div>
+    <div class="panel-body">
+      <div class="map-container">
+        <canvas class="map-canvas" id="map-canvas"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Events -->
+  <div class="panel events-panel">
+    <div class="panel-title">Event Timeline</div>
+    <div class="panel-body">
+      <div class="events-list" id="events-list"></div>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="panel stats-panel">
+    <div class="panel-title">Player Stats</div>
+    <div class="panel-body" id="stats-body"></div>
+  </div>
+
+  <!-- Opcodes -->
+  <div class="panel opcodes-panel">
+    <div class="panel-title">Protocol Opcodes</div>
+    <div class="panel-body">
+      <div class="opcode-grid" id="opcode-grid"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+
+  // ── Config ──
+  const POLL_MS = 2000;
+  const X_MIN = -90, X_MAX = 90;
+  const Y_MIN = -15, Y_MAX = 20;
+
+  // ── State ──
+  let lerpPlayers = {};  // entity_id -> {x, y, tx, ty, handle, team}
+  let animFrame = null;
+
+  const OPCODE_LABELS = {
+    '1000':'UUID','1001':'Setup','1005':'Handle','1006':'PlayerInfo',
+    '1012':'MoveInput','1016':'FloatUpd','1045':'Unk16B','1053':'Stat',
+    '1054':'Stat24B','1067':'State','1070':'Position','1086':'Property',
+    '1087':'Data40B','1107':'HeroCat','1108':'ModeConf','1114':'Snapshot',
+    '1135':'ModeName'
+  };
+
+  // ── DOM refs ──
+  const $mid = document.getElementById('h-match-id');
+  const $mode = document.getElementById('h-game-mode');
+  const $dur = document.getElementById('h-duration');
+  const $msgs = document.getElementById('h-messages');
+  const $fsize = document.getElementById('h-filesize');
+  const $dot = document.getElementById('status-dot');
+  const $rows = document.getElementById('scoreboard-rows');
+  const $events = document.getElementById('events-list');
+  const $stats = document.getElementById('stats-body');
+  const $opcodes = document.getElementById('opcode-grid');
+  const canvas = document.getElementById('map-canvas');
+  const ctx = canvas.getContext('2d');
+
+  function fmtDuration(s) {
+    if (!s || s <= 0) return '--:--';
+    const m = Math.floor(s / 60);
+    const sec = Math.floor(s % 60);
+    return m + ':' + String(sec).padStart(2, '0');
+  }
+
+  function fmtCounter(v) {
+    if (!v) return '-';
+    return String(Math.floor(v / 256));
+  }
+
+  function fmtPos(x, y, moves) {
+    if (!moves) return '-';
+    return '(' + x.toFixed(1) + ', ' + y.toFixed(1) + ')';
+  }
+
+  // ── Scoreboard ──
+  function renderScoreboard(players) {
+    if (!players || !players.length) return;
+
+    const blue = players.filter(p => p.team === 1);
+    const red = players.filter(p => p.team === 2);
+    const other = players.filter(p => p.team !== 1 && p.team !== 2);
+
+    let html = '';
+
+    if (blue.length) {
+      html += '<tr><td colspan="6" class="team-header blue">Team Blue</td></tr>';
+      blue.forEach(p => { html += playerRow(p, 'blue'); });
+    }
+    if (red.length) {
+      html += '<tr><td colspan="6" class="team-header red">Team Red</td></tr>';
+      red.forEach(p => { html += playerRow(p, 'red'); });
+    }
+    if (other.length) {
+      html += '<tr><td colspan="6" class="team-header" style="background:rgba(255,255,255,.05);color:var(--dim)">Unassigned</td></tr>';
+      other.forEach(p => { html += playerRow(p, ''); });
+    }
+
+    $rows.innerHTML = html;
+  }
+
+  function playerRow(p, cls) {
+    const name = p.handle || ('Slot ' + p.slot);
+    return '<tr class="' + cls + '">' +
+      '<td>' + esc(name) + '</td>' +
+      '<td>' + fmtCounter(p.gold) + '</td>' +
+      '<td>' + fmtCounter(p.xp) + '</td>' +
+      '<td>' + (p.speed > 0 ? p.speed.toFixed(1) : '-') + '</td>' +
+      '<td>' + fmtPos(p.pos_x, p.pos_y, p.moves) + '</td>' +
+      '<td>' + (p.moves || '-') + '</td>' +
+      '</tr>';
+  }
+
+  function esc(s) {
+    const d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
+  // ── Events ──
+  function renderEvents(events) {
+    if (!events || !events.length) {
+      $events.innerHTML = '<div style="color:var(--dim);padding:10px">No events yet</div>';
+      return;
+    }
+    // Deduplicate
+    const seen = new Set();
+    const unique = [];
+    for (const e of events) {
+      const key = Math.floor(e.time_s) + '|' + e.text.substring(0, 30);
+      if (!seen.has(key)) {
+        seen.add(key);
+        unique.push(e);
+      }
+    }
+    // Show most recent first, max 50
+    const show = unique.slice(-50).reverse();
+    $events.innerHTML = show.map(e =>
+      '<div class="event-row">' +
+      '<span class="event-time">' + fmtDuration(e.time_s) + '</span>' +
+      '<span class="event-text">' + esc(e.text) + '</span>' +
+      '</div>'
+    ).join('');
+  }
+
+  // ── Stats ──
+  function renderStats(players) {
+    if (!players || !players.length) return;
+
+    const active = players.filter(p => p.handle);
+    if (!active.length) { $stats.innerHTML = ''; return; }
+
+    // Find maxes for bar scaling
+    const maxStat0 = Math.max(1, ...active.map(p => Math.abs(p.stat0 || 0)));
+    const maxStat2 = Math.max(1, ...active.map(p => Math.abs(p.stat2 || 0)));
+    const maxHp = Math.max(1, ...active.map(p => Math.abs(p.hp_delta || 0)));
+    const maxStat8 = Math.max(1, ...active.map(p => Math.abs(p.stat8 || 0)));
+
+    let html = '';
+    active.forEach(p => {
+      const cls = p.team === 1 ? 'blue' : p.team === 2 ? 'red' : '';
+      const barCls = cls || 'blue';
+      html += '<div class="stat-player">';
+      html += '<div class="stat-player-name ' + cls + '">' + esc(p.handle || 'Slot ' + p.slot) + '</div>';
+      html += statBar('ATK', p.stat0 || 0, maxStat0, barCls);
+      html += statBar('S2', p.stat2 || 0, maxStat2, barCls);
+      html += statBar('HP', Math.abs(p.hp_delta || 0), maxHp, barCls);
+      html += statBar('CDR', p.stat8 || 0, maxStat8, barCls);
+      html += '</div>';
+    });
+    $stats.innerHTML = html;
+  }
+
+  function statBar(label, val, max, cls) {
+    const pct = max > 0 ? Math.min(100, (Math.abs(val) / max) * 100) : 0;
+    return '<div class="stat-row">' +
+      '<span class="stat-label">' + label + '</span>' +
+      '<div class="stat-bar-bg"><div class="stat-bar ' + cls + '" style="width:' + pct.toFixed(1) + '%"></div></div>' +
+      '<span class="stat-val">' + val.toFixed(1) + '</span>' +
+      '</div>';
+  }
+
+  // ── Opcodes ──
+  function renderOpcodes(counts) {
+    if (!counts) return;
+    const entries = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+    $opcodes.innerHTML = entries.map(([op, ct]) => {
+      const lbl = OPCODE_LABELS[op] || '';
+      return '<div class="opcode-chip">' +
+        '<span class="op">' + op + (lbl ? ' ' + lbl : '') + '</span>' +
+        '<span class="ct">' + ct.toLocaleString() + '</span>' +
+        '</div>';
+    }).join('');
+  }
+
+  // ── Map ──
+  function resizeCanvas() {
+    const rect = canvas.parentElement.getBoundingClientRect();
+    canvas.width = rect.width * devicePixelRatio;
+    canvas.height = rect.height * devicePixelRatio;
+    canvas.style.width = rect.width + 'px';
+    canvas.style.height = rect.height + 'px';
+  }
+
+  function mapX(x) { return ((x - X_MIN) / (X_MAX - X_MIN)) * canvas.width; }
+  function mapY(y) { return canvas.height - ((y - Y_MIN) / (Y_MAX - Y_MIN)) * canvas.height; }
+
+  function updateLerpTargets(players) {
+    if (!players) return;
+
+    players.forEach(p => {
+      if (!p.moves || p.entity_id === 0xFFFF) return;
+      const id = p.entity_id;
+      if (!lerpPlayers[id]) {
+        lerpPlayers[id] = { x: p.pos_x, y: p.pos_y, tx: p.pos_x, ty: p.pos_y, handle: p.handle, team: p.team };
+      } else {
+        lerpPlayers[id].tx = p.pos_x;
+        lerpPlayers[id].ty = p.pos_y;
+        lerpPlayers[id].handle = p.handle;
+        lerpPlayers[id].team = p.team;
+      }
+    });
+  }
+
+  // Smooth lerp in animation loop
+  function lerpStep() {
+    const speed = 0.12;
+    Object.values(lerpPlayers).forEach(p => {
+      p.x += (p.tx - p.x) * speed;
+      p.y += (p.ty - p.y) * speed;
+    });
+  }
+
+  // Combined animation loop
+  function animationLoop() {
+    lerpStep();
+    resizeCanvas();
+    drawMapFrame();
+    animFrame = requestAnimationFrame(animationLoop);
+  }
+
+  function drawMapFrame() {
+    const w = canvas.width, h = canvas.height;
+    const dpr = devicePixelRatio;
+
+    ctx.fillStyle = '#0d1117';
+    ctx.fillRect(0, 0, w, h);
+
+    // Grid
+    ctx.strokeStyle = 'rgba(255,255,255,.05)';
+    ctx.lineWidth = 1;
+    for (let x = -80; x <= 80; x += 20) {
+      const px = mapX(x);
+      ctx.beginPath(); ctx.moveTo(px, 0); ctx.lineTo(px, h); ctx.stroke();
+    }
+    for (let y = -10; y <= 15; y += 5) {
+      const py = mapY(y);
+      ctx.beginPath(); ctx.moveTo(0, py); ctx.lineTo(w, py); ctx.stroke();
+    }
+
+    // Lane center
+    ctx.strokeStyle = 'rgba(255,255,255,.12)';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(0, mapY(0)); ctx.lineTo(w, mapY(0)); ctx.stroke();
+
+    // Axis labels
+    ctx.fillStyle = 'rgba(255,255,255,.2)';
+    ctx.font = (10 * dpr) + 'px monospace';
+    ctx.textAlign = 'center';
+    for (let x = -80; x <= 80; x += 40) {
+      ctx.fillText(x.toString(), mapX(x), h - 4 * dpr);
+    }
+    ctx.textAlign = 'left';
+    for (let y = -10; y <= 15; y += 5) {
+      ctx.fillText(y.toString(), 4 * dpr, mapY(y) - 4 * dpr);
+    }
+
+    // Players
+    const dotR = 7 * dpr;
+    const fontSize = 10 * dpr;
+
+    Object.values(lerpPlayers).forEach(p => {
+      const px = mapX(p.x);
+      const py = mapY(p.y);
+      const color = p.team === 1 ? '#00d4ff' : p.team === 2 ? '#ff4757' : '#888';
+      const glow = p.team === 1 ? 'rgba(0,212,255,.3)' : p.team === 2 ? 'rgba(255,71,87,.3)' : 'rgba(128,128,128,.3)';
+
+      ctx.beginPath();
+      ctx.arc(px, py, dotR * 2.5, 0, Math.PI * 2);
+      ctx.fillStyle = glow;
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.arc(px, py, dotR, 0, Math.PI * 2);
+      ctx.fillStyle = color;
+      ctx.fill();
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 1.5 * dpr;
+      ctx.stroke();
+
+      if (p.handle) {
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold ' + fontSize + 'px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText(p.handle, px, py - dotR - 4 * dpr);
+      }
+    });
+  }
+
+  // ── Polling ──
+  let errorCount = 0;
+
+  async function poll() {
+    try {
+      const resp = await fetch('/api/state');
+      const data = await resp.json();
+
+      if (data.error) {
+        $dot.classList.add('error');
+        errorCount++;
+        if (errorCount > 3) {
+          document.querySelector('.grid').innerHTML =
+            '<div class="error-banner">Error: ' + esc(data.error) + '</div>';
+        }
+        return;
+      }
+
+      errorCount = 0;
+      $dot.classList.remove('error');
+
+      // Header
+      $mid.textContent = data.match_id || '--';
+      $mode.textContent = data.game_mode || '--';
+      $dur.textContent = fmtDuration(data.duration_s);
+      $msgs.textContent = (data.total_messages || 0).toLocaleString();
+      $fsize.textContent = (data.file_size_kb || 0).toFixed(0) + ' KB';
+
+      // Panels
+      renderScoreboard(data.players);
+      updateLerpTargets(data.players);
+      renderEvents(data.events);
+      renderStats(data.players);
+      renderOpcodes(data.opcode_counts);
+
+    } catch (e) {
+      $dot.classList.add('error');
+      errorCount++;
+      console.error('Poll error:', e);
+    }
+  }
+
+  // ── Init ──
+  poll();
+  setInterval(poll, POLL_MS);
+  animFrame = requestAnimationFrame(animationLoop);
+
+})();
+</script>
+</body>
+</html>

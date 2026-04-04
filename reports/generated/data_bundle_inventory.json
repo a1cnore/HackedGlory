@@ -1,0 +1,544 @@
+{
+  "cff0_examples": [
+    {
+      "path": "Payload/GameKindred.app/Data/0D/0D78056A22C9B83F183CF3DE873155A1",
+      "paths": [],
+      "size": 1200
+    },
+    {
+      "path": "Payload/GameKindred.app/Data/95/9549C64ED0CC89997044550EB2659C0A",
+      "paths": [],
+      "size": 1136
+    },
+    {
+      "path": "Payload/GameKindred.app/Data/95/95C3C182530326BD98A1D38E4289E28C",
+      "paths": [],
+      "size": 12560
+    },
+    {
+      "path": "Payload/GameKindred.app/Data/59/5916BF91A15F06D472EF51E48BA37B49",
+      "paths": [],
+      "size": 800
+    },
+    {
+      "path": "Payload/GameKindred.app/Data/59/59E022C62EAC87E7AAB79E451F389EC2",
+      "paths": [],
+      "size": 2976
+    },
+    {
+      "path": "Payload/GameKindred.app/Data/59/59D64156B19DC64AF31A5683B47DA85D",
+      "paths": [],
+      "size": 4304
+    },
+    {
+      "path": "Payload/GameKindred.app/Data/59/59F8716C1748AA5A7E26B2C09342ABD5",
+      "paths": [],
+      "size": 1696
+    },
+    {
+      "path": "Payload/GameKindred.app/Data/59/59876A2AF4157E6DAD4B2942567A51E0",
+      "paths": [],
+      "size": 117664
+    },
+    {
+      "path": "Payload/GameKindred.app/Data/59/59A45F3AA6E18E2E05C26F159EA9EF57",
+      "paths": [],
+      "size": 1232
+    },
+    {
+      "path": "Payload/GameKindred.app/Data/92/922DB3AE1BA94A60B02EF0D9F96028EE",
+      "paths": [],
+      "size": 1168
+    }
+  ],
+  "data_root": "Payload/GameKindred.app/Data",
+  "path_rich_examples": [
+    {
+      "header": "ID3",
+      "path": "Payload/GameKindred.app/Data/61/6160F810BCF2EF5D75C41FEC88499A57",
+      "paths": [
+        "/08/29-03",
+        "//www.w3.org/1999/02/22-rdf-syntax-ns",
+        "//ns.adobe.com/xap/1.0/mm/",
+        "//ns.adobe.com/xap/1.0/sType/ResourceEvent",
+        "//ns.adobe.com/xap/1.0/sType/ResourceRef",
+        "//ns.adobe.com/xap/1.0/",
+        "//ns.adobe.com/xmp/1.0/DynamicMedia/",
+        "//ns.adobe.com/xap/1.0/rights/",
+        "//purl.org/dc/elements/1.1/",
+        "//ns.adobe.com/creatorAtom/1.0/"
+      ],
+      "size": 18976
+    },
+    {
+      "header": "RSC0",
+      "path": "Payload/GameKindred.app/Data/0D/0D73BADE49529336008637641DA98D89",
+      "paths": [
+        "/Characters/Hero009/Art/hero009_rock_t3.rock_t3_mat.shadergraph",
+        "/Characters/Hero009/Art/hero009_rock_t3.guob_mat.shadergraph",
+        "/Characters/Hero009/Art/hero009_rock_t3.rock_t3_ice_mat.shadergraph"
+      ],
+      "size": 836106
+    },
+    {
+      "header": "00010000",
+      "path": "Payload/GameKindred.app/Data/0D/0D9EABC833E2EF3AB23BF310F529DF56",
+      "paths": [
+        "/-0-1-2-3-4-5-6-7-8-9-",
+        "/.0.1.2.3.4.5.6.7.8.9.",
+        "/-/.///0/1/2/3/4/5/6/7/8/9/",
+        "/F/G/H/I/J/K/L/M/N/O/P/Q/R/S/T/U/V/W/X/Y/Z/",
+        "/a/b/c/d/e/f/g/h/i/j/k/l/m/n/o/p/q/r/s/t/u/v/w/x/y/z/",
+        "/000102030405060708090",
+        "/101112131415161718191",
+        "/202122232425262728292",
+        "/303132333435363738393",
+        "/404142434445464748494"
+      ],
+      "size": 13631780
+    },
+    {
+      "header": "RSC0",
+      "path": "Payload/GameKindred.app/Data/95/9551468A0E7FFD09D545F94118ACE3D7",
+      "paths": [
+        "/Environment/A001/S005/Plants/Zone4TreesC_animated.PlantAtlas_Maple_animated_mat.shadergraph",
+        "/Environment/A001/S005/Plants/Zone4TreesC_animated.TreeAtlas_Maple_animated_mat.shadergraph",
+        "/Environment/A001/S005/Plants/Zone4TreesC_animated.PineTree_animated_mat.shadergraph",
+        "/Environment/A001/S005/Plants/Zone4TreesC_animated.TreeAtlas_mat.shadergraph",
+        "/z/N/J/y/N/z/y/",
+        "/y/Z/y/Y/",
+        "/Z/K/O/Y/K/Z/g/",
+        "/h/g/O/h/h/e/",
+        "/w/h/e/h/w/w/O/x/x/O/K/w/R/e/x/R/w/",
+        "/R/Q/Q/R/x/"
+      ],
+      "size": 2554060
+    },
+    {
+      "header": "RSC0",
+      "path": "Payload/GameKindred.app/Data/59/597656C0F72E262E6FBB3DF7CA822350",
+      "paths": [
+        "/Environment/A001/S005/Zones/Zone2/Zone2A.Zone2Crystals_mat.shadergraph",
+        "/Environment/A001/S005/Zones/Zone2/Zone2A.Zone2RocksA_mat.shadergraph",
+        "/Environment/A001/S005/Zones/Zone2/Zone2A.Zone2A_mat.shadergraph",
+        "/Environment/A001/S005/Zones/Zone2/Zone2A.Zone2B_mat.shadergraph",
+        "/Environment/A001/S005/Zones/Zone2/Zone2A.Zone2C_mat.shadergraph"
+      ],
+      "size": 365331
+    },
+    {
+      "header": "RSC0",
+      "path": "Payload/GameKindred.app/Data/59/5905BF088D7D0801460DE7737912D4ED",
+      "paths": [
+        "/Characters/Hero030/Art/hero030_hlwn.hlwn_crystalFire_mat.shadergraph",
+        "/Characters/Hero030/Art/hero030_hlwn.hlwn_glowBall_mat.shadergraph",
+        "/Characters/Hero030/Art/hero030_hlwn.hlwn_greenFire_mat.shadergraph",
+        "/Characters/Hero030/Art/hero030_hlwn.guob_mat.shadergraph",
+        "/Characters/Hero030/Art/hero030_hlwn.hlwn_mat.shadergraph",
+        "/Characters/Hero030/Art/hero030_hlwn.hlwn_weaponColor.shadergraph",
+        "/Characters/Hero030/Art/hero030_hlwn.hlwn_weaponFire_mat.shadergraph",
+        "/Characters/Hero030/Art/hero030_hlwn.hlwn_crystalColor_mat.shadergraph"
+      ],
+      "size": 627274
+    },
+    {
+      "header": "RSC0",
+      "path": "Payload/GameKindred.app/Data/59/593AA0D9427E10B07D5C1FFD01FBD6C8",
+      "paths": [
+        "/Environment/A001/S005/Zones/Zone11/Zone11A.Zone11Clouds_mat.shadergraph",
+        "/Environment/A001/S005/Zones/Zone11/Zone11A.Zone11Matte_mat.shadergraph",
+        "/Environment/A001/S005/Zones/Zone11/Zone11A.Zone11A_mat.shadergraph",
+        "/Environment/A001/S005/Zones/Zone11/Zone11A.Zone11B_mat.shadergraph",
+        "/Environment/A001/S005/Zones/Zone11/Zone11A.Zone11C_mat.shadergraph",
+        "/a0axaxa2a/a7axa0a5axa7a3a2axa5a3axa3a4a2a3a5a4a5a7a",
+        "/d0d.d8d-d-d",
+        "/C2C/C4C.C.C4C6C4C5C6C",
+        "/E/E.EIEIE.EHE.E",
+        "/F1F1F/F2F2F-F1F.F-F2F6F5F7F7F5F8F4F5F6F3F5F4F"
+      ],
+      "size": 1073483
+    },
+    {
+      "header": "RSC0",
+      "path": "Payload/GameKindred.app/Data/59/59CF6BA7A38F93C4AD51CA96BDF90113",
+      "paths": [
+        "/Environment/F003/Brush/Brush13B.PlantAtlas_Cattails_animated_mat.shadergraph",
+        "/Environment/F003/Brush/Brush13B.alphaPlantsAtlas_mat.shadergraph",
+        "/Environment/F003/Brush/Brush13B.brushGrass_mat.shadergraph",
+        "/Environment/F003/Brush/Brush13B.smallPlantsAtlas_mat.shadergraph"
+      ],
+      "size": 556239
+    },
+    {
+      "header": "RSC0",
+      "path": "Payload/GameKindred.app/Data/92/92022E2BE9A5DA779E8297E6D74668CD",
+      "paths": [
+        "/Characters/Hero023/Art/hero023_drow.drow_mat.shadergraph",
+        "/Characters/Hero023/Art/hero023_drow.drow_bowAlpha_mat.shadergraph",
+        "/Characters/Hero023/Art/hero023_drow.guob_mat.shadergraph",
+        "/01245679"
+      ],
+      "size": 810583
+    },
+    {
+      "header": "RSC0",
+      "path": "Payload/GameKindred.app/Data/92/923F70F9C4BBF6536DC96B8E1B6D15D9",
+      "paths": [
+        "/Characters/Joule/Art/joule_mkII_t1.mkII_t1_mech_mat.shadergraph",
+        "/Characters/Joule/Art/joule_mkII_t1.mkII_t1_rider_mat.shadergraph",
+        "/Characters/Joule/Art/joule_mkII_t1.guob_mat.shadergraph"
+      ],
+      "size": 683594
+    },
+    {
+      "header": "RSC0",
+      "path": "Payload/GameKindred.app/Data/0C/0C635097BE81CA5D5444BD4561050DC0",
+      "paths": [
+        "/Characters/Hero019/Art/hero019_terran_t1.terran_t1_mat.shadergraph",
+        "/Characters/Hero019/Art/hero019_terran_t1.guob_mat.shadergraph",
+        "/Characters/Hero019/Art/hero019_terran_t1.terran_t1_fire_mat.shadergraph"
+      ],
+      "size": 541337
+    },
+    {
+      "header": "RSC0",
+      "path": "Payload/GameKindred.app/Data/3E/3E267DFD6084A9BD54E7A68059F101CE",
+      "paths": [
+        "/Environment/F003/Ground/5v5_Ground_DA_hi.DA_DD_Base_mat.shadergraph",
+        "/Environment/F003/Ground/5v5_Ground_DA_hi.DA_River_mat.shadergraph",
+        "/Environment/F003/Ground/5v5_Ground_DA_hi.DA_River_Opaque_mat.shadergraph"
+      ],
+      "size": 811
+    },
+    {
+      "header": "RSC0",
+      "path": "Payload/GameKindred.app/Data/50/508BFFCC9E7AFE93E80EF03B2FBD0AA4",
+      "paths": [
+        "/Characters/Hero059/Art/hero059.hero059_mat.shadergraph",
+        "/Characters/Hero059/Art/hero059.guob_mat.shadergraph",
+        "/Characters/Hero059/Art/hero059.hero059_jetFlame_mat.shadergraph",
+        "/Characters/Hero059/Art/hero059.hero059_jetFlameGlow_mat.shadergraph",
+        "/I0123456798"
+      ],
+      "size": 731597
+    },
+    {
+      "header": "RSC0",
+      "path": "Payload/GameKindred.app/Data/50/50040A1E2D3E450BA2C0F00B3753CEE7",
+      "paths": [
+        "/Environment/F003/BLJungle/R2_BLJ.R2_KrakenPit01B.shadergraph",
+        "/Environment/F003/BLJungle/R2_BLJ.R2_RockClusterA01.shadergraph",
+        "/Environment/F003/BLJungle/R2_BLJ.R2_KrakenPit01A.shadergraph",
+        "/Environment/F003/BLJungle/R2_BLJ.R2_RockClusterB01.shadergraph",
+        "/Environment/F003/BLJungle/R2_BLJ.R2_KrakenPit03.shadergraph",
+        "/Environment/F003/BLJungle/R2_BLJ.R2_KrakenPit02.shadergraph",
+        "/Environment/F003/BLJungle/R2_BLJ.R2_KrakenPitCrystals01.shadergraph",
+        "/Environment/F003/BLJungle/R2_BLJ.R2_KrakenGazebo01.shadergraph",
+        "/.6.1.3.7.6./.8.8.1.7./.1.8."
+      ],
+      "size": 421304
+    },
+    {
+      "header": "RSC0",
+      "path": "Payload/GameKindred.app/Data/68/686FA168D2A2AFCC551477D38D3E82F1",
+      "paths": [
+        "/Environment/A001/S005/Zones/Zone2/Zone2C.Zone2Crystals_mat.shadergraph",
+        "/Environment/A001/S005/Zones/Zone2/Zone2C.Zone2E_mat.shadergraph",
+        "/Environment/A001/S005/Zones/Zone2/Zone2C.Zone2F_mat.shadergraph"
+      ],
+      "size": 264112
+    },
+    {
+      "header": "RSC0",
+      "path": "Payload/GameKindred.app/Data/68/689D4921403885C4A745A858AEF13506",
+      "paths": [
+        "/Environment/A001/S005/Plants/Zone4PlantsA_animated.PlantAtlas_Grass_animated_mat.shadergraph",
+        "/Environment/A001/S005/Plants/Zone4PlantsA_animated.AlphaPlants_animated_mat.shadergraph",
+        "/Environment/A001/S005/Plants/Zone4PlantsA_animated.PlantAtlas_Ivy_animated_mat.shadergraph",
+        "/8/6/7/8/6/",
+        "/4/5/6/4/4/",
+        "/-/1/3/.///1/./1/2/3/0/1///U/T/V/X/V/T/W/V/X/Z/X/T/X/Z/Y/",
+        "/R/Q/p/R/Q/P/p/o/",
+        "/n/l/q/P/r/l/n/m/l/",
+        "/j/i/k/i/g/",
+        "/g/_/h/g/i/_/g/f/d/_/f/e/d/f/a/_/d/d/c/a/_/a/"
+      ],
+      "size": 1021155
+    },
+    {
+      "header": "52494646",
+      "path": "Payload/GameKindred.app/Data/57/5734C037CEBE3DBADCB00B511A1C95A7",
+      "paths": [
+        "/I/S.X.n/K0",
+        "/w0A/u/N/",
+        "/Q/g0Q03.",
+        "/X.m/8/v/",
+        "/Y0Y1x1f2"
+      ],
+      "size": 901164
+    },
+    {
+      "header": "RSC0",
+      "path": "Payload/GameKindred.app/Data/57/570B8BF13D589063DC705AC93814B037",
+      "paths": [
+        "/Environment/A001/S005/Plants/Zone6PlantsC.PlantAtlas_mat.shadergraph",
+        "/Environment/A001/S005/Plants/Zone6PlantsC.PlantAtlas_mat1.shadergraph",
+        "/Environment/A001/S005/Plants/Zone6PlantsC.AlphaPlants_mat1.shadergraph",
+        "/Environment/A001/S005/Plants/Zone6PlantsC.TreeAtlas_mat.shadergraph"
+      ],
+      "size": 490511
+    },
+    {
+      "header": "RSC0",
+      "path": "Payload/GameKindred.app/Data/57/57F6E48B194703125445C571816B78A1",
+      "paths": [
+        "/Environment/A001/S005/Plants/Zone3TreesC_animated.TreeAtlas_RW_animated_mat.shadergraph",
+        "/Environment/A001/S005/Plants/Zone3TreesC_animated.AlphaPlants_RW_animated_mat.shadergraph",
+        "/Environment/A001/S005/Plants/Zone3TreesC_animated.PineTree_animated_mat.shadergraph",
+        "/Environment/A001/S005/Plants/Zone3TreesC_animated.PlantAtlas_Maple_animated_mat.shadergraph",
+        "/Environment/A001/S005/Plants/Zone3TreesC_animated.TreeAtlas_Maple_animated_mat.shadergraph",
+        "/T0T2T/T1T2T0T3T5T2T4T5T3T9T",
+        "/S1S0S1S/S5S",
+        "/W8W8W/W9W1W",
+        "/Z-Z/Z1Z-Z0Z1Z/Z-Z1Z2Z",
+        "/D0D.D.D0D-D-D0D1D-D1D"
+      ],
+      "size": 2376316
+    },
+    {
+      "header": "RSC0",
+      "path": "Payload/GameKindred.app/Data/3B/3B11A59F8C31FD3C55E59A94F7D15424",
+      "paths": [
+        "/Characters/CardsChest/Art/lootChest_t1.keyHole.shadergraph",
+        "/Characters/CardsChest/Art/lootChest_t1.lootChestRare_Crystal_mat.shadergraph",
+        "/Characters/CardsChest/Art/lootChest_t1.lootChestRare_Chest_mat.shadergraph",
+        "/Characters/CardsChest/Art/lootChest_t1.guob_mat.shadergraph",
+        "/Characters/CardsChest/Art/lootChest_t1.lootChestRare_Glow_mat.shadergraph"
+      ],
+      "size": 210006
+    }
+  ],
+  "rsc0_examples": [
+    {
+      "path": "Payload/GameKindred.app/Data/61/61E213A356DC2A92F95485DE22F9F7ED",
+      "paths": [
+        "/Characters/Hero042/Art/hero042.hero042_mat.shadergraph",
+        "/Characters/Hero042/Art/hero042.guob_mat.shadergraph"
+      ],
+      "size": 677563
+    },
+    {
+      "path": "Payload/GameKindred.app/Data/61/61CC2DE8AFBE40D196F950C0C7F58BC5",
+      "paths": [
+        "/Characters/Adagio/Art/adagio_goth_t2.goth_t2_mat.shadergraph",
+        "/Characters/Adagio/Art/adagio_goth_t2.guob_mat.shadergraph"
+      ],
+      "size": 596719
+    },
+    {
+      "path": "Payload/GameKindred.app/Data/61/612045DCB9B7422CAC1106686DAAC39F",
+      "paths": [
+        "/Environment/A001/S005/Ground/Zone12.PitchBlack_mat.shadergraph"
+      ],
+      "size": 338
+    },
+    {
+      "path": "Payload/GameKindred.app/Data/0D/0DBACE6CBB58E82D5E8CF3353BCE501C",
+      "paths": [
+        "/Characters/Hero030/Art/hero030_crimson.guob_mat.shadergraph",
+        "/Characters/Hero030/Art/hero030_crimson.crimson_mat.shadergraph"
+      ],
+      "size": 518754
+    },
+    {
+      "path": "Payload/GameKindred.app/Data/0D/0D3F8FC9835B45F9D11A4D257176DAC8",
+      "paths": [
+        "/UI/Selector_Ally/Selector_Ally.select_tex.shadergraph"
+      ],
+      "size": 617
+    },
+    {
+      "path": "Payload/GameKindred.app/Data/0D/0D73BADE49529336008637641DA98D89",
+      "paths": [
+        "/Characters/Hero009/Art/hero009_rock_t3.rock_t3_mat.shadergraph",
+        "/Characters/Hero009/Art/hero009_rock_t3.guob_mat.shadergraph",
+        "/Characters/Hero009/Art/hero009_rock_t3.rock_t3_ice_mat.shadergraph"
+      ],
+      "size": 836106
+    },
+    {
+      "path": "Payload/GameKindred.app/Data/0D/0D2F00C12F7C869D7FA07420E144CA04",
+      "paths": [
+        "/Environment/F003/BRJungle/BRJ3.BRJ3_mesh_mat.shadergraph"
+      ],
+      "size": 182648
+    },
+    {
+      "path": "Payload/GameKindred.app/Data/0D/0D528B3DBCED8B77673D78CE5038DA6C",
+      "paths": [
+        "/UI/Joule_PreTarget_Ally/Joule_PreTarget_Ally.lambert2.shadergraph"
+      ],
+      "size": 1267
+    },
+    {
+      "path": "Payload/GameKindred.app/Data/0D/0D20E52AF2D84B8BE90BB4EDC5FB2579",
+      "paths": [
+        "/Characters/LeadMinion/Art/leadMinion.leadMinion_Home_mat.shadergraph",
+        "/Characters/LeadMinion/Art/leadMinion.guob_mat.shadergraph"
+      ],
+      "size": 114339
+    },
+    {
+      "path": "Payload/GameKindred.app/Data/0D/0DCDE6D10C2596613CCD78900170CFD4",
+      "paths": [
+        "/Environment/F003/BotLane/BLL_FoliageA_low.TreesAtlas_mat.shadergraph"
+      ],
+      "size": 17000
+    },
+    {
+      "path": "Payload/GameKindred.app/Data/0D/0DB47DA5915E9ED677F1F1C6D15EA947",
+      "paths": [
+        "/Environment/F002/S000/chop_EE.chop_EE_mat.shadergraph"
+      ],
+      "size": 62599
+    },
+    {
+      "path": "Payload/GameKindred.app/Data/0D/0D5BF32347B86CA6D53E14537970A151",
+      "paths": [
+        "/Characters/Hero015/Art/hero015_hell_t3_packEnemy.hell_t3_packEnemy_mat.shadergraph"
+      ],
+      "size": 68596
+    },
+    {
+      "path": "Payload/GameKindred.app/Data/95/95F4D12EF15BEFD3CFAEE8158401151D",
+      "paths": [
+        "/Environment/F003/5v5Vista/Vista_MountainsD.v5Vista_MountainsBackground_mat.shadergraph",
+        "/Environment/F003/5v5Vista/Vista_MountainsD.Vista_RocksA_mat.shadergraph"
+      ],
+      "size": 18490
+    },
+    {
+      "path": "Payload/GameKindred.app/Data/95/95DD55B3305406F458E7B78EAB3A3E2B",
+      "paths": [
+        "/Characters/Adagio/Art/adagio_goth_t3.goth_t3_mat.shadergraph",
+        "/Characters/Adagio/Art/adagio_goth_t3.guob_mat.shadergraph"
+      ],
+      "size": 595507
+    },
+    {
+      "path": "Payload/GameKindred.app/Data/95/9551468A0E7FFD09D545F94118ACE3D7",
+      "paths": [
+        "/Environment/A001/S005/Plants/Zone4TreesC_animated.PlantAtlas_Maple_animated_mat.shadergraph",
+        "/Environment/A001/S005/Plants/Zone4TreesC_animated.TreeAtlas_Maple_animated_mat.shadergraph",
+        "/Environment/A001/S005/Plants/Zone4TreesC_animated.PineTree_animated_mat.shadergraph",
+        "/Environment/A001/S005/Plants/Zone4TreesC_animated.TreeAtlas_mat.shadergraph",
+        "/z/N/J/y/N/z/y/",
+        "/y/Z/y/Y/"
+      ],
+      "size": 2554060
+    }
+  ],
+  "top_headers": [
+    {
+      "count": 18136,
+      "header": "RSC0",
+      "total_size": 719466451
+    },
+    {
+      "count": 6307,
+      "header": "01000000",
+      "total_size": 95018578
+    },
+    {
+      "count": 5957,
+      "header": "fffb34c4",
+      "total_size": 84910320
+    },
+    {
+      "count": 3530,
+      "header": "fffb90c4",
+      "total_size": 142609138
+    },
+    {
+      "count": 3257,
+      "header": "ZERO",
+      "total_size": 5059761
+    },
+    {
+      "count": 2058,
+      "header": "fffb20c4",
+      "total_size": 21190676
+    },
+    {
+      "count": 1857,
+      "header": "fffb30c4",
+      "total_size": 24382140
+    },
+    {
+      "count": 1071,
+      "header": "ID3",
+      "total_size": 35738829
+    },
+    {
+      "count": 942,
+      "header": "CFF0",
+      "total_size": 16815088
+    },
+    {
+      "count": 892,
+      "header": "7c550100",
+      "total_size": 77978640
+    },
+    {
+      "count": 633,
+      "header": "fffb94c4",
+      "total_size": 26048616
+    },
+    {
+      "count": 357,
+      "header": "7c550000",
+      "total_size": 7812588
+    },
+    {
+      "count": 328,
+      "header": "fff334c4",
+      "total_size": 2386296
+    },
+    {
+      "count": 289,
+      "header": "a0550500",
+      "total_size": 101034400
+    },
+    {
+      "count": 237,
+      "header": "fffbb0c0",
+      "total_size": 17429380
+    },
+    {
+      "count": 231,
+      "header": "7c551500",
+      "total_size": 322970340
+    },
+    {
+      "count": 200,
+      "header": "OggS",
+      "total_size": 48725016
+    },
+    {
+      "count": 191,
+      "header": "7c550500",
+      "total_size": 66766724
+    },
+    {
+      "count": 154,
+      "header": "fffb9004",
+      "total_size": 6817524
+    },
+    {
+      "count": 133,
+      "header": "7c150000",
+      "total_size": 731500
+    }
+  ],
+  "total_files": 48187
+}

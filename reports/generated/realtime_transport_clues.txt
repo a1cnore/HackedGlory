@@ -1,0 +1,18 @@
+Quality_Client_Switched_LongPoll
+dismissReliableMessage
+processMessage
+notifyUrl
+notifyFallbackUrl
+enableStateUpdates
+missedStateUpdateMessagesThreshold
+ws://%[^:/]:%d/%s
+ws://%[^:/]/%s
+ws://%[^:/]:%d
+ws://%[^:/]
+ERROR: Could not parse WebSocket url: %s
+Upgrade: websocket
+Sec-WebSocket-Key: x3JJHMbDL1EzLkh9GBhXDw==
+Sec-WebSocket-Version: 13
+WebSocket successful HTTP status: %s
+Opening WebSocket connection: %s
+ERROR: Got unexpected WebSocket message.
