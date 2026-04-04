@@ -17,11 +17,9 @@ Current status at a glance:
 
 ![Socials UI Screenshot](friendlist.png)
 
-## Summary For Non-Techies
+## Summary
 
-This repository is a research archive for understanding how the final iOS version of **Vainglory** worked under the hood.
-
-In plain English, it contains:
+This repository is a research archive for understanding how the final iOS version of **Vainglory** worked under the hood.:
 
 - notes that explain what the game client appears to send to servers
 - tools for capturing and inspecting traffic in a controlled test setup
