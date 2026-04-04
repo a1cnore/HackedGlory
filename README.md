@@ -1,7 +1,5 @@
 # HackedGlory
 
-![Rank UI Screenshot](trophy.png)
-
 ## Feature Overview
 
 Current status at a glance:
@@ -10,6 +8,14 @@ Current status at a glance:
 - Rank-related UI can now be surfaced and inspected.
 - Leaderboard UI can now be surfaced and inspected.
 - The match protocol is now partially decrypted and documented.
+
+### Screenshots
+
+![Rank UI Screenshot](trophy.png)
+
+![Leaderboard UI Screenshot](leaderboard.png)
+
+![Socials UI Screenshot](friendlist.png)
 
 ## Summary For Non-Techies
 
