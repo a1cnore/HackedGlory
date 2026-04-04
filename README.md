@@ -173,16 +173,6 @@ Examples include:
 
 That is why the repository is relatively large for a code-first project.
 
-## Practical Entry Points
-
-If your goal is:
-
-- "I want the broad overview": read [`reports/vainglory_static_report.md`](reports/vainglory_static_report.md)
-- "I want the final protocol breakthrough": read [`reports/protocol_decryption_writeup.md`](reports/protocol_decryption_writeup.md)
-- "I want to understand the MITM setup": read [`mitm/README.md`](mitm/README.md)
-- "I want to see sample outputs": browse [`reports/decoded_matches/`](reports/decoded_matches) and [`mitm/matches/`](mitm/matches)
-- "I want machine-readable artifacts": browse [`reports/generated/`](reports/generated)
-
 ## License
 
 No license file is currently included. Until one is added, treat the contents as all rights reserved by default.
