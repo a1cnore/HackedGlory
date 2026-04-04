@@ -1,5 +1,14 @@
 # HackedGlory
 
+## Feature Overview
+
+Current status at a glance:
+
+- Socials UI can now be surfaced and inspected.
+- Rank-related UI can now be surfaced and inspected.
+- Leaderboard UI can now be surfaced and inspected.
+- The match protocol is now partially decrypted and documented.
+
 ## Summary For Non-Techies
 
 This repository is a research archive for understanding how the final iOS version of **Vainglory** worked under the hood.
