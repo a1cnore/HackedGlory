@@ -182,6 +182,51 @@ Examples include:
 
 That is why the repository is relatively large for a code-first project.
 
+## Android Port — Offset Verification Status
+
+The Android port (`mitm/vg_unlock_android/vg_unlock_android.c`) targets `libGameKindred.so` (arm64 ELF). Offsets were discovered via automated ELF relocation analysis and fall into three confidence tiers:
+
+### Confirmed (8 fptrs + 8 code + 2 globals = 18 offsets)
+
+| Offset | Value | Method |
+|---|---|---|
+| Parser fptrs (x4) | `0x26bac28`, `0x26bab38`, `0x26bab98`, `0x26bab68` | String XREF + relocation |
+| Profile openers (x3) | `0x26f34c8`, `0x26f34a8`, `0x26f3888` | String XREF + relocation |
+| Guest gate vtable[12] | `0x2720e70` | String XREF + disassembly |
+| `CODE_KV_WRITE` | `0x8370dc` | String XREF + BL trace |
+| `CODE_OPERATOR_NEW` | `0x795530` | PLT symbol `_Znwm` |
+| `CODE_OPEN_FULL_PROFILE` | `0xbbf91c` | String XREF, allocates `0x288f0` |
+| `CODE_REGISTER_PANEL` | `0xad9cfc` | 4 call sites with indices 0,1,2,5 |
+| `CODE_ACADEMY_CTOR` | `0xa510e8` | CE-gated, alloc `0x9cc0` |
+| `CODE_TAB_REG` | `0xb67934` | Bag ctor tab registration |
+| `CODE_ARRAY_ADD` | `0xaf2458` | 10 call sites in bag ctor |
+| `CODE_GET_DATA_MGR` | `0x8580b8` | Simple getter from BSS |
+| `GLOBAL_DATA_MGR` | `0x2b7ed00` | Loaded by getter |
+| `GLOBAL_SESSION_MGR` | `0x3110700` | Vtable dispatch pattern |
+
+### Medium confidence (6 fptrs + 3 code + 1 global)
+
+Real function prologues at the target addresses, but internal field offsets (`self+0xXXXX`) may differ from iOS and need runtime or Ghidra verification.
+
+### Needs Ghidra RE (9 fptrs + 3 code)
+
+The automated shift method failed for these because the Android CE build replaced disabled virtual functions with `ret` stubs in the vtable, unlike iOS which kept full implementations behind the gate function. These must be found manually via Ghidra disassembly of the Android binary.
+
+### Critical: Object layout differences
+
+Object layout offsets differ between iOS and Android despite both being arm64. The `self+0xXXXX` values in all hook functions are currently iOS values and must be re-discovered for Android. Confirmed differences so far:
+
+- Guest account string: `+0x2bd0` (iOS) → `+0x2ba0` (Android)
+- Academy panel alloc size: `0x9ca0` (iOS) → `0x9cc0` (Android)
+- Full profile alloc size: `0x28848` (iOS) → `0x288f0` (Android)
+- `setTabVisible` field `+0x2c2c` and trophy data flags `+0x18f20`/`+0x18f21` have zero matches on Android
+
 ## License
 
-No license file is currently included. Until one is added, treat the contents as all rights reserved by default.
+This project is released under the [MIT License](https://opensource.org/licenses/MIT).
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files, to deal in the software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the software, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
