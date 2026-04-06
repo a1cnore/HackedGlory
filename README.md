@@ -1,5 +1,21 @@
 # HackedGlory
 
+## Table of Contents
+
+- [Feature Overview](#feature-overview)
+- [Summary](#summary)
+- [CE Gate Analysis](#ce-gate-analysis)
+- [What This Repo Is](#what-this-repo-is)
+- [Current Headline Findings](#current-headline-findings)
+- [Important Note About The Reports](#important-note-about-the-reports)
+- [Repository Layout](#repository-layout)
+- [Recommended Reading Order](#recommended-reading-order)
+- [How To Use This Repo](#how-to-use-this-repo)
+- [Tooling And Environment](#tooling-and-environment)
+- [Data Included In The Repo](#data-included-in-the-repo)
+- [Android Port — Offset Verification Status](#android-port--offset-verification-status)
+- [License](#license)
+
 ## Feature Overview
 
 Current status at a glance:
@@ -32,6 +48,12 @@ This repository is a research archive for understanding how the final iOS versio
 If you are not technical, the most useful takeaway is this: the repo is trying to document how the game's old online systems were structured so the behavior can be studied, archived, and potentially reproduced in controlled environments.
 
 Start with [`reports/protocol_decryption_writeup.md`](reports/protocol_decryption_writeup.md) for the biggest result and [`reports/vainglory_static_report.md`](reports/vainglory_static_report.md) for the broad overview.
+
+## CE Gate Analysis
+
+The Community Edition gate function (`FUN_100131560`) is a single hardcoded `return 1` that disables features across 92 functions via 164 call sites. The unlock dylib systematically bypasses this gate across 9 layers — from feature flag parsing through sidebar panel registration, profile card restoration, and trophy data population.
+
+For the full breakdown of every hooked function, which UI elements are restored, and what remains to be done, see [`reports/ce_gate_analysis.md`](reports/ce_gate_analysis.md).
 
 ## What This Repo Is
 
