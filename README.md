@@ -30,11 +30,11 @@ Current status at a glance:
 
 ### Screenshots
 
-![Rank UI Screenshot](trophy.png)
-
-![Leaderboard UI Screenshot](leaderboard.png)
-
-![Socials UI Screenshot](friendlist.png)
+<p>
+  <img src="images/trophy.png" alt="Rank UI Screenshot" width="32%">
+  <img src="images/leaderboard.png" alt="Leaderboard UI Screenshot" width="32%">
+  <img src="images/friendlist.png" alt="Socials UI Screenshot" width="32%">
+</p>
 
 ## Summary
 
