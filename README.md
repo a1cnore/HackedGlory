@@ -1,5 +1,7 @@
 # HackedGlory
 
+For Updates join EU [Discord](https://discord.gg/5Y3q7cTH)
+
 ## Table of Contents
 
 - [Feature Overview](#feature-overview)
