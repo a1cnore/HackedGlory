@@ -7,7 +7,10 @@ Current status at a glance:
 - Socials UI can now be surfaced and inspected.
 - Rank-related UI can now be surfaced and inspected.
 - Leaderboard UI can now be surfaced and inspected.
+- Party, Academy, and Trophies panels restored in the sidebar and bag tabs.
+- Full profile card re-enabled (ICE, Glory, Opals, Karma, level shield, XP bar).
 - The match protocol is now partially decrypted and documented.
+- An Android (arm64) port of the unlock dylib is in progress.
 
 ### Screenshots
 
@@ -104,7 +107,8 @@ Key files:
 - [`mitm/vg_jsonl_viewer.py`](mitm/vg_jsonl_viewer.py): browser-based viewer for captured JSONL traffic
 - [`mitm/vg_log_viewer.py`](mitm/vg_log_viewer.py): terminal log viewer and replay helper
 - [`mitm/ssl_bypass/`](mitm/ssl_bypass): SSL-bypass support code and build scripts
-- [`mitm/vg_unlock/`](mitm/vg_unlock): unlock-related support code and build scripts
+- [`mitm/vg_unlock/`](mitm/vg_unlock): iOS unlock dylib (Objective-C, targets `GameKindred` Mach-O)
+- [`mitm/vg_unlock_android/`](mitm/vg_unlock_android): Android port of the unlock library (C, targets `libGameKindred.so` ELF arm64). Build with the included shell script or CMake against the Android NDK. Several offsets are confirmed via ELF relocation analysis; others are marked `NEEDS_RE` and require Ghidra verification of the Android binary.
 - [`mitm/matches/`](mitm/matches): captured per-match artifacts
 
 Read [`mitm/README.md`](mitm/README.md) for the runtime interception setup.
@@ -160,6 +164,7 @@ Common components referenced in the repo:
 - mitmproxy / `mitmdump`
 - Frida
 - a controlled iOS test environment or VM
+- Android NDK (for building the Android unlock library)
 
 Because this is a research archive, there is no single one-command bootstrap for the whole repository.
 

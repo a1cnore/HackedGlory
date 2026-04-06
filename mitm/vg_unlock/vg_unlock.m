@@ -205,12 +205,81 @@ static void hook_refresh(void *self) {
                     LOG(@"[sidebar] ACADEMY already exists at %p", academyPanel);
                 }
 
+                /* ── Register PARTY panel at index 3 ──
+                 *
+                 * The MARKET panel (always created at menuObj+0xe8, size 0x2cf68)
+                 * contains a PARTY sub-object at offset +0x2c50.
+                 * Its vtable provides icon "main_nav_party" and label "MAIN_MENU_PARTY".
+                 * The constructor never registers it at sidebar index 3 in CE mode.
+                 */
+                void *marketPanel = *(void **)((uint8_t *)menuObj + 0xe8);
+                void *existingParty = *(void **)((uint8_t *)menuObj + 0xc8);
+                if (marketPanel && !existingParty) {
+                    void *partySubObj = (void *)((uint8_t *)marketPanel + 0x2c50);
+                    *(void **)((uint8_t *)menuObj + 0xc8) = partySubObj;
+                    LOG(@"[sidebar] registering PARTY panel at index 3: subObj=%p", partySubObj);
+                    reg(sidebarCtrl, partySubObj, 3);
+                    LOG(@"[sidebar] PARTY registered!");
+                } else if (existingParty) {
+                    LOG(@"[sidebar] PARTY already registered (c8=%p)", existingParty);
+                } else {
+                    LOG(@"[sidebar] WARNING: no market panel at menuObj+0xe8!");
+                }
+
+                /* ── Create TROPHIES tab in BAG panel (CE-gated) ──
+                 *
+                 * The BAG constructor FUN_1001f59e8 creates 6 tabs always,
+                 * then 4 more when FUN_100131560 returns 0 (full game).
+                 * We create just the TROPHIES tab (season trophies) and register it.
+                 *
+                 * Vtable layout at subObj (tab+0x28):
+                 *   vt[2](self) = content object getter (returns inner object ptr)
+                 *   vt[3](self) = section name getter
+                 *   vt[4](self) = title getter (calls FUN_1004e0150)
+                 *
+                 * CRITICAL: vtable functions need `self` (subObj) as first arg!
+                 */
+                void *bagWrapper = *(void **)((uint8_t *)menuObj + 0x108);
+                if (bagWrapper) {
+                    void *bagContainer = *(void **)((uint8_t *)bagWrapper + 0x8);
+                    typedef void *(*tab_ctor_fn)(void *);
+                    typedef void (*array_add_fn)(void *, void **);
+                    typedef void *(*operator_new_fn2)(unsigned long);
+                    typedef void (*tab_reg_fn)(void *, void *, void *, void *, void *);
+                    typedef void *(*vt_method)(void *self);
+
+                    operator_new_fn2 bag_new = (operator_new_fn2)(g_base + 0x1148d8c);
+                    array_add_fn arr_add = (array_add_fn)(g_base + 0x1f5d50);
+                    tab_reg_fn tab_reg = (tab_reg_fn)(g_base + 0x2afb68);
+                    void *tabArray = (void *)((uint8_t *)bagWrapper + 0x48);
+
+                    /* Create TROPHIES tab: operator_new(0x50) → FUN_10021844c */
+                    void *mem = bag_new(0x50);
+                    if (mem) {
+                        tab_ctor_fn ctor = (tab_ctor_fn)(g_base + 0x21844c);
+                        void *tab = ctor(mem);
+                        void *subObj = (void *)((uint8_t *)tab + 0x28);
+                        arr_add(tabArray, &subObj);
+
+                        void **vt = *(void ***)subObj;
+                        void *icon    = ((vt_method)vt[2])(subObj);
+                        void *title   = ((vt_method)vt[4])(subObj);
+                        void *section = ((vt_method)vt[3])(subObj);
+
+                        LOG(@"[bag-tabs] TROPHIES: subObj=%p icon=%p title=%p section=%p",
+                            subObj, icon, title, section);
+                        tab_reg(bagContainer, title, 0, icon, section);
+                        LOG(@"[bag-tabs] TROPHIES tab registered!");
+                    }
+                }
+
                 /* Dump registered sidebar tabs for diagnostics */
                 void *home    = *(void **)((uint8_t *)menuObj + 0xb0);
                 void *bag     = *(void **)((uint8_t *)menuObj + 0xb8);
                 void *academyRef = *(void **)((uint8_t *)menuObj + 0xc0);
-                LOG(@"[sidebar] registered: home(b0)=%p bag(b8)=%p academy(c0)=%p social(d0)=%p",
-                    home, bag, academyRef, *(void **)((uint8_t *)menuObj + 0xd0));
+                void *partyRef   = *(void **)((uint8_t *)menuObj + 0xc8);
+                LOG(@"[sidebar] registered: home(b0)=%p bag(b8)=%p academy(c0)=%p party(c8)=%p social(d0)=%p",
+                    home, bag, academyRef, partyRef, *(void **)((uint8_t *)menuObj + 0xd0));
             }
         }
     }
@@ -453,8 +522,74 @@ static void hook_profile_body(void *self, void *data) {
     body_setup_fn setup = (body_setup_fn)(g_base + 0x227fb8);
     setup((void *)((uint8_t *)self + 0x1d0), 1);
 
+    /* Re-enable the level shield widget.
+     * The CE gate calls FUN_100530068(self+0x20a80, 0) which sets the widget
+     * to disabled state 3 via FUN_10052fe74. This hides the filled shield,
+     * level number inside it, and the XP progress bar (all children of the widget).
+     * Calling with param_2=1 transitions state 3 → 0 (enabled). */
+    typedef void (*widget_enable_fn)(void *, int);
+    widget_enable_fn enable_shield = (widget_enable_fn)(g_base + 0x530068);
+    enable_shield((void *)((uint8_t *)self + 0x20a80), 1);
+
+    /* ── Re-show 8 profile card elements hidden by CE gate ──
+     *
+     * The card sub-object (FUN_100255b9c) lives at self+0x8AC0.
+     * Its constructor hides 8 elements via `& 0xfffffffb` when CE gate=1:
+     *   +0x684  ICE amount display
+     *   +0x7b4  ICE icon
+     *   +0xc8c  Glory amount display
+     *   +0xdbc  Glory icon
+     *   +0x153c Opals / currency 3
+     *   +0x166c Opals icon
+     *   +0x1c9c Karma display
+     *   +0x1e7c Karma bonus label
+     * Plus 2 account level shields gated separately:
+     *   +0x2ac4 Level shield blur 1
+     *   +0x2bb4 Level shield blur 2
+     * Plus XP bar container backgrounds:
+     *   +0x4a3c black_background (XP bar bg)
+     *   +0x4b2c white_background (XP bar overlay)
+     */
+    uint8_t *card = (uint8_t *)self + 0x8AC0;
+    *(uint32_t *)(card + 0x684)  |= 0x4;  /* ICE display */
+    *(uint32_t *)(card + 0x7b4)  |= 0x4;  /* ICE icon */
+    *(uint32_t *)(card + 0xc8c)  |= 0x4;  /* Glory display */
+    *(uint32_t *)(card + 0xdbc)  |= 0x4;  /* Glory icon */
+    *(uint32_t *)(card + 0x153c) |= 0x4;  /* Opals display */
+    *(uint32_t *)(card + 0x166c) |= 0x4;  /* Opals icon */
+    *(uint32_t *)(card + 0x1c9c) |= 0x4;  /* Karma display */
+    *(uint32_t *)(card + 0x1e7c) |= 0x4;  /* Karma bonus label */
+    *(uint32_t *)(card + 0x2ac4) |= 0x4;  /* Level shield blur 1 */
+    *(uint32_t *)(card + 0x2bb4) |= 0x4;  /* Level shield blur 2 */
+    *(uint32_t *)(card + 0x4a3c) |= 0x4;  /* XP bar black background */
+    *(uint32_t *)(card + 0x4b2c) |= 0x4;  /* XP bar white background */
+
+    /* Force XP data if level exists but XP ceiling is 0 (prevents NaN in bar) */
+    typedef void *(*get_data_mgr_fn)(void);
+    get_data_mgr_fn get_dm = (get_data_mgr_fn)(g_base + 0x15d3ec);
+    void *dm = get_dm();
+    if (dm) {
+        uint32_t level = *(uint32_t *)((uint8_t *)dm + 0x55d0);
+        int xp_ceil = *(int *)((uint8_t *)dm + 0x55dc);
+        if (level > 0 && xp_ceil == 0) {
+            *(int *)((uint8_t *)dm + 0x55d4) = 5000;   /* currentXP */
+            *(int *)((uint8_t *)dm + 0x55d8) = 0;       /* XP floor */
+            *(int *)((uint8_t *)dm + 0x55dc) = 10000;   /* XP ceiling */
+            LOG(@"[ce-gate] injected XP data: level=%u xp=5000/10000", level);
+        }
+    }
+
     static int log_once = 0;
-    if (!log_once) { log_once = 1; LOG(@"[ce-gate] profile body elements SHOWN"); }
+    if (!log_once) {
+        log_once = 1;
+        void *dm2 = get_dm();
+        LOG(@"[ce-gate] profile card SHOWN (card=%p dm=%p level=%u xp=%d/%d-%d)",
+            card, dm2,
+            dm2 ? *(uint32_t *)((uint8_t *)dm2 + 0x55d0) : 0,
+            dm2 ? *(int *)((uint8_t *)dm2 + 0x55d4) : 0,
+            dm2 ? *(int *)((uint8_t *)dm2 + 0x55d8) : 0,
+            dm2 ? *(int *)((uint8_t *)dm2 + 0x55dc) : 0);
+    }
 }
 
 /* --- FUN_10025d3f0: Profile data loader (fptr g_base+0x147af38) ---
