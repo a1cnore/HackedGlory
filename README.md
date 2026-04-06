@@ -35,6 +35,20 @@ Current status at a glance:
   <img src="images/leaderboard.png" alt="Leaderboard UI Screenshot" width="32%">
   <img src="images/friendlist.png" alt="Socials UI Screenshot" width="32%">
 </p>
+<p>
+  <img src="images/IMG_8323.PNG" alt="Screenshot 1" width="32%">
+  <img src="images/IMG_8324.PNG" alt="Screenshot 2" width="32%">
+  <img src="images/IMG_8325.PNG" alt="Screenshot 3" width="32%">
+</p>
+<p>
+  <img src="images/IMG_8326.PNG" alt="Screenshot 4" width="32%">
+  <img src="images/IMG_8327.PNG" alt="Screenshot 5" width="32%">
+  <img src="images/IMG_8328.PNG" alt="Screenshot 6" width="32%">
+</p>
+<p>
+  <img src="images/IMG_8329.PNG" alt="Screenshot 7" width="32%">
+  <img src="images/IMG_8330.PNG" alt="Screenshot 8" width="32%">
+</p>
 
 ## Summary
 
