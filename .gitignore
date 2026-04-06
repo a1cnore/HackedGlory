@@ -2,3 +2,13 @@
 __pycache__/
 *.pyc
 mitm/vg_traffic.jsonl copy
+mitm/vg_unlock_android/__pycache__/
+mitm/vg_unlock_android/device_test/
+mitm/vg_unlock_android/out/
+mitm/vg_unlock_android/honor_install/out/
+mitm/vg_unlock_android/libvg_loader.so
+mitm/vg_unlock_android/libvg_unlock.so
+
+*.apk
+*.xapk
+*.idsig

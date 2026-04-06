@@ -1,3 +1,5 @@
+#define _GNU_SOURCE
+
 /*
  * vg_unlock_android — runtime patches for Vainglory CE (Android/ELF port).
  *
@@ -30,11 +32,28 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <link.h>
 #include <sys/mman.h>
 #include <android/log.h>
 
 #define TAG "vg_unlock"
 #define LOG(fmt, ...) __android_log_print(ANDROID_LOG_INFO, TAG, fmt, ##__VA_ARGS__)
+
+#ifndef VG_ENABLE_EXPERIMENTAL_HOOKS
+#define VG_ENABLE_EXPERIMENTAL_HOOKS 0
+#endif
+
+#ifndef VG_ENABLE_PARSER_PATCHES
+#define VG_ENABLE_PARSER_PATCHES 0
+#endif
+
+#ifndef VG_ENABLE_PROFILE_REDIRECTS
+#define VG_ENABLE_PROFILE_REDIRECTS 0
+#endif
+
+#ifndef VG_ENABLE_GUEST_BYPASS
+#define VG_ENABLE_GUEST_BYPASS 0
+#endif
 
 static uintptr_t g_base = 0;
 
@@ -128,29 +147,124 @@ static uintptr_t g_base = 0;
 #define GLOBAL_DATA_MGR                0x2b7ed00  /* [CONFIRMED] loaded by getter at 0x8580b8 */
 #define GLOBAL_SESSION_MGR             0x3110700  /* [CONFIRMED] vtable dispatch matches session mgr */
 
-/* ========== Utility: find library base via /proc/self/maps ========== */
+/* ========== Utility: find library base / page protections ========== */
 
-static uintptr_t find_lib_base(const char *lib_name) {
+typedef struct {
+    const char *lib_name;
+    uintptr_t base;
+    const char *match_name;
+} lib_find_ctx;
+
+static int maps_perms_to_prot(const char *perms) {
+    int prot = 0;
+    if (perms[0] == 'r') prot |= PROT_READ;
+    if (perms[1] == 'w') prot |= PROT_WRITE;
+    if (perms[2] == 'x') prot |= PROT_EXEC;
+    return prot;
+}
+
+static int find_lib_base_cb(struct dl_phdr_info *info, size_t size, void *data) {
+    lib_find_ctx *ctx = (lib_find_ctx *)data;
+    (void)size;
+
+    if (!info->dlpi_name || !strstr(info->dlpi_name, ctx->lib_name)) {
+        return 0;
+    }
+
+    ctx->base = (uintptr_t)info->dlpi_addr;
+    ctx->match_name = info->dlpi_name;
+    return 1;
+}
+
+static uintptr_t find_lib_base_from_maps(const char *lib_name) {
     FILE *f = fopen("/proc/self/maps", "r");
     if (!f) {
         LOG("FATAL: cannot open /proc/self/maps");
         return 0;
     }
 
+    uintptr_t best_base = 0;
     char line[512];
     while (fgets(line, sizeof(line), f)) {
-        if (strstr(line, lib_name) && strstr(line, "r-xp")) {
-            uintptr_t base = 0;
-            sscanf(line, "%lx-", &base);
+        if (!strstr(line, lib_name)) {
+            continue;
+        }
+
+        unsigned long start = 0;
+        unsigned long end = 0;
+        unsigned long file_offset = 0;
+        unsigned long inode = 0;
+        char perms[5] = {0};
+        char dev[16] = {0};
+        char path[256] = {0};
+
+        int parsed = sscanf(line, "%lx-%lx %4s %lx %15s %lu %255[^\n]",
+            &start, &end, perms, &file_offset, dev, &inode, path);
+        if (parsed < 6) {
+            continue;
+        }
+
+        uintptr_t candidate = (uintptr_t)start - (uintptr_t)file_offset;
+        if (file_offset == 0) {
             fclose(f);
-            LOG("found %s at base %p", lib_name, (void *)base);
-            return base;
+            LOG("found %s via /proc/self/maps at base %p (%s)",
+                lib_name, (void *)candidate, path[0] ? path : "unknown");
+            return candidate;
+        }
+        if (best_base == 0 || candidate < best_base) {
+            best_base = candidate;
         }
     }
 
     fclose(f);
+
+    if (best_base != 0) {
+        LOG("found %s via /proc/self/maps fallback at base %p", lib_name, (void *)best_base);
+        return best_base;
+    }
+
     LOG("FATAL: %s not found in /proc/self/maps", lib_name);
     return 0;
+}
+
+static uintptr_t find_lib_base(const char *lib_name) {
+    lib_find_ctx ctx = { lib_name, 0, NULL };
+
+    if (dl_iterate_phdr(find_lib_base_cb, &ctx) != 0 && ctx.base != 0) {
+        LOG("found %s via dl_iterate_phdr at base %p (%s)",
+            lib_name,
+            (void *)ctx.base,
+            ctx.match_name ? ctx.match_name : "unknown");
+        return ctx.base;
+    }
+
+    return find_lib_base_from_maps(lib_name);
+}
+
+static int query_page_protection(uintptr_t addr) {
+    FILE *f = fopen("/proc/self/maps", "r");
+    if (!f) {
+        return -1;
+    }
+
+    char line[512];
+    while (fgets(line, sizeof(line), f)) {
+        unsigned long start = 0;
+        unsigned long end = 0;
+        char perms[5] = {0};
+
+        if (sscanf(line, "%lx-%lx %4s", &start, &end, perms) != 3) {
+            continue;
+        }
+
+        if (addr >= (uintptr_t)start && addr < (uintptr_t)end) {
+            fclose(f);
+            return maps_perms_to_prot(perms);
+        }
+    }
+
+    fclose(f);
+    return -1;
 }
 
 /* ========== Utility: mprotect helper for RELRO pages ========== */
@@ -161,9 +275,16 @@ static int make_writable(uintptr_t addr, size_t len) {
     size_t total = (addr - page_start) + len;
     total = (total + page_size - 1) & ~(page_size - 1);
 
-    int ret = mprotect((void *)page_start, total, PROT_READ | PROT_WRITE);
+    int prot = query_page_protection(addr);
+    if (prot < 0) {
+        prot = PROT_READ;
+    }
+    prot |= PROT_WRITE;
+
+    int ret = mprotect((void *)page_start, total, prot);
     if (ret != 0) {
-        LOG("mprotect FAILED at %p (page %p, size 0x%zx)", (void *)addr, (void *)page_start, total);
+        LOG("mprotect FAILED at %p (page %p, size 0x%zx, prot=0x%x)",
+            (void *)addr, (void *)page_start, total, prot);
     }
     return ret;
 }
@@ -465,11 +586,13 @@ static void open_full_profile(const char *tag) {
     full_profile_fn open_full = (full_profile_fn)(g_base + CODE_OPEN_FULL_PROFILE);
     open_full("homepanel_profile_avatar");
 
+#if VG_ENABLE_EXPERIMENTAL_HOOKS
     if (data_mgr) {
         uint8_t *dirty = (uint8_t *)((uintptr_t)data_mgr + 0x29);
         LOG("[profile] dirty_flag=%d, forcing to 1", *dirty);
         *dirty = 1;
     }
+#endif
 }
 
 static void hook_profile_eeb60(void *p1, float p2, long p3) {
@@ -737,7 +860,12 @@ static fptr_patch parser_patches[] = {
 
 __attribute__((constructor))
 static void vg_unlock_init(void) {
-    LOG("loaded (v1 — Android port of vg_unlock v14)");
+    LOG("loaded (v2 — Android port of vg_unlock v14)");
+
+#if !VG_ENABLE_PARSER_PATCHES && !VG_ENABLE_PROFILE_REDIRECTS && !VG_ENABLE_GUEST_BYPASS && !VG_ENABLE_EXPERIMENTAL_HOOKS
+    LOG("control build detected — all Android patch groups disabled; skipping runtime init");
+    return;
+#endif
 
     g_base = find_lib_base("libGameKindred.so");
     if (!g_base) {
@@ -745,6 +873,13 @@ static void vg_unlock_init(void) {
         return;
     }
 
+    LOG("config: parsers=%d profile_redirects=%d guest_bypass=%d experimental=%d",
+        VG_ENABLE_PARSER_PATCHES,
+        VG_ENABLE_PROFILE_REDIRECTS,
+        VG_ENABLE_GUEST_BYPASS,
+        VG_ENABLE_EXPERIMENTAL_HOOKS);
+
+#if VG_ENABLE_PARSER_PATCHES
     /* Layer 1: patch constants parsers */
     int n = sizeof(parser_patches) / sizeof(parser_patches[0]);
     for (int i = 0; i < n; i++) {
@@ -759,7 +894,11 @@ static void vg_unlock_init(void) {
         *fptr = p->replacement;
         LOG("parser %s: %p -> %p", p->name, old, p->replacement);
     }
+#else
+    LOG("parser patches disabled");
+#endif
 
+#if VG_ENABLE_EXPERIMENTAL_HOOKS
     /* Layer 2: hook nav bar refresh */
     if (FPTR_NAV_REFRESH != 0) {
         void **refresh_fptr = (void **)(g_base + FPTR_NAV_REFRESH);
@@ -784,15 +923,27 @@ static void vg_unlock_init(void) {
 
     /* Layer 4c: hook profile layout refresh */
     HOOK_FPTR(FPTR_PROFILE_LAYOUT, orig_profile_layout, hook_profile_layout, "profile_layout");
+#else
+    LOG("experimental hooks disabled — skipping layout-dependent Layers 2-4 and 8");
+#endif
 
+#if VG_ENABLE_PROFILE_REDIRECTS
     /* Layer 5: hook profile openers */
     patch_fptr(FPTR_PROFILE_EEB60, (void *)hook_profile_eeb60, "profile_eeb60");
     patch_fptr(FPTR_PROFILE_F505C, (void *)hook_profile_f505c, "profile_f505c");
     patch_fptr(FPTR_PROFILE_FA7B0, (void *)hook_profile_fa7b0, "profile_fa7b0");
+#else
+    LOG("profile redirects disabled");
+#endif
 
+#if VG_ENABLE_GUEST_BYPASS
     /* Layer 7: guest gate bypass */
     patch_fptr(FPTR_GUEST_VTABLE12, (void *)stub_has_account, "guest_vtable12");
+#else
+    LOG("guest bypass disabled");
+#endif
 
+#if VG_ENABLE_EXPERIMENTAL_HOOKS
     /* Layer 8: CE gate caller hooks */
     HOOK_FPTR(FPTR_PROFILE_RANKED, orig_profile_ranked, hook_profile_ranked, "profile_ranked");
     HOOK_FPTR(FPTR_PROFILE_BODY,   orig_profile_body,   hook_profile_body,   "profile_body");
@@ -804,6 +955,11 @@ static void vg_unlock_init(void) {
     HOOK_FPTR(FPTR_DATA_FETCH,     orig_data_fetch,     hook_data_fetch,     "data_fetch");
     HOOK_FPTR(FPTR_TAB_INIT,       orig_tab_init,       hook_tab_init,       "tab_init");
     HOOK_FPTR(FPTR_MARKET_TABS,    orig_market_tabs,    hook_market_tabs,    "market_tabs");
+#endif
 
-    LOG("init complete — all hooks with discovered offsets installed");
+#if VG_ENABLE_EXPERIMENTAL_HOOKS
+    LOG("init complete — safe and experimental hooks installed");
+#else
+    LOG("init complete — safe hooks installed (experimental hooks disabled)");
+#endif
 }
