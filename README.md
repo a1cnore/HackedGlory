@@ -25,7 +25,7 @@ Current status at a glance:
 - Leaderboard UI can now be surfaced and inspected.
 - Party, Academy, and Trophies panels restored in the sidebar and bag tabs.
 - Full profile card re-enabled (ICE, Glory, Opals, Karma, level shield, XP bar).
-- The match protocol is now partially decrypted and documented.
+- The match protocol is now almost fully decrypted and documented.
 - An Android (arm64) port of the unlock dylib is in progress.
 
 ### Screenshots
