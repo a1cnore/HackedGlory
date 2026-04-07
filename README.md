@@ -12,7 +12,6 @@ Community updates: [EU Discord](https://discord.gg/5Y3q7cTH)
 - [Additional Major Findings](#additional-major-findings)
 - [Ghidra Reverse Engineering Workflow](#ghidra-reverse-engineering-workflow)
 - [Repository Layout](#repository-layout)
-- [Recommended Reading Order](#recommended-reading-order)
 - [Tooling and Environment](#tooling-and-environment)
 - [Android Port Status](#android-port-status)
 - [License](#license)
@@ -190,17 +189,6 @@ Key components:
 - [`mitm/matches/`](mitm/matches): captured per-match artifacts
 
 Read [`mitm/README.md`](mitm/README.md) for the runtime interception workflow.
-
-## Recommended Reading Order
-
-If you want the fastest path through the repository:
-
-1. Read [`reports/ce_gate_analysis.md`](reports/ce_gate_analysis.md).
-2. Read [`reports/trophy_investigation_summary.md`](reports/trophy_investigation_summary.md).
-3. Read [`reports/vainglory_static_report.md`](reports/vainglory_static_report.md).
-4. Read [`reports/protocol_decryption_writeup.md`](reports/protocol_decryption_writeup.md).
-5. Read [`reports/menu_ui_control_guide.md`](reports/menu_ui_control_guide.md).
-6. Browse [`mitm/README.md`](mitm/README.md) if you want the capture and unlock setup.
 
 ## Tooling and Environment
 
