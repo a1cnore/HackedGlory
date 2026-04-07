@@ -1,20 +1,20 @@
 # Vainglory Deep Static Inventory
 
-This document extends the first-pass report in [vainglory_static_report.md](/Users/marvinkleinpass/Developer/vphone/vgf/reports/vainglory_static_report.md) with a broader inventory, counts, and raw artifact references.
+This document extends the first-pass report in [vainglory_static_report.md](vainglory_static_report.md) with a broader inventory, counts, and raw artifact references.
 
 Scope remains passive local analysis only. No live interception, runtime patching, or TLS bypassing was performed.
 
 ## Artifact map
 
-Generated raw inventories live under [reports/generated](/Users/marvinkleinpass/Developer/vphone/vgf/reports/generated):
+Generated raw inventories live under [reports/generated](generated):
 
-- [hosts_and_urls.txt](/Users/marvinkleinpass/Developer/vphone/vgf/reports/generated/hosts_and_urls.txt)
-- [jsonrpc_cluster_raw.txt](/Users/marvinkleinpass/Developer/vphone/vgf/reports/generated/jsonrpc_cluster_raw.txt)
-- [method_candidates.txt](/Users/marvinkleinpass/Developer/vphone/vgf/reports/generated/method_candidates.txt)
-- [session_and_state_fields.txt](/Users/marvinkleinpass/Developer/vphone/vgf/reports/generated/session_and_state_fields.txt)
-- [ranked_and_season_fields.txt](/Users/marvinkleinpass/Developer/vphone/vgf/reports/generated/ranked_and_season_fields.txt)
-- [realtime_transport_clues.txt](/Users/marvinkleinpass/Developer/vphone/vgf/reports/generated/realtime_transport_clues.txt)
-- [sdk_and_runtime_clues.txt](/Users/marvinkleinpass/Developer/vphone/vgf/reports/generated/sdk_and_runtime_clues.txt)
+- [hosts_and_urls.txt](generated/hosts_and_urls.txt)
+- [jsonrpc_cluster_raw.txt](generated/jsonrpc_cluster_raw.txt)
+- [method_candidates.txt](generated/method_candidates.txt)
+- [session_and_state_fields.txt](generated/session_and_state_fields.txt)
+- [ranked_and_season_fields.txt](generated/ranked_and_season_fields.txt)
+- [realtime_transport_clues.txt](generated/realtime_transport_clues.txt)
+- [sdk_and_runtime_clues.txt](generated/sdk_and_runtime_clues.txt)
 
 Inventory sizes:
 
@@ -114,7 +114,7 @@ Interpretation:
 
 ## JSON-RPC surface
 
-The candidate method list is in [method_candidates.txt](/Users/marvinkleinpass/Developer/vphone/vgf/reports/generated/method_candidates.txt). It includes some false positives and SDK methods, but a large useful subset is likely actual game RPC.
+The candidate method list is in [method_candidates.txt](generated/method_candidates.txt). It includes some false positives and SDK methods, but a large useful subset is likely actual game RPC.
 
 High-confidence gameplay/platform method families:
 
@@ -283,7 +283,7 @@ Interpretation:
 
 ### Ranked / season / ascension
 
-The extracted ranked field inventory is in [ranked_and_season_fields.txt](/Users/marvinkleinpass/Developer/vphone/vgf/reports/generated/ranked_and_season_fields.txt).
+The extracted ranked field inventory is in [ranked_and_season_fields.txt](generated/ranked_and_season_fields.txt).
 
 Most relevant fields:
 

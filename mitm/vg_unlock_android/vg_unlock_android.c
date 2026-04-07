@@ -113,17 +113,33 @@ static uintptr_t g_base = 0;
 
 /* Layer 8: CE gate caller hooks — mixed confidence.
  * Functions calling CE gate 0x8480e0, then hiding UI when it returns 1.
- * Some shift predictions were correct (real prologues), some were stubs. */
+ * Some shift predictions were correct (real prologues), some were stubs.
+ *
+ * CE gate (0x8480e0) is called from 9 sites. Each caller checks the
+ * return value and hides UI elements when it returns 1. The following
+ * CE gate caller fptrs were found via BL scan + .data.rel.ro lookup:
+ *
+ *   Call at 0x863b88: fptr 0x26bbd58 -> func 0x863dd4 (main menu init area)
+ *   Call at 0xa6e734: fptrs 0x26e52e8/0x26e5260/0x26e5238 -> funcs 0xa6e6f4/f0/ec
+ *   Call at 0xad2680: fptrs 0x26ed4f8/0x26ed488/+5 more -> funcs in 0xad2xxx range
+ *   Call at 0xad6794: fptrs 0x26ed788/0x26ed770/0x26ed768 -> funcs 0xad676c/5c/2c
+ *   Call at 0xae0920: fptrs 0x26eec18/0x26eec00/+3 more -> funcs 0xae08f8/089c/etc
+ *   Call at 0xaf783c: fptr 0x26f34c0 -> func 0xaf7808 (CODE_SOCIAL_INNER area)
+ *   Call at 0xaf79a8: fptrs 0x26f34a8/0x26f3888 -> CONFIRMED profile_f505c/fa7b0
+ *   Call at 0xbbe99c: fptrs 0x270b7c0/0x270b798 -> funcs 0xbbe890/e878 (profile area)
+ *
+ * Next step: decompile each candidate in Ghidra to match to NEEDS_RE slots.
+ * Do NOT patch CE gate directly — it will crash the app. */
 #define FPTR_PROFILE_RANKED            0x26d5630  /* [MEDIUM] func 0xa02b60 — real prologue, accesses +0x370 */
-#define FPTR_PROFILE_BODY              0x0  /* NEEDS_RE: shift -> thunk. Candidates: fptr 0x26d61e0 (func 0x9c3e68) or 0x26de668 (func 0xa24390) — both access +0xb04 */
-#define FPTR_PROFILE_LOADER            0x0  /* NEEDS_RE: shift -> thunk (0xe13d98) */
+#define FPTR_PROFILE_BODY              0x0  /* NEEDS_RE: CE gate caller candidates: 0x26e52e8 (func 0xa6e6f4), 0x26e5260 (func 0xa6e6f0) */
+#define FPTR_PROFILE_LOADER            0x0  /* NEEDS_RE: CE gate caller candidates: 0x26eec18 (func 0xae08f8), 0x26eec00 (func 0xae089c) */
 #define FPTR_SEASON_HANDLER            0x0  /* NEEDS_RE: shift -> tiny func (0xe13e54) */
 #define FPTR_SEASON_UPDATE             0x26d8080  /* [MEDIUM] func 0xe01c54 — real prologue */
 #define FPTR_SOCIAL_FEAT               0x26d1440  /* [MEDIUM] func 0x99f5e0 — real prologue */
 #define FPTR_SKILL_TIER                0x26da510  /* [MEDIUM] func 0xe020b4 — real prologue */
-#define FPTR_DATA_FETCH                0x0  /* NEEDS_RE: shift -> stub (0x7fcca4) */
+#define FPTR_DATA_FETCH                0x0  /* NEEDS_RE: CE gate caller candidates: 0x26ed4f8 (func 0xad240c), 0x26ed488 (func 0xad23b4) */
 #define FPTR_TAB_INIT                  0x26c97b0  /* [MEDIUM] func 0xe02408 — real prologue */
-#define FPTR_MARKET_TABS               0x0  /* NEEDS_RE: shift -> "return -1" (0xe13f50) */
+#define FPTR_MARKET_TABS               0x0  /* NEEDS_RE: CE gate caller candidates: 0x26ed788 (func 0xad676c), 0x26ed770 (func 0xad675c) */
 
 /* ---- Code offsets (functions called via g_base + offset) ---- */
 
@@ -827,6 +843,128 @@ static void ensure_trophy_data(long profile_obj) {
         TOTAL_TROPHIES, array, (void *)profile_obj);
 }
 
+/* ========== CE gate call-site bypass ========== */
+
+/* The CE gate at CODE offset 0x8480e0 returns 1 when CE restrictions apply,
+ * causing callers to hide UI elements. We cannot safely patch the gate
+ * function itself, but we CAN patch individual BL call sites to replace
+ * the BL with MOV W0, WZR (= "not CE, show everything").
+ *
+ * Each entry is the code offset of a BL 0x8480e0 instruction. */
+static const uintptr_t ce_gate_call_sites[] = {
+    0x863b88,  /* main menu init area */
+    0x8640cc,  /* menu setup */
+    0xa6e734,  /* profile panel / tab switch */
+    0xad2680,  /* home panel — full vs simplified profile */
+    0xad6794,  /* login/signup area */
+    0xae0920,  /* account registration */
+    0xaf783c,  /* profile social inner area */
+    0xaf79a8,  /* profile opener (profile_f505c area) */
+    0xbbe99c,  /* full profile display */
+};
+#define CE_GATE_SITE_COUNT (sizeof(ce_gate_call_sites) / sizeof(ce_gate_call_sites[0]))
+
+/* Pre-gate at 0x83d808: always returns 0 (false), called BEFORE the CE gate.
+ * This causes early returns that prevent CE gate callers from ever running.
+ * We patch these BL sites to MOV W0, #1 so the pre-check passes. */
+static const uintptr_t pre_gate_call_sites[] = {
+    0x8b9b00,
+    0x8c2fd8,
+    0x8c38f4,
+    0x971e4c,
+    0xad2244,
+    0xad2670,  /* home panel — right before CE gate at 0xad2680 */
+    0xad35c4,
+    0xad7734,
+    0xad7804,
+    0xad78e4,
+    0xad7ec8,
+    0xaf7990,  /* profile opener area */
+    0xb24828,
+    0xb3eb08,
+};
+#define PRE_GATE_SITE_COUNT (sizeof(pre_gate_call_sites) / sizeof(pre_gate_call_sites[0]))
+
+/* ARM64: MOV W0, WZR = 0x2a1f03e0 (return 0) */
+#define ARM64_MOV_W0_WZR 0x2a1f03e0u
+/* ARM64: ORR W0, WZR, #1 = 0x320003e0 (return 1 / true) */
+#define ARM64_MOV_W0_1   0x320003e0u
+/* ARM64: ORR W1, WZR, #1 = 0x320003e1 (param1 = 1 / true) */
+#define ARM64_MOV_W1_1   0x320003e1u
+
+static void patch_bl_sites(const uintptr_t *sites, int count, uint32_t replacement, const char *tag) {
+    int patched = 0;
+    for (int i = 0; i < count; i++) {
+        uint32_t *site = (uint32_t *)(g_base + sites[i]);
+        if (make_writable((uintptr_t)site, sizeof(uint32_t)) != 0) {
+            LOG("[%s] FAILED mprotect at 0x%lx", tag, (unsigned long)sites[i]);
+            continue;
+        }
+        uint32_t old = *site;
+        *site = replacement;
+        patched++;
+        LOG("[%s] 0x%lx: 0x%08x -> 0x%08x", tag, (unsigned long)sites[i], old, replacement);
+    }
+    LOG("[%s] patched %d/%d call sites", tag, patched, count);
+}
+
+/* ARM64: NOP = 0xd503201f */
+#define ARM64_NOP 0xd503201fu
+
+static void bypass_ce_gate_calls(void) {
+    /* CE gate (0x8480e0): returns 1 = CE restricted. Patch to return 0 = unrestricted.
+     * Note: pre-gate (0x83d808) returns 0, and callers use tbz (branch if zero)
+     * to PROCEED to the CE gate. So pre-gate returning 0 is correct — do NOT patch it. */
+    patch_bl_sites(ce_gate_call_sites, (int)CE_GATE_SITE_COUNT, ARM64_MOV_W0_WZR, "ce-gate");
+
+    /* Nav refresh (0xb78f88): vtable-dispatched, no fptr.
+     * The function calls setVisible(button, 0) to hide 5 secondary nav buttons.
+     * Each call is: LDR X0, [X19, #off]; MOV W1, WZR; BL setVisible.
+     * We patch MOV W1, WZR -> ORR W1, WZR, #1 to show instead of hide.
+     *
+     * Button offsets and their hide-call sites:
+     *   self+0xe8 (news)        -> 0xb79454
+     *   self+0xf0 (tiv)         -> 0xb7920c
+     *   self+0xf8 (leaderboard) -> 0xb79334
+     *   self+0x100 (academy)    -> 0xb793c4
+     *   self+0x108 (settings)   -> 0xb792a4
+     */
+    /* Patch 1: NOP the AND that hides the secondary nav container (self+0xc0).
+     * At 0xb78fe4: AND w9, w9, #0xfffffffb clears visibility bit of the container. */
+    uint32_t *container_hide = (uint32_t *)(g_base + 0xb78fe4);
+    if (make_writable((uintptr_t)container_hide, sizeof(uint32_t)) == 0) {
+        LOG("[nav-fix] NOP container hide: 0x%08x -> NOP", *container_hide);
+        *container_hide = ARM64_NOP;
+    }
+
+    /* Patch 2: setVisible is a state machine (modes 0-5), not a boolean.
+     * For the leaderboard, NOP both the MOV and BL to skip the hide entirely.
+     * For other buttons, change mode 0 → mode 1. */
+    static const uintptr_t nav_hide_sites[] = {
+        0xb79454,  /* news        — self+0xe8 */
+        0xb7920c,  /* tiv         — self+0xf0 */
+        0xb793c4,  /* academy     — self+0x100 */
+        0xb792a4,  /* settings    — self+0x108 */
+    };
+    for (int i = 0; i < (int)(sizeof(nav_hide_sites) / sizeof(nav_hide_sites[0])); i++) {
+        uint32_t *site = (uint32_t *)(g_base + nav_hide_sites[i]);
+        if (make_writable((uintptr_t)site, sizeof(uint32_t)) == 0) {
+            *site = ARM64_MOV_W1_1;
+        }
+    }
+
+    /* Leaderboard (self+0xf8): NOP both the MOV W1,WZR and the BL setVisible
+     * so the button keeps its default visible state from creation. */
+    uint32_t *lb_mov = (uint32_t *)(g_base + 0xb79334);
+    uint32_t *lb_bl  = (uint32_t *)(g_base + 0xb79338);
+    if (make_writable((uintptr_t)lb_mov, 8) == 0) {
+        LOG("[nav-fix] leaderboard: NOP setVisible call (0x%08x 0x%08x -> NOP NOP)",
+            *lb_mov, *lb_bl);
+        *lb_mov = ARM64_NOP;
+        *lb_bl  = ARM64_NOP;
+    }
+}
+
 /* ========== Patch table for parser replacements ========== */
 
 typedef struct {
@@ -867,9 +1005,14 @@ static void vg_unlock_init(void) {
     return;
 #endif
 
-    g_base = find_lib_base("libGameKindred.so");
+    /* Try the loader-shim name first (libGameKindred_real.so), then fall
+       back to the original name for the legacy DT_NEEDED injection path. */
+    g_base = find_lib_base("libGameKindred_real.so");
     if (!g_base) {
-        LOG("FATAL: could not find libGameKindred.so");
+        g_base = find_lib_base("libGameKindred.so");
+    }
+    if (!g_base) {
+        LOG("FATAL: could not find libGameKindred");
         return;
     }
 
@@ -894,6 +1037,9 @@ static void vg_unlock_init(void) {
         *fptr = p->replacement;
         LOG("parser %s: %p -> %p", p->name, old, p->replacement);
     }
+
+    /* Bypass CE gate at individual call sites so parser flags take effect */
+    bypass_ce_gate_calls();
 #else
     LOG("parser patches disabled");
 #endif

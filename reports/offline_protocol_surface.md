@@ -4,9 +4,9 @@ This report focuses on what can be modeled offline from the extracted client bun
 
 Supporting machine-readable files:
 
-- [protocol_spec.json](/Users/marvinkleinpass/Developer/vphone/vgf/reports/generated/protocol_spec.json)
-- [data_bundle_inventory.json](/Users/marvinkleinpass/Developer/vphone/vgf/reports/generated/data_bundle_inventory.json)
-- [jsonrpc_cluster_raw.txt](/Users/marvinkleinpass/Developer/vphone/vgf/reports/generated/jsonrpc_cluster_raw.txt)
+- [protocol_spec.json](generated/protocol_spec.json)
+- [data_bundle_inventory.json](generated/data_bundle_inventory.json)
+- [jsonrpc_cluster_raw.txt](generated/jsonrpc_cluster_raw.txt)
 
 ## What looks mockable offline
 
@@ -252,13 +252,13 @@ Interpretation:
 
 ## Useful local tooling added
 
-- [scripts/build_protocol_spec.py](/Users/marvinkleinpass/Developer/vphone/vgf/scripts/build_protocol_spec.py)
+- [scripts/build_protocol_spec.py](../scripts/build_protocol_spec.py)
   Builds a machine-readable protocol extraction from the client binary.
 
-- [scripts/analyze_data_bundle.py](/Users/marvinkleinpass/Developer/vphone/vgf/scripts/analyze_data_bundle.py)
+- [scripts/analyze_data_bundle.py](../scripts/analyze_data_bundle.py)
   Inventories `Data/` headers and extracts representative embedded resource paths.
 
-- [scripts/mock_platform_server.py](/Users/marvinkleinpass/Developer/vphone/vgf/scripts/mock_platform_server.py)
+- [scripts/mock_platform_server.py](../scripts/mock_platform_server.py)
   Runs a local offline JSON-RPC mock with canned bootstrap, profile, ranked, and manifest responses.
 
 ## Recommended next passive step
