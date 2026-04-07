@@ -4,9 +4,9 @@ This is a tighter, method-oriented interpretation of the `JSONRpc` string neighb
 
 Related files:
 
-- [mock_contract.json](/Users/marvinkleinpass/Developer/vphone/vgf/reports/generated/mock_contract.json)
-- [protocol_spec.json](/Users/marvinkleinpass/Developer/vphone/vgf/reports/generated/protocol_spec.json)
-- [jsonrpc_cluster_raw.txt](/Users/marvinkleinpass/Developer/vphone/vgf/reports/generated/jsonrpc_cluster_raw.txt)
+- [mock_contract.json](generated/mock_contract.json)
+- [protocol_spec.json](generated/protocol_spec.json)
+- [jsonrpc_cluster_raw.txt](generated/jsonrpc_cluster_raw.txt)
 
 ## Cluster 1: Auth and bootstrap
 

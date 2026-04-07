@@ -132,6 +132,8 @@ def find_sdk_root(explicit: Path | None) -> Path | None:
     if local_app_data:
         candidates.append(Path(local_app_data) / "Android" / "Sdk")
 
+    candidates.append(Path.home() / "Library" / "Android" / "sdk")
+
     for candidate in candidates:
         if candidate and candidate.exists():
             return candidate

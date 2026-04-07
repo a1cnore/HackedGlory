@@ -12,7 +12,13 @@ The Vainglory Community Edition uses a single master gate function `FUN_10013156
 | HOME | 0 | ✅ Always registered | Native |
 | BAG (Heroes) | 1 | ✅ Always registered | Native |
 | ACADEMY | 2 | ✅ Created + registered at runtime | dylib hook in `hook_refresh` |
+| PARTY | 3 | ✅ Registered at runtime | dylib hook in `hook_refresh` |
 | SOCIAL | 4 | ✅ Registered at runtime | dylib hook in `hook_refresh` |
+
+### BAG Sub-Tabs (Layer 6)
+| Tab | Status | Method |
+|-----|--------|--------|
+| TROPHIES (Season) | ✅ Created + registered at runtime | dylib hook in `hook_refresh` |
 
 ### Progression UI (Layer 8 hooks)
 | Feature | Status | Hook |
@@ -232,6 +238,7 @@ The two SIMD-signature functions (`prog_vis1`, `prog_vis2`) crash because their 
 1. **vm_protect __TEXT patching** — Crashes due to code signing enforcement even on the VM.
 2. **Binary-level master gate flip** — Enabling all 116 gates at once crashes because some code paths depend on CE-missing infrastructure.
 3. **SIMD-parameter hooks** — C function hooks clobber ARM64 SIMD registers (`s0`/`v0`/`d0`). Functions with `undefined1 param_1[16]` in Ghidra need inline assembly wrappers to save/restore SIMD state.
+4. **Vtable calls without `self`** — C++ virtual methods need the sub-object pointer as the first argument (`self` in x0). Calling `((fn)vtable[n])()` without passing `self` causes the function to read garbage from uninitialized x0. Must use `((fn)vtable[n])(subObj)` instead. Symptom: EXC_ARM_DA_ALIGN at an address that looks like ARM64 instruction bytes (e.g. `0xa9be4ff4...`).
 
 ### Object Graph
 ```
@@ -242,13 +249,19 @@ DAT_101dc2920 (global)
         │     ├── +0xb0 → HOME panel subobj
         │     ├── +0xb8 → BAG panel subobj
         │     ├── +0xc0 → ACADEMY panel subobj (NULL in CE, created by hook)
+        │     ├── +0xc8 → PARTY panel subobj (NULL in CE, set by hook from MARKET+0x2c50)
         │     ├── +0xd0 → SOCIAL panel subobj (NULL in CE, set by hook)
         │     ├── +0xe0 → HOME panel (always created)
-        │     ├── +0xe8 → MARKET panel (always created, no sidebar tab)
+        │     ├── +0xe8 → MARKET panel (always created, contains PARTY subobj at +0x2c50)
         │     ├── +0xf0 → Small social panel (created in CE, not registered natively)
         │     ├── +0xf8 → Full social panel (NOT created in CE)
         │     ├── +0x100 → ACADEMY panel (NOT created in CE, created by hook)
-        │     └── +0x108 → HEROES_BAG panel (always created)
+        │     └── +0x108 → BAG panel wrapper (always created, 0x60 bytes)
+        │           ├── +0x08 → Tab container (0x2c88 bytes via FUN_1002af074)
+        │           │     └── +0x2a8 → Tab bar UI (managed by FUN_100198d1c)
+        │           └── +0x48 → Tab array {count, capacity, data[]}
+        │                 ├── [0..5] → 6 native tabs (always created)
+        │                 └── [6]    → TROPHIES tab (CE-gated, created by hook)
         └── ...
 
 DAT_101e43908 (global)
@@ -265,6 +278,10 @@ DAT_101e43908 (global)
 | operator_new | `g_base + 0x1148d8c` | PLT stub |
 | ACADEMY constructor | `g_base + 0x242e6c` | `thunk_FUN_100242e6c` |
 | Social gate fn | `g_base + 0x126b6c` | `FUN_100126b6c` |
+| PARTY subobj offset | MARKET panel + `0x2c50` | Icon: `main_nav_party`, Label: `MAIN_MENU_PARTY` |
+| BAG tab array add fn | `g_base + 0x1f5d50` | `FUN_1001f5d50(array, &subObj)` |
+| BAG tab register fn | `g_base + 0x2afb68` | `FUN_1002afb68(container, title, 0, icon, section)` |
+| TROPHIES tab ctor | `g_base + 0x21844c` | `FUN_10021844c(mem)` — alloc size 0x50, subobj at +0x28 |
 
 ---
 

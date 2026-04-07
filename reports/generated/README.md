@@ -4,7 +4,7 @@ These files are direct extraction artifacts from passive static analysis of `Pay
 
 Related local tooling:
 
-- [scripts/mock_platform_server.py](/Users/marvinkleinpass/Developer/vphone/vgf/scripts/mock_platform_server.py)
+- [scripts/mock_platform_server.py](../../scripts/mock_platform_server.py)
   Offline JSON-RPC mock server driven by the inferred contract.
 
 - `hosts_and_urls.txt`

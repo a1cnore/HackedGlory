@@ -15,9 +15,10 @@ from pathlib import Path
 from datetime import datetime, timezone
 from collections import defaultdict
 
-BASE = Path("/Users/marvinkleinpass/Developer/vphone/vgf/mitm")
+ROOT = Path(__file__).resolve().parents[2]
+BASE = ROOT / "mitm"
 TRAFFIC = BASE / "vg_traffic.jsonl"
-OUTPUT = Path("/Users/marvinkleinpass/Developer/vphone/vgf/reports/generated/rpc_key_search.md")
+OUTPUT = ROOT / "reports/generated/rpc_key_search.md"
 
 # Known matches with their XOR keys (determined via crib-dragging/known plaintext)
 MATCHES = {
