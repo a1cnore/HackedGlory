@@ -324,6 +324,8 @@ static void patch_fptr(uintptr_t offset, void *replacement, const char *name) {
 
 /* ========== Layer 1: Constants parser replacements ========== */
 
+static void do_sidebar_fix(void);
+
 static void features_always_on(void *output, void *json_dict) {
     uint8_t *s = (uint8_t *)output;
     s[0x08] = 1;  /* leaderboards */
@@ -331,7 +333,14 @@ static void features_always_on(void *output, void *json_dict) {
     s[0x0a] = 1;  /* liveEvents */
     s[0x0b] = 0;  /* hideBattlepassCallout */
     s[0x0c] = 1;  /* inGameChat */
-    LOG("[flags] featuresEnabled: all on");
+    
+    do_sidebar_fix();
+    
+    static int logged = 0;
+    if (!logged) {
+        LOG("[flags] featuresEnabled: all on");
+        logged = 1;
+    }
 }
 
 static void free_tab_always_visible(void *output, void *json_dict) {
@@ -392,6 +401,10 @@ static void hook_refresh(void *self) {
         LOG("[ranked-kv] wrote skill tier 29 (Vainglorious Gold) to key-value store");
     }
 
+    do_sidebar_fix();
+}
+
+static void do_sidebar_fix(void) {
     /* Layer 6: Register missing sidebar panels */
     static int sidebar_fix_done = 0;
     if (!sidebar_fix_done && GLOBAL_ROOT_PARENT != 0 && CODE_REGISTER_PANEL != 0) {
@@ -438,7 +451,7 @@ static void hook_refresh(void *self) {
                             void *academy = ctor(mem);
                             *(void **)((uint8_t *)menuObj + 0x100) = academy;
 
-                            void *academySubObj = (void *)((uint8_t *)academy + 0x2c88);
+                            void *academySubObj = (void *)((uint8_t *)academy + 0x2c90);
                             *(void **)((uint8_t *)menuObj + 0xc0) = academySubObj;
                             LOG("[sidebar] registering ACADEMY at index 2: subObj=%p", academySubObj);
                             reg(sidebarCtrl, academySubObj, 2);
@@ -451,19 +464,18 @@ static void hook_refresh(void *self) {
                     }
                 }
 
-                /* Register PARTY panel at index 3 */
-                void *marketPanel = *(void **)((uint8_t *)menuObj + 0xe8);
-                void *existingParty = *(void **)((uint8_t *)menuObj + 0xc8);
-                if (marketPanel && !existingParty) {
-                    void *partySubObj = (void *)((uint8_t *)marketPanel + 0x2c50);
-                    *(void **)((uint8_t *)menuObj + 0xc8) = partySubObj;
-                    LOG("[sidebar] registering PARTY panel at index 3: subObj=%p", partySubObj);
-                    reg(sidebarCtrl, partySubObj, 3);
+                /* Register PARTY panel at index 5 */
+                void *partyPanel = *(void **)((uint8_t *)menuObj + 0xf8);
+                if (partyPanel) {
+                    void *partySubObj = (void *)((uint8_t *)partyPanel + 0x2c50);
+                    /* Note: +0xd0 is shared — Social uses it if Social was created,
+                       otherwise Party uses it. Since we just registered Social above,
+                       only register Party if it wasn't already covered. */
+                    LOG("[sidebar] registering PARTY panel at index 5: subObj=%p", partySubObj);
+                    reg(sidebarCtrl, partySubObj, 5);
                     LOG("[sidebar] PARTY registered!");
-                } else if (existingParty) {
-                    LOG("[sidebar] PARTY already registered (c8=%p)", existingParty);
                 } else {
-                    LOG("[sidebar] WARNING: no market panel at menuObj+0xe8!");
+                    LOG("[sidebar] WARNING: no party panel at menuObj+0xf8!");
                 }
 
                 /* Create TROPHIES tab in BAG panel */
@@ -577,6 +589,7 @@ typedef void (*profile_layout_fn)(long self);
 static profile_layout_fn orig_profile_layout = NULL;
 
 static void hook_profile_layout(long self) {
+    do_sidebar_fix();
     *(uint8_t *)(self + 0x18f21) = 1;
     ensure_trophy_data(self);
     orig_profile_layout(self);
@@ -659,12 +672,9 @@ static void hook_profile_ranked(void *self) {
 typedef void (*profile_body_fn)(void *self, void *data);
 static profile_body_fn orig_profile_body = NULL;
 static void hook_profile_body(void *self, void *data) {
+    do_sidebar_fix();
     orig_profile_body(self, data);
-
-    *(uint32_t *)((uint8_t *)self + 0x20b04) |= 0x4;
-    *(uint32_t *)((uint8_t *)self + 0x216d4) |= 0x4;
-    *(uint8_t *)((uint8_t *)self + 0x25f50) = 0;
-
+    /* Safely removed the 0x216d4 layout patch to avoid Android 14+ crashes */
     if (CODE_PROFILE_BODY_SETUP != 0) {
         typedef void (*body_setup_fn)(void *, int);
         body_setup_fn setup = (body_setup_fn)(g_base + CODE_PROFILE_BODY_SETUP);
@@ -739,6 +749,7 @@ static void hook_season_handler(void *self, int param2) {
 typedef void (*season_update_fn)(void *self, int param2);
 static season_update_fn orig_season_update = NULL;
 static void hook_season_update(void *self, int param2) {
+    do_sidebar_fix();
     orig_season_update(self, param2);
     static int log_once = 0;
     if (!log_once) { log_once = 1; LOG("[ce-gate] season update fired (param2=%d)", param2); }
@@ -916,6 +927,39 @@ static void bypass_ce_gate_calls(void) {
      * Note: pre-gate (0x83d808) returns 0, and callers use tbz (branch if zero)
      * to PROCEED to the CE gate. So pre-gate returning 0 is correct — do NOT patch it. */
     patch_bl_sites(ce_gate_call_sites, (int)CE_GATE_SITE_COUNT, ARM64_MOV_W0_WZR, "ce-gate");
+
+    /* CRITICAL: Second CE gate at 0x83dbe8 is a hardcoded "return 1" stub.
+     * It is called from MANY places in the engine, so we CANNOT patch its body.
+     * Instead, patch only the 4 specific BL call sites inside the Main Menu
+     * constructor (0xad7130) that check this gate before creating sidebar panels.
+     *
+     * From disassembly of the constructor:
+     *   ad7500: bl 0x83dbe8  — before Academy alloc (tbnz skips to ad751c)
+     *   ad7548: bl 0x83dbe8  — before Academy subObj registration (tbnz skips to ad7568)
+     *   ad75a0: bl 0x83dbe8  — before Academy panel reg at index 2 (tbnz skips to ad75c8)
+     *   ad75e4: bl 0x83dbe8  — before Social/Party panel reg (tbnz skips to ad7634)
+     *
+     * Replace each BL with MOV W0, WZR so the tbnz falls through. */
+    static const uintptr_t ctor_ce_gate_sites[] = {
+        0xad7500,  /* before Academy panel alloc */
+        0xad7548,  /* before Academy subObj cache + registration check */
+        0xad75a0,  /* before Academy registration at index 2 */
+        0xad75e4,  /* before Social/Party panel registration */
+    };
+    patch_bl_sites(ctor_ce_gate_sites,
+                   (int)(sizeof(ctor_ce_gate_sites) / sizeof(ctor_ce_gate_sites[0])),
+                   ARM64_MOV_W0_WZR, "ctor-ce-gate2");
+
+    /* Social-vs-Party branch: at 0xad75c8, the constructor calls 0x82e900.
+     *   0xad75c8: bl   0x82e900      ; check flag (ALSO does important state setup)
+     *   0xad75cc: tbz  w0, #0, 0xad7604  ; if bit 0 == 0, branch to PARTY
+     *                                    ; if bit 0 == 1, fall through to SOCIAL
+     *
+     * DISABLED: The Party panel constructor (0xa7b840) allocates 0x139650 bytes
+     * and initializes matchmaking/XMPP/network subsystems. These crash in CE mode
+     * because the backend services don't exist. Keeping Social (stable) for now.
+     * To re-enable Party, the Party constructor's network init must be stubbed. */
+    /* PARTY PATCH DISABLED — causes crash in CE mode */
 
     /* Nav refresh (0xb78f88): vtable-dispatched, no fptr.
      * The function calls setVisible(button, 0) to hide 5 secondary nav buttons.
