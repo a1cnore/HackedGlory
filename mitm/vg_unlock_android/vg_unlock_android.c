@@ -326,6 +326,33 @@ static void patch_fptr(uintptr_t offset, void *replacement, const char *name) {
 
 static void do_sidebar_fix(void);
 
+/* Layer 9b: Force ranked skill-tier values into the KV store.
+ * Mirrors the iOS kv writes in vg_unlock.m hook_refresh. On Android the
+ * nav refresh hook is never installed (FPTR_NAV_REFRESH unresolved), so we
+ * drive this from the parser + installed Layer 8 hooks instead. */
+static void ensure_ranked_kv_written(void) {
+    static int ranked_kv_done = 0;
+    if (ranked_kv_done || CODE_KV_WRITE == 0) return;
+    ranked_kv_done = 1;
+
+    typedef void (*kv_write_fn)(const char *, int);
+    kv_write_fn kv_write = (kv_write_fn)(g_base + CODE_KV_WRITE);
+
+    kv_write("new5v5RankedDataEloBucket", 29);
+    kv_write("prev5v5RankedDataEloBucket", 29);
+    kv_write("new5v5RankedDatamEloBucket", 29);
+    kv_write("prev5v5RankedDatamEloEarned", 3000);
+    kv_write("new5v5RankedDatamEloEarned", 3000);
+
+    kv_write("new3v3RankedDataEloBucket", 29);
+    kv_write("prev3v3RankedDataEloBucket", 29);
+    kv_write("new3v3RankedDatamEloBucket", 29);
+    kv_write("prev3v3RankedDatamEloEarned", 3000);
+    kv_write("new3v3RankedDatamEloEarned", 3000);
+
+    LOG("[ranked-kv] wrote skill tier 29 (Vainglorious Gold) to key-value store");
+}
+
 static void features_always_on(void *output, void *json_dict) {
     uint8_t *s = (uint8_t *)output;
     s[0x08] = 1;  /* leaderboards */
@@ -379,28 +406,7 @@ static void hook_refresh(void *self) {
         }
     }
 
-    /* Layer 9b: Force ranked data into key-value store */
-    static int ranked_kv_done = 0;
-    if (!ranked_kv_done && CODE_KV_WRITE != 0) {
-        ranked_kv_done = 1;
-        typedef void (*kv_write_fn)(const char *, int);
-        kv_write_fn kv_write = (kv_write_fn)(g_base + CODE_KV_WRITE);
-
-        kv_write("new5v5RankedDataEloBucket", 29);
-        kv_write("prev5v5RankedDataEloBucket", 29);
-        kv_write("new5v5RankedDatamEloBucket", 29);
-        kv_write("prev5v5RankedDatamEloEarned", 3000);
-        kv_write("new5v5RankedDatamEloEarned", 3000);
-
-        kv_write("new3v3RankedDataEloBucket", 29);
-        kv_write("prev3v3RankedDataEloBucket", 29);
-        kv_write("new3v3RankedDatamEloBucket", 29);
-        kv_write("prev3v3RankedDatamEloEarned", 3000);
-        kv_write("new3v3RankedDatamEloEarned", 3000);
-
-        LOG("[ranked-kv] wrote skill tier 29 (Vainglorious Gold) to key-value store");
-    }
-
+    ensure_ranked_kv_written();
     do_sidebar_fix();
 }
 
@@ -570,6 +576,7 @@ typedef void (*profile_data_fn)(long self, long data);
 static profile_data_fn orig_profile_data = NULL;
 
 static void hook_profile_data(long self, long data) {
+    ensure_ranked_kv_written();
     orig_profile_data(self, data);
 
     uint8_t old20 = *(uint8_t *)(self + 0x18f20);
@@ -648,6 +655,7 @@ static uint32_t stub_has_account(void *self, void *out_str) {
 typedef void (*profile_ranked_fn)(void *self);
 static profile_ranked_fn orig_profile_ranked = NULL;
 static void hook_profile_ranked(void *self) {
+    ensure_ranked_kv_written();
     orig_profile_ranked(self);
 
     *(uint32_t *)((uint8_t *)self + 0x2853c) |= 0x4;
@@ -750,6 +758,7 @@ typedef void (*season_update_fn)(void *self, int param2);
 static season_update_fn orig_season_update = NULL;
 static void hook_season_update(void *self, int param2) {
     do_sidebar_fix();
+    ensure_ranked_kv_written();
     orig_season_update(self, param2);
     static int log_once = 0;
     if (!log_once) { log_once = 1; LOG("[ce-gate] season update fired (param2=%d)", param2); }
@@ -981,21 +990,11 @@ static void bypass_ce_gate_calls(void) {
         *container_hide = ARM64_NOP;
     }
 
-    /* Patch 2: setVisible is a state machine (modes 0-5), not a boolean.
-     * For the leaderboard, NOP both the MOV and BL to skip the hide entirely.
-     * For other buttons, change mode 0 → mode 1. */
-    static const uintptr_t nav_hide_sites[] = {
-        0xb79454,  /* news        — self+0xe8 */
-        0xb7920c,  /* tiv         — self+0xf0 */
-        0xb793c4,  /* academy     — self+0x100 */
-        0xb792a4,  /* settings    — self+0x108 */
-    };
-    for (int i = 0; i < (int)(sizeof(nav_hide_sites) / sizeof(nav_hide_sites[0])); i++) {
-        uint32_t *site = (uint32_t *)(g_base + nav_hide_sites[i]);
-        if (make_writable((uintptr_t)site, sizeof(uint32_t)) == 0) {
-            *site = ARM64_MOV_W1_1;
-        }
-    }
+    /* iOS parity: only the leaderboard button is re-enabled in the secondary
+     * nav bar. The other buttons (news, tiv, academy, settings) are CE-gated
+     * and their textures are never loaded, so forcing them visible renders
+     * 4 white squares. Leaving them hidden matches iOS hook_refresh which
+     * only toggles the leaderboard button's visibility bit. */
 
     /* Leaderboard (self+0xf8): NOP both the MOV W1,WZR and the BL setVisible
      * so the button keeps its default visible state from creation. */
@@ -1118,10 +1117,17 @@ static void vg_unlock_init(void) {
 #endif
 
 #if VG_ENABLE_PROFILE_REDIRECTS
-    /* Layer 5: hook profile openers */
-    patch_fptr(FPTR_PROFILE_EEB60, (void *)hook_profile_eeb60, "profile_eeb60");
+    /* Layer 5: hook profile openers.
+     * Only f505c (0xaf7980) is the confirmed avatar-tap dispatch that loads
+     * "homepanel_profile_avatar". eeb60 (0xaf7920) and fa7b0 (0xaf7950) are
+     * adjacent functions that get called during Android main-menu init; the
+     * Android call graph differs from iOS so the iOS-mapped fptrs don't
+     * point at the same behavior. fa7b0 firing at init-time deadlocks the
+     * render thread on the "connecting" screen because open_full_profile
+     * needs UI state that doesn't exist yet. CE gate call-site patching
+     * already routes avatar taps to the full profile branch inside f505c,
+     * so the redirect is now a safety net rather than the main mechanism. */
     patch_fptr(FPTR_PROFILE_F505C, (void *)hook_profile_f505c, "profile_f505c");
-    patch_fptr(FPTR_PROFILE_FA7B0, (void *)hook_profile_fa7b0, "profile_fa7b0");
 #else
     LOG("profile redirects disabled");
 #endif
