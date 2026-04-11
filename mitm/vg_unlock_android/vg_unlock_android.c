@@ -637,16 +637,8 @@ static void open_full_profile(const char *tag) {
 #endif
 }
 
-static void hook_profile_eeb60(void *p1, float p2, long p3) {
-    open_full_profile("hook_profile_eeb60");
-}
-
 static void hook_profile_f505c(void) {
     open_full_profile("hook_profile_f505c");
-}
-
-static void hook_profile_fa7b0(long self) {
-    open_full_profile("hook_profile_fa7b0");
 }
 
 /* ========== Layer 7: Guest gate bypass ========== */
