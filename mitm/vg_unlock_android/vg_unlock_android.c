@@ -360,9 +360,10 @@ static void features_always_on(void *output, void *json_dict) {
     s[0x0a] = 1;  /* liveEvents */
     s[0x0b] = 0;  /* hideBattlepassCallout */
     s[0x0c] = 1;  /* inGameChat */
-    
+
+    ensure_ranked_kv_written();
     do_sidebar_fix();
-    
+
     static int logged = 0;
     if (!logged) {
         LOG("[flags] featuresEnabled: all on");
@@ -608,6 +609,11 @@ static void hook_profile_layout(long self) {
 
 static void open_full_profile(const char *tag) {
     LOG("[profile] %s intercepted! opening full profile", tag);
+
+    /* Ensure the ranked skill-tier KV entries exist before the profile
+     * panel reads them. By the time a profile opener fires, the KV
+     * subsystem is definitely ready — safer than the parser-hook timing. */
+    ensure_ranked_kv_written();
 
     if (GLOBAL_SESSION_MGR == 0 || GLOBAL_DATA_MGR == 0 || CODE_OPEN_FULL_PROFILE == 0) {
         LOG("[profile] SKIP — offsets not yet discovered");
@@ -958,6 +964,29 @@ static void bypass_ce_gate_calls(void) {
     patch_bl_sites(ctor_ce_gate_sites,
                    (int)(sizeof(ctor_ce_gate_sites) / sizeof(ctor_ce_gate_sites[0])),
                    ARM64_MOV_W0_WZR, "ctor-ce-gate2");
+
+    /* Full profile panel ctor (0xbbf978) has 3 CE-gate-2 checks that each
+     * clear bit 2 of a visibility flag on the ranked / profile-body tabs
+     * via the `bfi w9, w10, #2, #1; str w9, [x19, x8]` pattern:
+     *
+     *   bc0438: bl 0x83dbe8  ; bit 2 of self+0x285e4 (ranked tab 1)
+     *   bc0458: bl 0x83dbe8  ; bit 2 of self+0x28714 (ranked tab 2)
+     *   bc0478: bl 0x83dbe8  ; bit 2 of self+0x28844 (ranked tab 3)
+     *
+     * iOS hooks hook_profile_ranked on an fptr and sets these bits via
+     * `|= 0x4`. On Android the iOS-mapped fptr points at the wrong
+     * function, so instead we make the CE gate return 0 at each call
+     * site — `mvn w10, w0` then flips that to 1 and the bfi sets the
+     * bit instead of clearing it. This is what was leaving the opened
+     * profile panel virtually empty. */
+    static const uintptr_t profile_ctor_ce_gate_sites[] = {
+        0xbc0438,
+        0xbc0458,
+        0xbc0478,
+    };
+    patch_bl_sites(profile_ctor_ce_gate_sites,
+                   (int)(sizeof(profile_ctor_ce_gate_sites) / sizeof(profile_ctor_ce_gate_sites[0])),
+                   ARM64_MOV_W0_WZR, "profile-ctor-ce-gate2");
 
     /* Social-vs-Party branch: at 0xad75c8, the constructor calls 0x82e900.
      *   0xad75c8: bl   0x82e900      ; check flag (ALSO does important state setup)
