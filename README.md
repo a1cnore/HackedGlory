@@ -207,16 +207,55 @@ There is no single bootstrap command for the entire repository. Most work is org
 
 ## Android Port Status
 
-The Android port in [`mitm/vg_unlock_android/`](mitm/vg_unlock_android/) is in active reverse-engineering territory rather than a finished port.
+The Android port in [`mitm/vg_unlock_android/`](mitm/vg_unlock_android/) has reached feature parity with the iOS unlock dylib on the primary test device (Honor Magic 6 Pro / BVL-N49, Android 16). The library is loaded through a loader-shim path that replaces `libGameKindred.so` with a small shim, forwards the exported `Java_*` JNI entrypoints, and side-loads `libvg_unlock.so` without touching smali or rewriting `DT_NEEDED`.
 
-The current state is:
+### What Is Working On Android
 
-- several function pointers, code targets, and globals are already confirmed
-- Android-specific Ghidra scripts exist to recover missing `.data.rel.ro` offsets
-- some object layouts differ materially from iOS and must be re-derived rather than assumed
-- a remaining set of offsets is still marked `NEEDS_RE` and requires manual verification
+- cold launch reaches the main menu cleanly, with no tombstone and no deadlock on the "connecting" screen
+- sidebar restored with **BAG / MARKET / SOCIAL** tabs populated
+- top-right nav bar renders the expected icons, with the leaderboard button force-visible and the four unloaded CE buttons (news / tiv / academy / settings) correctly left hidden (no white-square fallbacks)
+- home-screen banner surfaces the skill-tier KV writes driven from the parser hook and `open_full_profile` (e.g. `10 5v5 / 10 3v3`)
+- full profile panel opens with **RANKED 5V5** and **RANKED 3V3** tabs visible, Vainglorious skill-tier icon, Bronze→Gold progression bar at tier 29, and the region selector
+- avatar tap routes through the confirmed `FPTR_PROFILE_F505C` (`0xaf7980`) dispatch, matching the iOS full-profile flow
+- profile / season / ranked hook families fire without blocking the render thread
 
-This work is documented in [`scripts/android/README.md`](scripts/android/README.md) and summarized in the Android notes already present in the repository.
+### Android Screenshots
+
+<p>
+  <img src="images/android_parity_port.png" alt="Android parity port — main menu and sidebar" width="48%">
+  <img src="images/android_full_profile.png" alt="Android full profile panel with ranked tabs" width="48%">
+</p>
+
+### How Parity Was Reached
+
+- CE gate call-site patching inside the full-profile panel constructor (`0xbbf978`) unhides the ranked tabs and profile body elements by flipping the `bl` to a `mov w0, wzr`, producing the same bit-2 set that iOS gets via `hook_profile_ranked` writing `|= 0x4`
+- `ensure_ranked_kv_written()` is invoked from the parser hook and `open_full_profile` so the skill-tier KV entries land before the profile panel reads them, compensating for the fact that the Android `FPTR_NAV_REFRESH` and several Layer 8 profile function pointers are still MEDIUM-confidence and never fire as hook sites
+- the Layer 5 profile redirects for the two adjacent functions around `0xaf7980` were dropped because on Android they are called during main-menu init rather than on avatar tap, and redirecting them deadlocked the render thread
+- the force-visible loop over `nav_hide_sites` was removed because the CE build never loads those buttons' textures, so flipping their `setVisible` immediates rendered as four white squares
+
+### Remaining Android RE Blockers
+
+A handful of function pointers and Android field offsets are still unresolved and gate the experimental hook families. These are not required for the parity set above but block deeper feature work:
+
+- `FPTR_NAV_REFRESH`, `FPTR_SET_TAB_VISIBLE`, `FPTR_TROPHY_PANEL`
+- `FPTR_PROFILE_LAYOUT`, `FPTR_PROFILE_BODY`, `FPTR_PROFILE_LOADER`
+- `FPTR_SEASON_HANDLER`, `FPTR_DATA_FETCH`, `FPTR_MARKET_TABS`
+- Android replacements for the iOS field offsets used in trophy and `setTabVisible` hooks
+
+Known confirmed layout differences between iOS and Android so far:
+
+- guest account string: `+0x2bd0` → `+0x2ba0`
+- academy alloc: `0x9ca0` → `0x9cc0`
+- full profile alloc: `0x28848` → `0x288f0`
+- trophy flags at `+0x18f20 / +0x18f21` are not valid on Android
+- `setTabVisible` field `+0x2c2c` is not a valid Android match
+
+### Device Notes
+
+- **Honor Magic 6 Pro / BVL-N49 (Android 16)**: primary target, cold launches cleanly under the loader-shim path, parity set verified
+- **Xiaomi Pad 6 8GB / Xiaomi 23043RP34G**: the legacy `DT_NEEDED` rewrite path segfaults seconds after launch even with a no-op control build, so the loader-shim path is the only supported injection mode and is the default in `patch_xapk.py`
+
+Build, patch, and injection-mode details live in [`mitm/vg_unlock_android/README.md`](mitm/vg_unlock_android/README.md). Android-specific Ghidra helpers for recovering missing `.data.rel.ro` offsets live under [`scripts/android/`](scripts/android/) and are documented in [`scripts/android/README.md`](scripts/android/README.md).
 
 ## License
 
