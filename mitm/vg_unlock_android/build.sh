@@ -9,11 +9,7 @@
 
 set -e
 
-_default_ndk_dir="$HOME/Library/Android/sdk/ndk"
-if [ -d "$_default_ndk_dir" ]; then
-    _latest_ndk=$(ls -1d "$_default_ndk_dir"/*/ 2>/dev/null | sort -V | tail -1 | sed 's:/$::')
-fi
-NDK="${NDK_HOME:-${ANDROID_NDK_HOME:-${_latest_ndk:-}}}"
+NDK="${NDK_HOME:-${ANDROID_NDK_HOME:-$HOME/Library/Android/sdk/ndk/26.1.10909125}}"
 case "$(uname -s)" in
     Darwin)
         HOST_TAG="darwin-x86_64"

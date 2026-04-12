@@ -985,11 +985,57 @@ static void bypass_ce_gate_calls(void) {
      *   0xad75cc: tbz  w0, #0, 0xad7604  ; if bit 0 == 0, branch to PARTY
      *                                    ; if bit 0 == 1, fall through to SOCIAL
      *
-     * DISABLED: The Party panel constructor (0xa7b840) allocates 0x139650 bytes
-     * and initializes matchmaking/XMPP/network subsystems. These crash in CE mode
-     * because the backend services don't exist. Keeping Social (stable) for now.
-     * To re-enable Party, the Party constructor's network init must be stubbed. */
-    /* PARTY PATCH DISABLED — causes crash in CE mode */
+     * FIXED: Instead of calling the Party constructor (which crashes due to
+     * network init), we rewrite the PARTY path (0xad7604-0xad7624) to extract
+     * the PARTY sub-object from the MARKET panel (menuObj+0xe8, offset +0x2c58)
+     * and register it at sidebar index 3.
+     *
+     * After Social registration at 0xad7630, we redirect 0xad7634 to our
+     * rewritten PARTY path, which calls register_panel directly and then
+     * resumes the constructor at 0xad7638.
+     *
+     * Rewritten PARTY path (0xad7604-0xad7624):
+     *   ldr  x8, [x19, #0xe8]     ; MARKET panel (x19=menuObj)
+     *   mov  w9, #0x2c58          ; party subobj offset (Android, iOS was 0x2c50)
+     *   add  x1, x8, x9           ; party subobj
+     *   mov  w2, #0x3             ; sidebar index 3
+     *   mov  x0, x20              ; sidebarCtrl (x20=menuObj+0x70)
+     *   bl   register_panel       ; register party
+     *   adrp x9, 0x2ade000        ; (moved from 0xad7634 — same page, same encoding)
+     *   b    0xad7638             ; resume constructor
+     *   nop
+     *
+     * Redirect (0xad7634):
+     *   b    0xad7604             ; after Social reg, also do Party
+     */
+    {
+        uint32_t party_path[] = {
+            0xf9407668,  /* ldr  x8, [x19, #0xe8]  */
+            0x52858b09,  /* mov  w9, #0x2c58        */
+            0x8b090101,  /* add  x1, x8, x9         */
+            0x52800062,  /* mov  w2, #0x3            */
+            0xaa1403e0,  /* mov  x0, x20             */
+            0x940009b9,  /* bl   0xad9cfc            */
+            0xf0010029,  /* adrp x9, 0x2ade000       */
+            0x14000006,  /* b    0xad7638            */
+            ARM64_NOP,   /* (pad)                    */
+        };
+        uint32_t *dst = (uint32_t *)(g_base + 0xad7604);
+        if (make_writable((uintptr_t)dst, sizeof(party_path)) == 0) {
+            for (int i = 0; i < 9; i++) dst[i] = party_path[i];
+            __builtin___clear_cache((char *)dst, (char *)(dst + 9));
+            LOG("[party] rewrote PARTY path at 0xad7604 (9 insns)");
+        }
+
+        /* After Social registers via shared code at 0xad7630, redirect
+         * to our PARTY path so both panels get registered. */
+        uint32_t *redirect = (uint32_t *)(g_base + 0xad7634);
+        if (make_writable((uintptr_t)redirect, sizeof(uint32_t)) == 0) {
+            LOG("[party] redirect 0xad7634: 0x%08x -> b 0xad7604", *redirect);
+            *redirect = 0x17fffff4;  /* b 0xad7604 (-0x30) */
+            __builtin___clear_cache((char *)redirect, (char *)(redirect + 1));
+        }
+    }
 
     /* Nav refresh (0xb78f88): vtable-dispatched, no fptr.
      * The function calls setVisible(button, 0) to hide 5 secondary nav buttons.
