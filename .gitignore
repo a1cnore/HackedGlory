@@ -11,4 +11,4 @@ mitm/vg_unlock_android/libvg_unlock.so
 
 *.apk
 *.xapk
-*.idsig
+*.idsigPayload/
