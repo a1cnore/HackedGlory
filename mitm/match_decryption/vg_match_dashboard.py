@@ -1145,6 +1145,7 @@ def detect_level_like_milestones(
     prev_stats: dict[int, dict[int, float]] = defaultdict(dict)
     last_level_ts: dict[int, float] = defaultdict(lambda: float("-inf"))
     base_level = 4 if "aral" in state.game_mode.lower() else 1
+    max_extra_levels = 8 if base_level == 4 else 11
 
     for i, (ts, dir_str, opcode, dec) in enumerate(messages):
         if dir_str != "S->C":
@@ -1160,11 +1161,13 @@ def detect_level_like_milestones(
                 or not is_plausible_scoreboard_counter(decode_prop_counter_total(payload))
             ):
                 continue
+            if player and player.level_like_events >= max_extra_levels:
+                continue
             if payload[8] == 0x42 and player and player.level_like_events >= 1:
                 continue
 
-            lookahead_seconds = 0.35 if payload[8] == 0x42 else 0.25
-            lookahead_messages = 80 if payload[8] == 0x42 else 60
+            lookahead_seconds = 0.35 if payload[8] == 0x42 else 0.30
+            lookahead_messages = 80
             changed_types: set[int] = set()
             for ts2, dir_str2, opcode2, dec2 in messages[i + 1 : i + lookahead_messages]:
                 if ts2 - ts > lookahead_seconds:
