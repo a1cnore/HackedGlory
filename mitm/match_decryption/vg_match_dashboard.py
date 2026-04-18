@@ -1050,13 +1050,16 @@ def detect_level_like_milestones(
             continue
 
         payload = dec[2:]
-        if opcode == OP_ENTITY_PROP and len(payload) >= 14 and payload[8] == 0x3E:
+        if opcode == OP_ENTITY_PROP and len(payload) >= 14 and payload[8] in (0x3E, 0x42):
             entity_id = struct.unpack(">H", payload[2:4])[0]
+            player = _get_player_by_entity(state, entity_id)
             if (
                 entity_id not in range(1500, 1506)
                 or ts - last_level_ts[entity_id] < 5.0
                 or not is_plausible_scoreboard_counter(decode_prop_counter_total(payload))
             ):
+                continue
+            if payload[8] == 0x42 and player and player.level_like_events >= 1:
                 continue
 
             changed_types: set[int] = set()
