@@ -82,6 +82,10 @@ class Player:
     ability_followup_scalar_types: set[int] = field(default_factory=set)
     ability_followup_prop_families: set[int] = field(default_factory=set)
     farm_reward_types: set[int] = field(default_factory=set)
+    xp_like_gain_events: int = 0
+    gold_like_gain_events: int = 0
+    kill_window_gain_events: int = 0
+    assist_window_gain_events: int = 0
     prop_counters: dict[int, int] = field(default_factory=dict)
     # Tentative aliases for two well-behaved opcode-1086 counter families.
     gold_counter: int = 0  # alias for type 0x4d (semantics still being verified)
@@ -896,6 +900,11 @@ def detect_resource_gain_events(
                 if window["source"] != entity_id or prop_type in window["emitted"]:
                     continue
                 window["emitted"].add(prop_type)
+                if player:
+                    if prop_type == 0x3E:
+                        player.xp_like_gain_events += 1
+                    else:
+                        player.gold_like_gain_events += 1
                 state.events.append(
                     (
                         ts - state.start_ts,
@@ -912,6 +921,15 @@ def detect_resource_gain_events(
                 if role is None or (role, prop_type) in window["emitted"]:
                     continue
                 window["emitted"].add((role, prop_type))
+                if player:
+                    if prop_type == 0x3E:
+                        player.xp_like_gain_events += 1
+                    else:
+                        player.gold_like_gain_events += 1
+                    if role == "kill-window":
+                        player.kill_window_gain_events += 1
+                    else:
+                        player.assist_window_gain_events += 1
                 state.events.append(
                     (
                         ts - state.start_ts,
