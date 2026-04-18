@@ -1151,6 +1151,30 @@ def detect_level_like_milestones(
     messages: list[tuple[float, str, int, bytes]], state: MatchState
 ):
     """Infer level-like milestones from xp-like updates plus clustered stat changes."""
+
+    def collect_changed_stat_types(entity_id: int, start_idx: int, ts: float, seconds: float) -> set[int]:
+        changed_types: set[int] = set()
+        for ts2, dir_str2, opcode2, dec2 in messages[start_idx : start_idx + 80]:
+            if ts2 - ts > seconds:
+                break
+            if dir_str2 != "S->C" or opcode2 != OP_ENTITY_STAT:
+                continue
+
+            payload2 = dec2[2:]
+            if len(payload2) < 9 or struct.unpack(">H", payload2[2:4])[0] != entity_id:
+                continue
+
+            stat_type = payload2[8]
+            stat_value = struct.unpack(">f", payload2[4:8])[0]
+            old_value = prev_stats[entity_id].get(stat_type)
+            if old_value is not None and stat_value == stat_value:
+                if stat_type in (0, 2, 3, 8) and 0.75 < abs(stat_value - old_value) < 100:
+                    changed_types.add(stat_type)
+                elif stat_type in (13, 14, 15) and abs(stat_value - old_value) > 0.4:
+                    changed_types.add(stat_type)
+            prev_stats[entity_id][stat_type] = stat_value
+        return changed_types
+
     prev_stats: dict[int, dict[int, float]] = defaultdict(dict)
     last_level_ts: dict[int, float] = defaultdict(lambda: float("-inf"))
     base_level = 4 if "aral" in state.game_mode.lower() else 1
@@ -1176,46 +1200,75 @@ def detect_level_like_milestones(
                 continue
 
             lookahead_seconds = 0.35 if payload[8] == 0x42 else 0.30
-            lookahead_messages = 80
-            changed_types: set[int] = set()
-            for ts2, dir_str2, opcode2, dec2 in messages[i + 1 : i + lookahead_messages]:
-                if ts2 - ts > lookahead_seconds:
-                    break
-                if dir_str2 != "S->C" or opcode2 != OP_ENTITY_STAT:
-                    continue
-
-                payload2 = dec2[2:]
-                if len(payload2) < 9 or struct.unpack(">H", payload2[2:4])[0] != entity_id:
-                    continue
-
-                stat_type = payload2[8]
-                stat_value = struct.unpack(">f", payload2[4:8])[0]
-                old_value = prev_stats[entity_id].get(stat_type)
-                if old_value is not None and stat_value == stat_value:
-                    if stat_type in (0, 2, 3, 8) and 0.75 < abs(stat_value - old_value) < 100:
-                        changed_types.add(stat_type)
-                    elif stat_type in (13, 14, 15) and abs(stat_value - old_value) > 0.4:
-                        changed_types.add(stat_type)
-                prev_stats[entity_id][stat_type] = stat_value
-
-            if len(changed_types) >= 2:
-                player = _get_player_by_entity(state, entity_id)
-                if player:
-                    player.level_like_events += 1
-                    player.estimated_level_like = base_level + player.level_like_events
-                    name = player.handle or f"Entity {entity_id}"
-                    state.events.append(
-                        (
-                            ts - state.start_ts,
-                            f"{name} level-like milestone -> approx level {player.estimated_level_like}",
-                        )
+            changed_types = collect_changed_stat_types(entity_id, i + 1, ts, lookahead_seconds)
+            if len(changed_types) >= 2 and player:
+                player.level_like_events += 1
+                player.estimated_level_like = base_level + player.level_like_events
+                name = player.handle or f"Entity {entity_id}"
+                state.events.append(
+                    (
+                        ts - state.start_ts,
+                        f"{name} level-like milestone -> approx level {player.estimated_level_like}",
                     )
+                )
                 last_level_ts[entity_id] = ts
 
         elif opcode == OP_ENTITY_STAT and len(payload) >= 9:
             entity_id = struct.unpack(">H", payload[2:4])[0]
             if entity_id in range(1500, 1506):
                 prev_stats[entity_id][payload[8]] = struct.unpack(">f", payload[4:8])[0]
+
+    if base_level != 4:
+        return
+
+    fallback_targets = {
+        player.entity_id
+        for player in state.players
+        if player.snapshot_active and player.level_like_events == 0 and player.xp_counter >= 12_000
+    }
+    if not fallback_targets:
+        return
+
+    prev_stats.clear()
+    used_targets: set[int] = set()
+    fallback_last_ts: dict[int, float] = defaultdict(lambda: float("-inf"))
+
+    for i, (ts, dir_str, opcode, dec) in enumerate(messages):
+        if dir_str != "S->C" or opcode != OP_ENTITY_PROP:
+            continue
+
+        payload = dec[2:]
+        if len(payload) < 14 or payload[8] != 0x42:
+            continue
+
+        entity_id = struct.unpack(">H", payload[2:4])[0]
+        if (
+            entity_id not in fallback_targets
+            or entity_id in used_targets
+            or ts - fallback_last_ts[entity_id] < 5.0
+            or not is_plausible_scoreboard_counter(decode_prop_counter_total(payload))
+        ):
+            continue
+
+        changed_types = collect_changed_stat_types(entity_id, i + 1, ts, 0.35)
+        if len(changed_types) != 1:
+            continue
+
+        player = _get_player_by_entity(state, entity_id)
+        if not player:
+            continue
+
+        player.level_like_events += 1
+        player.estimated_level_like = base_level + player.level_like_events
+        used_targets.add(entity_id)
+        fallback_last_ts[entity_id] = ts
+        name = player.handle or f"Entity {entity_id}"
+        state.events.append(
+            (
+                ts - state.start_ts,
+                f"{name} level-like fallback -> approx level {player.estimated_level_like}",
+            )
+        )
 
 
 def detect_item_like_loadout_events(
