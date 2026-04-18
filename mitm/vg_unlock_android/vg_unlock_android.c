@@ -95,7 +95,7 @@ static uintptr_t g_base = 0;
 #define FPTR_SET_TAB_VISIBLE           0x0  /* NEEDS_RE: field offset differs */
 
 /* Layer 4: Trophy panel + profile data/layout */
-#define FPTR_TROPHY_PANEL              0x0  /* NEEDS_RE: shift -> stub (0x7fcc90) */
+#define FPTR_TROPHY_PANEL              0x26d4df8  /* [CONFIRMED] func 0xa67e3c — trophy panel refresh, visibility at self+0x209c/+0x21fc */
 #define FPTR_PROFILE_DATA              0x26dc200  /* [MEDIUM] func 0xa0c2f8 — real prologue */
 #define FPTR_PROFILE_LAYOUT            0x0  /* NEEDS_RE: shift -> stub (0x81ad94) */
 
@@ -131,31 +131,31 @@ static uintptr_t g_base = 0;
  * Next step: decompile each candidate in Ghidra to match to NEEDS_RE slots.
  * Do NOT patch CE gate directly — it will crash the app. */
 #define FPTR_PROFILE_RANKED            0x26d5630  /* [MEDIUM] func 0xa02b60 — real prologue, accesses +0x370 */
-#define FPTR_PROFILE_BODY              0x0  /* NEEDS_RE: CE gate caller candidates: 0x26e52e8 (func 0xa6e6f4), 0x26e5260 (func 0xa6e6f0) */
-#define FPTR_PROFILE_LOADER            0x0  /* NEEDS_RE: CE gate caller candidates: 0x26eec18 (func 0xae08f8), 0x26eec00 (func 0xae089c) */
-#define FPTR_SEASON_HANDLER            0x0  /* NEEDS_RE: shift -> tiny func (0xe13e54) */
+#define FPTR_PROFILE_BODY              0x26e52e8  /* [CONFIRMED] func 0xa6e6f4 — real CE-gate caller, accesses +0x809c/+0x8ae8/+0x84 */
+#define FPTR_PROFILE_LOADER            0x26eec18  /* [CONFIRMED] func 0xae08f8 — real loader, CE-gate at 0xae0920, calls 0xe048a4/e0 */
+#define FPTR_SEASON_HANDLER            0x0  /* NEEDS_RE: 0xe13e54 is SIMD getter (ldp s0,s1; ret), real handler at 0xe13e5c uses SIMD — unsafe to hook from C */
 #define FPTR_SEASON_UPDATE             0x26d8080  /* [MEDIUM] func 0xe01c54 — real prologue */
 #define FPTR_SOCIAL_FEAT               0x26d1440  /* [MEDIUM] func 0x99f5e0 — real prologue */
 #define FPTR_SKILL_TIER                0x26da510  /* [MEDIUM] func 0xe020b4 — real prologue */
-#define FPTR_DATA_FETCH                0x0  /* NEEDS_RE: CE gate caller candidates: 0x26ed4f8 (func 0xad240c), 0x26ed488 (func 0xad23b4) */
+#define FPTR_DATA_FETCH                0x26ed4f8  /* [CONFIRMED] func 0xad240c — trampoline to 0xad23b4 (data fetch setup) */
 #define FPTR_TAB_INIT                  0x26c97b0  /* [MEDIUM] func 0xe02408 — real prologue */
-#define FPTR_MARKET_TABS               0x0  /* NEEDS_RE: CE gate caller candidates: 0x26ed788 (func 0xad676c), 0x26ed770 (func 0xad675c) */
+#define FPTR_MARKET_TABS               0x26ed788  /* [CONFIRMED] func 0xad676c — real CE-gate caller, same pattern as profile_loader */
 
 /* ---- Code offsets (functions called via g_base + offset) ---- */
 
 #define CODE_KV_WRITE                  0x8370dc  /* [CONFIRMED] XREF "new5v5RankedDataEloBucket" @ 0xae9e14 */
 #define CODE_OPERATOR_NEW              0x795530  /* [CONFIRMED] PLT stub for _Znwm (operator new) */
 #define CODE_GET_DATA_MGR              0x8580b8  /* [CONFIRMED] simple getter: ADRP+LDR from 0x2b7ed00 + RET */
-#define CODE_EXTRA_FETCH               0x0       /* NEEDS_RE: candidates 0xe04760, 0xe048a4, 0xe048e0 */
+#define CODE_EXTRA_FETCH               0xe04760  /* [CONFIRMED] called from profile_loader (0xae0950) and market_tabs (0xad67c4) */
 #define CODE_REGISTER_PANEL            0xad9cfc  /* [CONFIRMED] called 4x in main menu ctor with indices 0,1,2,5 */
 #define CODE_ARRAY_ADD                 0xaf2458  /* [CONFIRMED] called 10x in bag ctor for tab additions */
 #define CODE_SOCIAL_INNER              0xaf7808  /* [MEDIUM] may be inlined on Android (not separate BL) */
 #define CODE_TROPHY_TAB_CTOR           0xaf5314  /* [MEDIUM] 0x50-byte tab ctor in bag area */
 #define CODE_OPEN_FULL_PROFILE         0xbbf91c  /* [CONFIRMED] allocates 0x288f0, calls ctor 0xbbf978 */
-#define CODE_PROFILE_BODY_SETUP        0x0       /* NEEDS_RE: field offsets differ */
+#define CODE_PROFILE_BODY_SETUP        0xa32074  /* [CONFIRMED] tail-called from profile_body with (self+0x1d0, 1) — layout setup switch */
 #define CODE_ACADEMY_CTOR              0xa510e8  /* [CONFIRMED] alloc 0x9cc0 (iOS was 0x9ca0), CE-gated by 0x83dbe8 */
 #define CODE_TAB_REG                   0xb67934  /* [CONFIRMED] bag tab registration, 5 params */
-#define CODE_WIDGET_ENABLE             0x0       /* NEEDS_RE: field offsets differ */
+#define CODE_WIDGET_ENABLE             0xa67c70  /* [CONFIRMED] tail-called from 0xa6e7f0 with (self+0x8ae8, bool) — shield enable */
 
 /* ---- Global data offsets (singletons in .bss) ---- */
 
@@ -560,14 +560,16 @@ static trophy_panel_fn orig_trophy_panel = NULL;
 static void hook_trophy_panel(void *self) {
     orig_trophy_panel(self);
 
-    uint32_t *flags1 = (uint32_t *)((uint8_t *)self + 0x6a4);
-    uint32_t *flags2 = (uint32_t *)((uint8_t *)self + 0xc94);
+    /* Android offsets: iOS 0x6a4/0xc94 → Android 0x209c/0x21fc
+     * (confirmed from disassembly of helper 0xa67f08 called by 0xa67e3c) */
+    uint32_t *flags1 = (uint32_t *)((uint8_t *)self + 0x209c);
+    uint32_t *flags2 = (uint32_t *)((uint8_t *)self + 0x21fc);
     uint32_t old1 = *flags1, old2 = *flags2;
     *flags1 |= 0x4;
     *flags2 |= 0x4;
 
     if (!(old1 & 0x4) || !(old2 & 0x4)) {
-        LOG("[trophy] panel: SHOWN panels (0x6a4: 0x%x->0x%x, 0xc94: 0x%x->0x%x)",
+        LOG("[trophy] panel: SHOWN (0x209c: 0x%x->0x%x, 0x21fc: 0x%x->0x%x)",
             old1, *flags1, old2, *flags2);
     }
 }
@@ -690,11 +692,15 @@ static void hook_profile_body(void *self, void *data) {
     if (CODE_WIDGET_ENABLE != 0) {
         typedef void (*widget_enable_fn)(void *, int);
         widget_enable_fn enable_shield = (widget_enable_fn)(g_base + CODE_WIDGET_ENABLE);
-        enable_shield((void *)((uint8_t *)self + 0x20a80), 1);
+        /* Android offset: iOS 0x20a80 → Android 0x8AE8
+         * (confirmed from tail-call at 0xa6e848: add x0, x20, #0x8ae8; b 0xa67c70) */
+        enable_shield((void *)((uint8_t *)self + 0x8AE8), 1);
     }
 
-    /* Re-show 12 profile card elements */
-    uint8_t *card = (uint8_t *)self + 0x8AC0;
+    /* Re-show 12 profile card elements.
+     * Card base: iOS 0x8AC0 → Android 0x8AE8 (confirmed from disassembly of
+     * func 0xa6e6f4 which uses mov w10,#0x8ae8; add x0,x0,x10). */
+    uint8_t *card = (uint8_t *)self + 0x8AE8;
     *(uint32_t *)(card + 0x684)  |= 0x4;
     *(uint32_t *)(card + 0x7b4)  |= 0x4;
     *(uint32_t *)(card + 0xc8c)  |= 0x4;
@@ -734,12 +740,12 @@ typedef void (*profile_loader_fn)(void *self, int show);
 static profile_loader_fn orig_profile_loader = NULL;
 static void hook_profile_loader(void *self, int show) {
     orig_profile_loader(self, show);
-    if (show) {
-        *(uint32_t *)((uint8_t *)self + 0x21a1c) &= ~0x4;
-        *(uint32_t *)((uint8_t *)self + 0x20b04) |= 0x4;
-    }
+    /* Field offset fixups disabled — iOS offsets (0x21a1c, 0x20b04) differ
+     * on Android (profile alloc shifted +0xa8: 0x28848 → 0x288f0).
+     * CE gate call-site patches at 0xae0920 already bypass the gate in the
+     * original function, so these fixups are redundant. */
     static int log_once = 0;
-    if (!log_once) { log_once = 1; LOG("[ce-gate] profile loader fixup done"); }
+    if (!log_once) { log_once = 1; LOG("[ce-gate] profile loader hook fired"); }
 }
 
 /* Season handler */
@@ -928,6 +934,8 @@ static void patch_bl_sites(const uintptr_t *sites, int count, uint32_t replaceme
 
 /* ARM64: NOP = 0xd503201f */
 #define ARM64_NOP 0xd503201fu
+/* ARM64: ORR W9, W9, #0x4 = 0x321e0129 (set bit 2 → visible) */
+#define ARM64_ORR_W9_W9_4 0x321e0129u
 
 static void bypass_ce_gate_calls(void) {
     /* CE gate (0x8480e0): returns 1 = CE restricted. Patch to return 0 = unrestricted.
@@ -1049,12 +1057,16 @@ static void bypass_ce_gate_calls(void) {
      *   self+0x100 (academy)    -> 0xb793c4
      *   self+0x108 (settings)   -> 0xb792a4
      */
-    /* Patch 1: NOP the AND that hides the secondary nav container (self+0xc0).
-     * At 0xb78fe4: AND w9, w9, #0xfffffffb clears visibility bit of the container. */
+    /* Patch 1: Force the secondary nav container (self+0xc0) visible.
+     * At 0xb78fe4: AND w9, w9, #0xfffffffb clears visibility bit 2 of the
+     * container.  Replacing with ORR w9, w9, #0x4 actively SETS the bit
+     * each time the refresh runs, so the container becomes visible even
+     * if it started hidden. (The old NOP approach only prevented re-hiding
+     * but never set the bit if it was already 0.) */
     uint32_t *container_hide = (uint32_t *)(g_base + 0xb78fe4);
     if (make_writable((uintptr_t)container_hide, sizeof(uint32_t)) == 0) {
-        LOG("[nav-fix] NOP container hide: 0x%08x -> NOP", *container_hide);
-        *container_hide = ARM64_NOP;
+        LOG("[nav-fix] container: AND->ORR (0x%08x -> 0x%08x)", *container_hide, ARM64_ORR_W9_W9_4);
+        *container_hide = ARM64_ORR_W9_W9_4;
     }
 
     /* iOS parity: only the leaderboard button is re-enabled in the secondary
@@ -1063,15 +1075,18 @@ static void bypass_ce_gate_calls(void) {
      * 4 white squares. Leaving them hidden matches iOS hook_refresh which
      * only toggles the leaderboard button's visibility bit. */
 
-    /* Leaderboard (self+0xf8): NOP both the MOV W1,WZR and the BL setVisible
-     * so the button keeps its default visible state from creation. */
+    /* Leaderboard (self+0xf8): change setVisible(button, 0) to
+     * setVisible(button, 1) so the button is actively SHOWN each refresh.
+     * Original: MOV W1, WZR (=0); BL setVisible → hides the button.
+     * Patched:  MOV W1, #1;       BL setVisible → shows the button.
+     * (The old NOP-NOP approach skipped the call entirely, which only
+     * worked if the button started visible — it didn't.) */
     uint32_t *lb_mov = (uint32_t *)(g_base + 0xb79334);
-    uint32_t *lb_bl  = (uint32_t *)(g_base + 0xb79338);
-    if (make_writable((uintptr_t)lb_mov, 8) == 0) {
-        LOG("[nav-fix] leaderboard: NOP setVisible call (0x%08x 0x%08x -> NOP NOP)",
-            *lb_mov, *lb_bl);
-        *lb_mov = ARM64_NOP;
-        *lb_bl  = ARM64_NOP;
+    if (make_writable((uintptr_t)lb_mov, sizeof(uint32_t)) == 0) {
+        LOG("[nav-fix] leaderboard: setVisible(1) (0x%08x -> 0x%08x)",
+            *lb_mov, ARM64_MOV_W1_1);
+        *lb_mov = ARM64_MOV_W1_1;  /* MOV W1, #1 — visible=true */
+        /* BL setVisible at +4 is left intact */
     }
 }
 
