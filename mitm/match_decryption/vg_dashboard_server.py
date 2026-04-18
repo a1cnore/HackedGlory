@@ -59,6 +59,7 @@ OP_SNAPSHOT = 1114
 OP_GAMEMODE_NAME = 1135
 OP_ENTITY_STAT = 1053
 OP_POSITION = 1070
+OP_MATCH_RESULT_BURST = 1077
 OP_ENTITY_PROP = 1086
 OP_ENTITY_STATE = 1067
 
@@ -129,6 +130,72 @@ def _get_player(players, entity_id):
         if p["entity_id"] == entity_id:
             return p
     return None
+
+
+def detect_match_winner(messages, players):
+    expected_sources = {p["entity_id"] for p in players if p["team"] in (1, 2)}
+    if len(expected_sources) < 6:
+        return 0, 0, 0xFFFFFFFF
+
+    current_group = []
+    best_group = []
+
+    def maybe_commit(group):
+        nonlocal best_group
+        if len(group) < 7:
+            return
+        player_sources = {src for _, src, _, _ in group if src != 0xFFFFFFFF}
+        has_sentinel = any(src == 0xFFFFFFFF for _, src, _, _ in group)
+        if player_sources == expected_sources and has_sentinel:
+            best_group = list(group)
+
+    for ts, dir_str, opcode, dec in messages:
+        if dir_str != "S->C" or opcode != OP_MATCH_RESULT_BURST:
+            maybe_commit(current_group)
+            current_group = []
+            continue
+
+        payload = dec[2:]
+        if len(payload) < 16:
+            maybe_commit(current_group)
+            current_group = []
+            continue
+
+        source_id = struct.unpack(">I", payload[0:4])[0]
+        target_id = struct.unpack(">I", payload[4:8])[0]
+        losing_team = struct.unpack(">I", payload[12:16])[0]
+        if target_id not in expected_sources:
+            maybe_commit(current_group)
+            current_group = []
+            continue
+
+        if current_group and (
+            target_id != current_group[0][2]
+            or losing_team != current_group[0][3]
+            or ts - current_group[-1][0] > 0.25
+        ):
+            maybe_commit(current_group)
+            current_group = []
+
+        current_group.append((ts, source_id, target_id, losing_team))
+
+    maybe_commit(current_group)
+    if not best_group:
+        return 0, 0, 0xFFFFFFFF
+
+    _, _, target_id, losing_team = best_group[0]
+    target_player = _get_player(players, target_id)
+    if target_player and target_player["team"] in (1, 2):
+        if losing_team not in (1, 2):
+            losing_team = target_player["team"]
+        elif target_player["team"] != losing_team:
+            return 0, 0, 0xFFFFFFFF
+
+    if losing_team not in (1, 2):
+        return 0, 0, 0xFFFFFFFF
+
+    winning_team = 1 if losing_team == 2 else 2
+    return winning_team, losing_team, target_id
 
 
 def decode_snapshot(payload, players):
@@ -375,6 +442,7 @@ def analyze_match(match_dir: Path) -> dict:
             decode_entity_prop(payload, players)
 
     file_size_kb = packets_path.stat().st_size / 1024
+    winning_team, losing_team, winner_focus_entity_id = detect_match_winner(messages, players)
 
     return {
         "match_id": match_id[:8],
@@ -382,6 +450,9 @@ def analyze_match(match_dir: Path) -> dict:
         "duration_s": round(duration, 1),
         "total_messages": len(messages),
         "file_size_kb": round(file_size_kb, 1),
+        "winning_team": winning_team,
+        "losing_team": losing_team,
+        "winner_focus_entity_id": winner_focus_entity_id,
         "players": players,
         "events": events,
         "opcode_counts": {str(k): v for k, v in opcode_counts.most_common(20)},

@@ -1,7 +1,7 @@
 # Autoresearch: full Vainglory match protocol decoding
 
 ## Objective
-Improve the existing Vainglory in-match protocol decoder until full matches can be replayed as useful scoreboard state over time. The immediate target is not generic semantic coverage anymore; it is decoding gameplay values that let us reconstruct the scoreboard at any point in the match timeline: **level-ups, kills, deaths, creep score, total gold, and total XP**.
+Improve the existing Vainglory in-match protocol decoder until full matches can be replayed as useful scoreboard state over time. The immediate target is not generic semantic coverage anymore; it is decoding gameplay values that let us reconstruct the scoreboard at any point in the match timeline: **level-ups, kills, deaths, creep score, total gold, total XP, and—when present—a trustworthy winner signal at match end**.
 
 The current code already derives the Blowfish key, decrypts messages correctly, and identifies a useful subset of opcodes. The main gap is turning those state streams into replay-usable scoreboard values instead of broad "interesting event" coverage.
 
@@ -15,6 +15,7 @@ The current code already derives the Blowfish key, decrypts messages correctly, 
   - `cs_players` — active players with non-zero decoded creep score
   - `level_players` — active players with at least one decoded level-up
   - `replay_players` — active players that have gold + XP + death timeline plus at least one of kills / CS / level-ups
+  - `winner_matches` — full gameplay captures where the winner/loser team is decoded from an end-of-match signal
   - `scored_matches` — full gameplay captures included in the benchmark
   - `total_players` — active player rows considered by the benchmark
 

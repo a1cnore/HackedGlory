@@ -92,6 +92,7 @@ def main() -> int:
 
     scoreboard_score = 0
     scored_matches = 0
+    winner_matches = 0
     total_players = 0
     gold_players = 0
     xp_players = 0
@@ -112,6 +113,10 @@ def main() -> int:
             continue
 
         scored_matches += 1
+        if state.winning_team in (1, 2):
+            winner_matches += 1
+            scoreboard_score += 40
+
         for player in state.players:
             if not player.snapshot_active:
                 continue
@@ -154,6 +159,7 @@ def main() -> int:
 
     print(f"METRIC scoreboard_score={scoreboard_score}")
     print(f"METRIC scored_matches={scored_matches}")
+    print(f"METRIC winner_matches={winner_matches}")
     print(f"METRIC total_players={total_players}")
     print(f"METRIC gold_players={gold_players}")
     print(f"METRIC xp_players={xp_players}")

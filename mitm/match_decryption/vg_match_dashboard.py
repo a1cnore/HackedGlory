@@ -134,6 +134,9 @@ class MatchState:
     # Timeline events
     events: list[tuple[float, str]] = field(default_factory=list)
     activated_entities: set[int] = field(default_factory=set)
+    winning_team: int = 0
+    losing_team: int = 0
+    winner_focus_entity_id: int = 0xFFFFFFFF
 
 
 # ── Packet Parser ──
@@ -205,6 +208,7 @@ OP_GAMEMODE_NAME = 1135  # Game mode name
 OP_ENTITY_SCALAR = 1052  # Entity scalar/stat record (24B): [2B 0][2B eid][...][4B float][1B type]
 OP_ENTITY_STAT = 1053  # Entity stat updates (16B): [2B 0][2B eid][4B float][1B type][5B]
 OP_POSITION = 1070  # Entity position (16B): [2B 0][2B eid][4B X][4B Y][2B 0]
+OP_MATCH_RESULT_BURST = 1077  # Late 7-message end-of-match burst; target team looks like loser
 OP_ENTITY_PROP = 1086  # Entity property (24B): [2B 0][2B eid][...][1B type][...]
 OP_ENTITY_PROP_EXT = 1087  # Entity extended property stream (40B-ish) with typed u16 codes
 OP_ENTITY_STATE = 1067  # Entity state (16B): [2B 0][2B eid][1B idx][1B state][...]
@@ -402,6 +406,95 @@ def _get_player_by_entity(state: MatchState, entity_id: int) -> Optional[Player]
         if p.entity_id == entity_id:
             return p
     return None
+
+
+def detect_match_winner(
+    messages: list[tuple[float, str, int, bytes]], state: MatchState
+):
+    """Infer winner from the late 1077 post-match burst.
+
+    Complete ended matches often emit 7 consecutive opcode-1077 messages that all
+    target the same player entity. Across captures examined so far, that target's
+    team matches the losing side, so the winner is the opposite team.
+    """
+    expected_sources = {p.entity_id for p in state.players if p.team in (1, 2)}
+    if len(expected_sources) < 6:
+        return
+
+    current_group: list[tuple[float, int, int, int]] = []
+    best_group: list[tuple[float, int, int, int]] = []
+
+    def maybe_commit(group: list[tuple[float, int, int, int]]):
+        nonlocal best_group
+        if len(group) < 7:
+            return
+        player_sources = {source_id for _, source_id, _, _ in group if source_id != 0xFFFFFFFF}
+        has_sentinel = any(source_id == 0xFFFFFFFF for _, source_id, _, _ in group)
+        if player_sources == expected_sources and has_sentinel:
+            best_group = group[:]
+
+    for ts, dir_str, opcode, dec in messages:
+        if dir_str != "S->C" or opcode != OP_MATCH_RESULT_BURST:
+            maybe_commit(current_group)
+            current_group = []
+            continue
+
+        payload = dec[2:]
+        if len(payload) < 16:
+            maybe_commit(current_group)
+            current_group = []
+            continue
+
+        source_id = struct.unpack(">I", payload[0:4])[0]
+        target_id = struct.unpack(">I", payload[4:8])[0]
+        losing_team = struct.unpack(">I", payload[12:16])[0]
+        if target_id not in expected_sources:
+            maybe_commit(current_group)
+            current_group = []
+            continue
+
+        if (
+            current_group
+            and (
+                target_id != current_group[0][2]
+                or losing_team != current_group[0][3]
+                or ts - current_group[-1][0] > 0.25
+            )
+        ):
+            maybe_commit(current_group)
+            current_group = []
+
+        current_group.append((ts, source_id, target_id, losing_team))
+
+    maybe_commit(current_group)
+    if not best_group:
+        return
+
+    _, _, target_id, losing_team = best_group[0]
+    target_player = _get_player_by_entity(state, target_id)
+    if target_player and target_player.team in (1, 2):
+        if losing_team not in (1, 2):
+            losing_team = target_player.team
+        elif target_player.team != losing_team:
+            return
+
+    if losing_team not in (1, 2):
+        return
+
+    state.losing_team = losing_team
+    state.winning_team = 1 if losing_team == 2 else 2
+    state.winner_focus_entity_id = target_id
+
+    focus_name = (
+        target_player.handle if target_player and target_player.handle else f"Entity {target_id}"
+    )
+    team_name = "Blue" if state.winning_team == 1 else "Red"
+    state.events.append(
+        (
+            best_group[-1][0] - state.start_ts,
+            f"Team {team_name} win detected from end burst targeting losing-side {focus_name}",
+        )
+    )
 
 
 def decode_position(payload: bytes, state: MatchState):
@@ -1398,6 +1491,7 @@ def analyze_match(match_dir: Path) -> MatchState:
     detect_item_like_loadout_events(messages, state)
     detect_farm_reward_channels(messages, state)
     detect_post_death_counter_pulses(messages, state)
+    detect_match_winner(messages, state)
 
     return state
 
@@ -1449,6 +1543,10 @@ def print_dashboard(state: MatchState):
     print(f"  Match ID:    {C_WHITE}{mid}{C_RESET}")
     print(f"  Game Mode:   {C_WHITE}{mode}{C_RESET}")
     print(f"  Duration:    {C_WHITE}{dur}{C_RESET}")
+    if state.winning_team in (1, 2):
+        winner_label = "TEAM BLUE" if state.winning_team == 1 else "TEAM RED"
+        winner_color = C_CYAN if state.winning_team == 1 else C_RED
+        print(f"  Winner:      {winner_color}{C_BOLD}{winner_label}{C_RESET}")
     print(f"  Messages:    {C_DIM}{state.total_messages:,} decrypted{C_RESET}")
     if state.hero_catalog:
         base_count = sum(1 for h in state.hero_catalog if "_Skin_" not in h and not h.startswith("Hero"))
@@ -1545,6 +1643,7 @@ def print_dashboard(state: MatchState):
         1054: "Entity stat (24B)",
         1067: "Entity state change",
         1070: "Entity position",
+        1077: "Match-result burst",
         1086: "Entity property counters",
         1087: "Entity data (40B)",
         1107: "Hero/skin catalog",
