@@ -79,6 +79,8 @@ class Player:
     talent_choice_id: int = 0
     hero_interaction_families: set[int] = field(default_factory=set)
     minion_interaction_families: set[int] = field(default_factory=set)
+    ability_followup_scalar_types: set[int] = field(default_factory=set)
+    ability_followup_prop_families: set[int] = field(default_factory=set)
     farm_reward_types: set[int] = field(default_factory=set)
     prop_counters: dict[int, int] = field(default_factory=dict)
     # Tentative aliases for two well-behaved opcode-1086 counter families.
@@ -726,6 +728,94 @@ def detect_talent_like_choices(
             )
 
 
+def detect_ability_followup_channels(
+    messages: list[tuple[float, str, int, bytes]], state: MatchState
+):
+    """Infer recurring self-state channels that follow hero-target interactions."""
+    scalar_counts_by_entity: dict[int, Counter[int]] = defaultdict(Counter)
+    prop_counts_by_entity: dict[int, Counter[int]] = defaultdict(Counter)
+
+    seen: set[tuple[int, int, int, int]] = set()
+    for i, (ts, dir_str, opcode, dec) in enumerate(messages):
+        if dir_str != "S->C" or opcode != OP_ENTITY_PROP_EXT:
+            continue
+
+        payload = dec[2:]
+        if len(payload) < 16:
+            continue
+
+        source_id = struct.unpack(">H", payload[2:4])[0]
+        target_id = struct.unpack(">H", payload[6:8])[0]
+        if source_id not in range(1500, 1506) or target_id not in range(1500, 1506) or source_id == target_id:
+            continue
+
+        key = (source_id, target_id, int(ts * 5), payload[8])
+        if key in seen:
+            continue
+        seen.add(key)
+
+        seen_scalar_types: set[int] = set()
+        seen_prop_families: set[int] = set()
+        for ts2, dir_str2, opcode2, dec2 in messages[i + 1 :]:
+            if ts2 - ts > 0.25:
+                break
+            if dir_str2 != "S->C":
+                continue
+
+            payload2 = dec2[2:]
+            if opcode2 == OP_ENTITY_SCALAR and len(payload2) >= 13:
+                entity_id = struct.unpack(">H", payload2[2:4])[0]
+                if entity_id == source_id:
+                    seen_scalar_types.add(payload2[12])
+            elif opcode2 == OP_ENTITY_PROP_EXT and len(payload2) >= 16:
+                entity_id = struct.unpack(">H", payload2[2:4])[0]
+                target_id2 = struct.unpack(">H", payload2[6:8])[0]
+                if entity_id == source_id and target_id2 == source_id:
+                    seen_prop_families.add(payload2[8])
+
+        for scalar_type in seen_scalar_types:
+            scalar_counts_by_entity[source_id][scalar_type] += 1
+        for prop_family in seen_prop_families:
+            prop_counts_by_entity[source_id][prop_family] += 1
+
+    for entity_id in set(scalar_counts_by_entity) | set(prop_counts_by_entity):
+        player = _get_player_by_entity(state, entity_id)
+        if not player:
+            continue
+
+        scalar_types = {
+            scalar_type
+            for scalar_type, count in scalar_counts_by_entity[entity_id].items()
+            if count >= 3
+        }
+        prop_families = {
+            prop_family
+            for prop_family, count in prop_counts_by_entity[entity_id].items()
+            if count >= 3
+        }
+        if not scalar_types and not prop_families:
+            continue
+
+        player.ability_followup_scalar_types.update(scalar_types)
+        player.ability_followup_prop_families.update(prop_families)
+
+        parts = []
+        if scalar_types:
+            parts.append(
+                f"1052 types {', '.join(str(t) for t in sorted(scalar_types))}"
+            )
+        if prop_families:
+            parts.append(
+                f"1087 families {', '.join(f'0x{t:02x}' for t in sorted(prop_families))}"
+            )
+        state.events.append(
+            (
+                0.0,
+                f"{player.handle or f'Entity {entity_id}'} cooldown-like followup channels {'; '.join(parts)}",
+            )
+        )
+
+
 def detect_farm_reward_channels(
     messages: list[tuple[float, str, int, bytes]], state: MatchState
 ):
@@ -974,6 +1064,7 @@ def analyze_match(match_dir: Path) -> MatchState:
     detect_interaction_timeline_events(messages, state)
     detect_kill_like_interactions(messages, state)
     detect_assist_like_interactions(messages, state)
+    detect_ability_followup_channels(messages, state)
     detect_farm_reward_channels(messages, state)
     detect_post_death_counter_pulses(messages, state)
 

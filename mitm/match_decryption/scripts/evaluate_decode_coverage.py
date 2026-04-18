@@ -40,6 +40,10 @@ def player_score(player) -> tuple[int, bool, bool]:
     has_ability_interactions = len(player.hero_interaction_families) >= 1
     has_farm_interactions = len(player.minion_interaction_families) >= 1
     has_farm_rewards = len(player.farm_reward_types) >= 1
+    has_cooldown_channels = (
+        len(player.ability_followup_scalar_types) >= 1
+        or len(player.ability_followup_prop_families) >= 1
+    )
     has_speed = player.move_speed > 0
     has_pos = player.pos_updates > 0
 
@@ -59,6 +63,7 @@ def player_score(player) -> tuple[int, bool, bool]:
     score += 8 if has_ability_interactions else 0
     score += 8 if has_farm_interactions else 0
     score += 8 if has_farm_rewards else 0
+    score += 8 if has_cooldown_channels else 0
     score += 8 if has_scalar_stats else 0
     score += 8 if has_extended_props else 0
     score += 8 if has_interaction_props else 0
@@ -89,6 +94,8 @@ def event_kind(event_text: str) -> str:
         return "kill"
     if "reward" in text or "pulse" in text or "bounty" in text:
         return "reward"
+    if "cooldown" in text:
+        return "cooldown"
     if "talent" in text:
         return "talent"
     if "active" in text or "joined" in text or "spawned" in text:
@@ -130,6 +137,7 @@ def main() -> int:
     prop_counter_players = 0
     talent_players = 0
     ability_players = 0
+    cooldown_players = 0
     farm_players = 0
     farm_reward_players = 0
     interaction_players = 0
@@ -169,6 +177,11 @@ def main() -> int:
                 farm_players += 1
             if len(player.farm_reward_types) >= 1:
                 farm_reward_players += 1
+            if (
+                len(player.ability_followup_scalar_types) >= 1
+                or len(player.ability_followup_prop_families) >= 1
+            ):
+                cooldown_players += 1
             if len(player.interaction_props) >= 1:
                 interaction_players += 1
             if len(player.scalar_stats) >= 2:
@@ -189,6 +202,7 @@ def main() -> int:
     print(f"METRIC prop_counter_players={prop_counter_players}")
     print(f"METRIC talent_players={talent_players}")
     print(f"METRIC ability_players={ability_players}")
+    print(f"METRIC cooldown_players={cooldown_players}")
     print(f"METRIC farm_players={farm_players}")
     print(f"METRIC farm_reward_players={farm_reward_players}")
     print(f"METRIC interaction_players={interaction_players}")
