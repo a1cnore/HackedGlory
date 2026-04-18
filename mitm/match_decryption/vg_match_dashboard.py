@@ -598,6 +598,55 @@ def detect_kill_like_interactions(
         )
 
 
+def detect_assist_like_interactions(
+    messages: list[tuple[float, str, int, bytes]], state: MatchState
+):
+    """Find death windows with multiple distinct hero-target interaction sources."""
+    last_death_ts: dict[int, float] = {}
+
+    for i, (ts, dir_str, opcode, dec) in enumerate(messages):
+        if dir_str != "S->C" or opcode != OP_ENTITY_STATE:
+            continue
+
+        payload = dec[2:]
+        if len(payload) < 6 or payload[4] != 0 or payload[5] != 3:
+            continue
+
+        dead_entity = struct.unpack(">H", payload[2:4])[0]
+        if dead_entity not in range(1500, 1506):
+            continue
+        if ts - last_death_ts.get(dead_entity, float("-inf")) < 1.0:
+            continue
+        last_death_ts[dead_entity] = ts
+
+        sources: set[int] = set()
+        for ts2, dir_str2, opcode2, dec2 in reversed(messages[:i]):
+            if ts - ts2 > 1.0:
+                break
+            if dir_str2 != "S->C" or opcode2 != OP_ENTITY_PROP_EXT:
+                continue
+
+            payload2 = dec2[2:]
+            if len(payload2) < 16:
+                continue
+            source_id = struct.unpack(">H", payload2[2:4])[0]
+            target_id = struct.unpack(">H", payload2[6:8])[0]
+            if source_id in range(1500, 1506) and target_id == dead_entity and source_id != dead_entity:
+                sources.add(source_id)
+
+        if len(sources) < 2:
+            continue
+
+        dead_player = _get_player_by_entity(state, dead_entity)
+        name = dead_player.handle if dead_player and dead_player.handle else f"Entity {dead_entity}"
+        state.events.append(
+            (
+                ts - state.start_ts,
+                f"assist-like window on {name} involved {len(sources)} attackers",
+            )
+        )
+
+
 def detect_post_death_counter_pulses(
     messages: list[tuple[float, str, int, bytes]], state: MatchState
 ):
@@ -789,6 +838,7 @@ def analyze_match(match_dir: Path) -> MatchState:
 
     detect_interaction_timeline_events(messages, state)
     detect_kill_like_interactions(messages, state)
+    detect_assist_like_interactions(messages, state)
     detect_post_death_counter_pulses(messages, state)
 
     return state
