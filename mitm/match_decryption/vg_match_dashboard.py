@@ -79,6 +79,7 @@ class Player:
     talent_choice_id: int = 0
     hero_interaction_families: set[int] = field(default_factory=set)
     minion_interaction_families: set[int] = field(default_factory=set)
+    farm_reward_types: set[int] = field(default_factory=set)
     prop_counters: dict[int, int] = field(default_factory=dict)
     # Tentative aliases for two well-behaved opcode-1086 counter families.
     gold_counter: int = 0  # alias for type 0x4d (semantics still being verified)
@@ -725,6 +726,61 @@ def detect_talent_like_choices(
             )
 
 
+def detect_farm_reward_channels(
+    messages: list[tuple[float, str, int, bytes]], state: MatchState
+):
+    """Infer recurring 1086 reward families that follow minion-like interactions."""
+    counts_by_entity: dict[int, Counter[int]] = defaultdict(Counter)
+
+    for i, (ts, dir_str, opcode, dec) in enumerate(messages):
+        if dir_str != "S->C" or opcode != OP_ENTITY_PROP_EXT:
+            continue
+
+        payload = dec[2:]
+        if len(payload) < 16:
+            continue
+
+        source_id = struct.unpack(">H", payload[2:4])[0]
+        target_id = struct.unpack(">H", payload[6:8])[0]
+        if source_id not in range(1500, 1506) or target_id not in range(2000, 2100):
+            continue
+
+        seen_types: set[int] = set()
+        for ts2, dir_str2, opcode2, dec2 in messages[i + 1 :]:
+            if ts2 - ts > 0.25:
+                break
+            if dir_str2 != "S->C" or opcode2 != OP_ENTITY_PROP:
+                continue
+
+            payload2 = dec2[2:]
+            if len(payload2) < 14:
+                continue
+            entity_id = struct.unpack(">H", payload2[2:4])[0]
+            if entity_id != source_id:
+                continue
+            seen_types.add(payload2[8])
+
+        for prop_type in seen_types:
+            counts_by_entity[source_id][prop_type] += 1
+
+    for entity_id, counter in counts_by_entity.items():
+        player = _get_player_by_entity(state, entity_id)
+        if not player:
+            continue
+
+        reward_types = {prop_type for prop_type, count in counter.items() if count >= 3}
+        if not reward_types:
+            continue
+
+        player.farm_reward_types.update(reward_types)
+        state.events.append(
+            (
+                0.0,
+                f"{player.handle or f'Entity {entity_id}'} farm reward channel types {', '.join(f'0x{t:02x}' for t in sorted(reward_types))}",
+            )
+        )
+
+
 def detect_post_death_counter_pulses(
     messages: list[tuple[float, str, int, bytes]], state: MatchState
 ):
@@ -918,6 +974,7 @@ def analyze_match(match_dir: Path) -> MatchState:
     detect_interaction_timeline_events(messages, state)
     detect_kill_like_interactions(messages, state)
     detect_assist_like_interactions(messages, state)
+    detect_farm_reward_channels(messages, state)
     detect_post_death_counter_pulses(messages, state)
 
     return state
