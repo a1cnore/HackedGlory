@@ -771,7 +771,7 @@ def detect_kill_like_interactions(
             reward_idx = bisect_left(counter_delta_times, ts)
             while (
                 reward_idx < len(counter_delta_events)
-                and counter_delta_events[reward_idx][0] - ts <= 0.5
+                and counter_delta_events[reward_idx][0] - ts <= 1.0
             ):
                 _, source_id, delta = counter_delta_events[reward_idx]
                 if source_id != dead_entity:
