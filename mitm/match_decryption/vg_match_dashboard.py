@@ -77,6 +77,8 @@ class Player:
     interaction_props: dict[tuple[int, int], tuple[int, int]] = field(default_factory=dict)
     talent_offer_ids: list[int] = field(default_factory=list)
     talent_choice_id: int = 0
+    hero_interaction_families: set[int] = field(default_factory=set)
+    minion_interaction_families: set[int] = field(default_factory=set)
     prop_counters: dict[int, int] = field(default_factory=dict)
     # Tentative aliases for two well-behaved opcode-1086 counter families.
     gold_counter: int = 0  # alias for type 0x4d (semantics still being verified)
@@ -515,21 +517,29 @@ def detect_interaction_timeline_events(
         source_player = _get_player_by_entity(state, entity_id)
         name = source_player.handle if source_player and source_player.handle else f"Entity {entity_id}"
 
-        if target_id in range(1500, 1506) and target_id != entity_id and entity_id not in seen_hero_like:
-            seen_hero_like.add(entity_id)
-            target_player = _get_player_by_entity(state, target_id)
-            target_name = (
-                target_player.handle if target_player and target_player.handle else f"Entity {target_id}"
-            )
-            state.events.append(
-                (
-                    ts - state.start_ts,
-                    f"{name} ability-like hero interaction family 0x{payload[8]:02x} targeted {target_name}",
+        if target_id in range(1500, 1506) and target_id != entity_id:
+            if source_player:
+                source_player.hero_interaction_families.add(payload[8])
+            if entity_id not in seen_hero_like:
+                seen_hero_like.add(entity_id)
+                target_player = _get_player_by_entity(state, target_id)
+                target_name = (
+                    target_player.handle if target_player and target_player.handle else f"Entity {target_id}"
                 )
-            )
+                state.events.append(
+                    (
+                        ts - state.start_ts,
+                        f"{name} ability-like hero interaction family 0x{payload[8]:02x} targeted {target_name}",
+                    )
+                )
             continue
 
-        if target_id not in range(2000, 2100) or entity_id in seen_minion_like:
+        if target_id not in range(2000, 2100):
+            continue
+
+        if source_player:
+            source_player.minion_interaction_families.add(payload[8])
+        if entity_id in seen_minion_like:
             continue
 
         seen_minion_like.add(entity_id)
