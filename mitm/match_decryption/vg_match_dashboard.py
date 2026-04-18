@@ -816,6 +816,110 @@ def detect_ability_followup_channels(
         )
 
 
+def detect_resource_gain_events(
+    messages: list[tuple[float, str, int, bytes]], state: MatchState
+):
+    """Emit xp-like / gold-like gain events around minion and death windows."""
+    last_counter: dict[int, dict[int, int]] = defaultdict(dict)
+    active_farm_windows: list[dict] = []
+    active_kill_windows: list[dict] = []
+    recent_hero_interactions: list[tuple[float, int, int]] = []
+    last_death_ts: dict[int, float] = {}
+
+    for ts, dir_str, opcode, dec in messages:
+        if dir_str != "S->C":
+            continue
+
+        payload = dec[2:]
+        recent_hero_interactions = [
+            item for item in recent_hero_interactions if ts - item[0] <= 1.0
+        ]
+        active_farm_windows = [w for w in active_farm_windows if ts <= w["expires"]]
+        active_kill_windows = [w for w in active_kill_windows if ts <= w["expires"]]
+
+        if opcode == OP_ENTITY_PROP_EXT and len(payload) >= 16:
+            source_id = struct.unpack(">H", payload[2:4])[0]
+            target_id = struct.unpack(">H", payload[6:8])[0]
+            if source_id in range(1500, 1506):
+                if target_id in range(1500, 1506) and target_id != source_id:
+                    recent_hero_interactions.append((ts, source_id, target_id))
+                elif target_id in range(2000, 2100):
+                    active_farm_windows.append(
+                        {
+                            "source": source_id,
+                            "target": target_id,
+                            "expires": ts + 0.25,
+                            "emitted": set(),
+                        }
+                    )
+
+        elif opcode == OP_ENTITY_STATE and len(payload) >= 6 and payload[4] == 0 and payload[5] == 3:
+            dead_entity = struct.unpack(">H", payload[2:4])[0]
+            if dead_entity in range(1500, 1506) and ts - last_death_ts.get(dead_entity, float("-inf")) >= 1.0:
+                last_death_ts[dead_entity] = ts
+                attackers = []
+                for _, source_id, target_id in recent_hero_interactions:
+                    if target_id == dead_entity and source_id != dead_entity and source_id not in attackers:
+                        attackers.append(source_id)
+                if attackers:
+                    active_kill_windows.append(
+                        {
+                            "dead": dead_entity,
+                            "killer": attackers[-1],
+                            "attackers": set(attackers),
+                            "expires": ts + 0.25,
+                            "emitted": set(),
+                        }
+                    )
+
+        elif opcode == OP_ENTITY_PROP and len(payload) >= 14:
+            entity_id = struct.unpack(">H", payload[2:4])[0]
+            prop_type = payload[8]
+            if entity_id not in range(1500, 1506) or prop_type not in (0x3E, 0x4D):
+                continue
+
+            combined = struct.unpack(">I", payload[9:13])[0] * 256 + payload[13]
+            previous = last_counter[entity_id].get(prop_type)
+            last_counter[entity_id][prop_type] = combined
+            if previous is None:
+                continue
+
+            delta = combined - previous
+            if delta <= 0 or delta > 4096:
+                continue
+
+            channel_name = "xp-like" if prop_type == 0x3E else "gold-like"
+            player = _get_player_by_entity(state, entity_id)
+            name = player.handle if player and player.handle else f"Entity {entity_id}"
+
+            for window in active_farm_windows:
+                if window["source"] != entity_id or prop_type in window["emitted"]:
+                    continue
+                window["emitted"].add(prop_type)
+                state.events.append(
+                    (
+                        ts - state.start_ts,
+                        f"{name} farm {channel_name} gain +{delta}",
+                    )
+                )
+
+            for window in active_kill_windows:
+                role = None
+                if entity_id == window["killer"]:
+                    role = "kill-window"
+                elif entity_id in window["attackers"]:
+                    role = "assist-window"
+                if role is None or (role, prop_type) in window["emitted"]:
+                    continue
+                window["emitted"].add((role, prop_type))
+                state.events.append(
+                    (
+                        ts - state.start_ts,
+                        f"{name} {role} {channel_name} gain +{delta}",
+                    )
+                )
+
+
 def detect_farm_reward_channels(
     messages: list[tuple[float, str, int, bytes]], state: MatchState
 ):
@@ -1065,6 +1169,7 @@ def analyze_match(match_dir: Path) -> MatchState:
     detect_kill_like_interactions(messages, state)
     detect_assist_like_interactions(messages, state)
     detect_ability_followup_channels(messages, state)
+    detect_resource_gain_events(messages, state)
     detect_farm_reward_channels(messages, state)
     detect_post_death_counter_pulses(messages, state)
 

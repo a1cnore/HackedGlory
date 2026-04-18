@@ -90,6 +90,10 @@ def player_score(player) -> tuple[int, bool, bool]:
 
 def event_kind(event_text: str) -> str:
     text = event_text.lower()
+    if "xp-like" in text or " xp " in text:
+        return "xp"
+    if "gold-like" in text or " gold " in text:
+        return "gold"
     if "kill" in text:
         return "kill"
     if "reward" in text or "pulse" in text or "bounty" in text:
