@@ -1051,8 +1051,8 @@ def detect_level_like_milestones(
                 continue
 
             changed_types: set[int] = set()
-            for ts2, dir_str2, opcode2, dec2 in messages[i + 1 : i + 40]:
-                if ts2 - ts > 0.2:
+            for ts2, dir_str2, opcode2, dec2 in messages[i + 1 : i + 60]:
+                if ts2 - ts > 0.25:
                     break
                 if dir_str2 != "S->C" or opcode2 != OP_ENTITY_STAT:
                     continue
