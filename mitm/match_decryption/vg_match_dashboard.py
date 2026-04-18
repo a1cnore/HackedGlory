@@ -82,6 +82,7 @@ class Player:
     ability_followup_scalar_types: set[int] = field(default_factory=set)
     ability_followup_prop_families: set[int] = field(default_factory=set)
     farm_reward_types: set[int] = field(default_factory=set)
+    item_like_ids: set[int] = field(default_factory=set)
     xp_like_gain_events: int = 0
     gold_like_gain_events: int = 0
     kill_window_gain_events: int = 0
@@ -999,6 +1000,43 @@ def detect_level_like_milestones(
                 prev_stats[entity_id][payload[8]] = struct.unpack(">f", payload[4:8])[0]
 
 
+def detect_item_like_loadout_events(
+    messages: list[tuple[float, str, int, bytes]], state: MatchState
+):
+    """Infer item-like self-loadout changes from later self-targeted 1087 family 0xbc values."""
+    constants = {45, 121, 122, 123, 173, 174, 254, 255, 273}
+    first_ts = state.start_ts
+
+    for ts, dir_str, opcode, dec in messages:
+        if dir_str != "S->C" or opcode != OP_ENTITY_PROP_EXT or ts - first_ts < 30.0:
+            continue
+
+        payload = dec[2:]
+        if len(payload) < 16:
+            continue
+
+        entity_id = struct.unpack(">H", payload[2:4])[0]
+        target_id = struct.unpack(">H", payload[6:8])[0]
+        if entity_id not in range(1500, 1506) or target_id != entity_id or payload[8] != 0xBC:
+            continue
+
+        value = struct.unpack(">H", payload[14:16])[0]
+        if value in constants:
+            continue
+
+        player = _get_player_by_entity(state, entity_id)
+        if not player or value in player.item_like_ids or value in player.talent_offer_ids or value == player.talent_choice_id:
+            continue
+
+        player.item_like_ids.add(value)
+        state.events.append(
+            (
+                ts - state.start_ts,
+                f"{player.handle or f'Entity {entity_id}'} item-like loadout id {value}",
+            )
+        )
+
+
 def detect_farm_reward_channels(
     messages: list[tuple[float, str, int, bytes]], state: MatchState
 ):
@@ -1250,6 +1288,7 @@ def analyze_match(match_dir: Path) -> MatchState:
     detect_ability_followup_channels(messages, state)
     detect_resource_gain_events(messages, state)
     detect_level_like_milestones(messages, state)
+    detect_item_like_loadout_events(messages, state)
     detect_farm_reward_channels(messages, state)
     detect_post_death_counter_pulses(messages, state)
 
