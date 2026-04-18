@@ -731,6 +731,9 @@ def detect_kill_like_interactions(
             continue
         last_death_ts[dead_entity] = ts
 
+        target_player = _get_player_by_entity(state, dead_entity)
+        target_team = target_player.team if target_player and target_player.team in (1, 2) else 0
+
         killer_id = None
         reason = ""
         latest_by_source: dict[int, tuple[float, int]] = {}
@@ -752,6 +755,10 @@ def detect_kill_like_interactions(
                 or source_id == dead_entity
             ):
                 continue
+            source_player = _get_player_by_entity(state, source_id)
+            source_team = source_player.team if source_player and source_player.team in (1, 2) else 0
+            if target_team and source_team == target_team:
+                continue
             if source_id not in latest_by_source:
                 latest_by_source[source_id] = (ts2, payload2[8])
 
@@ -768,7 +775,10 @@ def detect_kill_like_interactions(
             ):
                 _, source_id, delta = counter_delta_events[reward_idx]
                 if source_id != dead_entity:
-                    reward_totals[source_id] += delta
+                    source_player = _get_player_by_entity(state, source_id)
+                    source_team = source_player.team if source_player and source_player.team in (1, 2) else 0
+                    if not target_team or source_team != target_team:
+                        reward_totals[source_id] += delta
                 reward_idx += 1
             if len(reward_totals) == 1:
                 killer_id = next(iter(reward_totals))
@@ -787,7 +797,6 @@ def detect_kill_like_interactions(
             continue
 
         source_player = _get_player_by_entity(state, killer_id)
-        target_player = _get_player_by_entity(state, dead_entity)
         if source_player:
             source_player.kills += 1
         source_name = (
