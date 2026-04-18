@@ -75,6 +75,8 @@ class Player:
     scalar_stats: dict[int, float] = field(default_factory=dict)
     extended_props: dict[tuple[int, int], tuple[int, int]] = field(default_factory=dict)
     interaction_props: dict[tuple[int, int], tuple[int, int]] = field(default_factory=dict)
+    talent_offer_ids: list[int] = field(default_factory=list)
+    talent_choice_id: int = 0
     prop_counters: dict[int, int] = field(default_factory=dict)
     # Tentative aliases for two well-behaved opcode-1086 counter families.
     gold_counter: int = 0  # alias for type 0x4d (semantics still being verified)
@@ -647,6 +649,72 @@ def detect_assist_like_interactions(
         )
 
 
+def detect_talent_like_choices(
+    messages: list[tuple[float, str, int, bytes]], state: MatchState
+):
+    """Infer ARAL talent-like offer/choice IDs from early self-targeted 1087 family 0xbc."""
+    if "aral" not in state.game_mode.lower():
+        return
+
+    constants = {45, 121, 122, 123, 173, 174, 254, 255, 273}
+    by_entity: dict[int, list[tuple[float, int]]] = defaultdict(list)
+
+    for ts, dir_str, opcode, dec in messages:
+        if dir_str != "S->C" or opcode != OP_ENTITY_PROP_EXT:
+            continue
+
+        payload = dec[2:]
+        if len(payload) < 16:
+            continue
+
+        entity_id = struct.unpack(">H", payload[2:4])[0]
+        target_id = struct.unpack(">H", payload[6:8])[0]
+        if entity_id not in range(1500, 1506) or target_id != entity_id or payload[8] != 0xBC:
+            continue
+
+        value = struct.unpack(">H", payload[14:16])[0]
+        if value not in constants:
+            by_entity[entity_id].append((ts, value))
+
+    for entity_id, seq in by_entity.items():
+        player = _get_player_by_entity(state, entity_id)
+        if not player or not seq:
+            continue
+
+        offers: list[int] = []
+        choice_id = 0
+        seen_offer_phase = True
+        for _, value in seq:
+            if seen_offer_phase and len(offers) < 3 and value not in offers:
+                offers.append(value)
+                continue
+            seen_offer_phase = False
+            if value not in offers:
+                choice_id = value
+                break
+
+        if not choice_id:
+            distinct = []
+            for _, value in seq:
+                if value not in distinct:
+                    distinct.append(value)
+            if len(distinct) == 1:
+                choice_id = distinct[0]
+            elif len(distinct) > 1:
+                choice_id = distinct[-1]
+
+        player.talent_offer_ids = offers
+        player.talent_choice_id = choice_id
+
+        if choice_id:
+            state.events.append(
+                (
+                    seq[0][0] - state.start_ts,
+                    f"{player.handle or f'Entity {entity_id}'} talent-like choice {choice_id}",
+                )
+            )
+
+
 def detect_post_death_counter_pulses(
     messages: list[tuple[float, str, int, bytes]], state: MatchState
 ):
@@ -836,6 +904,7 @@ def analyze_match(match_dir: Path) -> MatchState:
         elif opcode == OP_ENTITY_STATE:
             decode_entity_state(payload, state, ts)
 
+    detect_talent_like_choices(messages, state)
     detect_interaction_timeline_events(messages, state)
     detect_kill_like_interactions(messages, state)
     detect_assist_like_interactions(messages, state)
