@@ -1163,9 +1163,11 @@ def detect_level_like_milestones(
             if payload[8] == 0x42 and player and player.level_like_events >= 1:
                 continue
 
+            lookahead_seconds = 0.35 if payload[8] == 0x42 else 0.25
+            lookahead_messages = 80 if payload[8] == 0x42 else 60
             changed_types: set[int] = set()
-            for ts2, dir_str2, opcode2, dec2 in messages[i + 1 : i + 60]:
-                if ts2 - ts > 0.25:
+            for ts2, dir_str2, opcode2, dec2 in messages[i + 1 : i + lookahead_messages]:
+                if ts2 - ts > lookahead_seconds:
                     break
                 if dir_str2 != "S->C" or opcode2 != OP_ENTITY_STAT:
                     continue

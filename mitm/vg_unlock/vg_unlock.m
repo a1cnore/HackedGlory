@@ -8,7 +8,8 @@
  * Layer 5: Replace avatar tap handler → open full profile panel
  * Layer 6: Sidebar tab activation → force all panel tabs active + visible
  * Layer 7: Patch session manager vtable → disable guest gate globally
- * Layer 8: (reserved)
+ * Layer 8: CE gate caller hooks — undo gate effects on progression UI
+ * Layer 10: Post-match — preserve session flag so notifyGameResults fires
  */
 
 #import <Foundation/Foundation.h>
@@ -696,6 +697,64 @@ static void hook_market_tabs(void *self) {
     if (!log_once) { log_once = 1; LOG(@"[ce-gate] market tabs hook fired"); }
 }
 
+/* ========== Layer 10: Post-match session flag preservation ========== */
+
+/*
+ * FUN_1004fd37c: endSession RPC sender (fptr g_base+0x149e760)
+ *
+ * ROOT CAUSE of missing spoils screen:
+ *   1. Match ends → endSession fires
+ *   2. endSession clears *(param_1 + 0x2b08) = 0 (session-active flag)
+ *   3. notifyGameResults sender (FUN_1005028f8) checks +0x2b08 == 0 → aborts
+ *   4. Spoils screen never gets its data → skipped
+ *
+ * Fix: save +0x2b08 before calling original, restore after.
+ * This keeps the session flag alive for notifyGameResults to fire.
+ *
+ * All three functions share the same vtable (RPC session manager):
+ *   FUN_1004fd37c (endSession)        → fptr at g_base+0x149e760
+ *   FUN_1004fdaf0 (notifyExitPostMatch) → fptr at g_base+0x149e788
+ *   FUN_1005028f8 (notifyGameResults)   → fptr at g_base+0x149e938
+ */
+typedef void (*end_session_fn)(void *self);
+static end_session_fn orig_end_session = NULL;
+static void hook_end_session(void *self) {
+    /* Save the session-active flag before endSession clears it */
+    int saved_flag = *(int *)((uint8_t *)self + 0x2b08);
+    LOG(@"[post-match] endSession called, +0x2b08=%d (saving)", saved_flag);
+
+    orig_end_session(self);
+
+    /* Restore the flag so notifyGameResults can still fire */
+    int after = *(int *)((uint8_t *)self + 0x2b08);
+    *(int *)((uint8_t *)self + 0x2b08) = saved_flag;
+    LOG(@"[post-match] endSession returned, +0x2b08: %d -> %d (restored to %d)",
+        saved_flag, after, saved_flag);
+}
+
+/* ── Probes for remaining available CE gate callers ── */
+
+typedef void (*party_match_fn)(void *self);
+static party_match_fn orig_party_match = NULL;
+static void hook_party_match(void *self) {
+    LOG(@"[probe] FUN_10028c348 (party/matchmaking) CALLED self=%p", self);
+    orig_party_match(self);
+}
+
+typedef void (*tab_ctrl_fn)(void *self);
+static tab_ctrl_fn orig_tab_ctrl = NULL;
+static void hook_tab_ctrl(void *self) {
+    LOG(@"[probe] FUN_1001e0550 (tab controller) CALLED self=%p", self);
+    orig_tab_ctrl(self);
+}
+
+typedef void (*home_text_fn)(void *self, void *param2);
+static home_text_fn orig_home_text = NULL;
+static void hook_home_text(void *self, void *param2) {
+    LOG(@"[probe] FUN_1001f4efc (home panel text) CALLED self=%p", self);
+    orig_home_text(self, param2);
+}
+
 /* ========== Layer 9: Direct trophy data population ========== */
 
 /*
@@ -914,9 +973,16 @@ static void vg_unlock_init(void) {
     HOOK_FPTR(0x1469478, orig_tab_init,       hook_tab_init,       "tab_init");
     HOOK_FPTR(0x147a120, orig_market_tabs,    hook_market_tabs,    "market_tabs");
 
+    /* Layer 10: Post-match — preserve session flag across endSession */
+    HOOK_FPTR(0x149e760, orig_end_session,   hook_end_session,   "endSession");
+    /* Probes for remaining available CE gate callers */
+    HOOK_FPTR(0x147f110, orig_party_match,   hook_party_match,   "party_match");
+    HOOK_FPTR(0x1469468, orig_tab_ctrl,      hook_tab_ctrl,      "tab_ctrl");
+    HOOK_FPTR(0x146cfb0, orig_home_text,     hook_home_text,     "home_text");
+
 #undef HOOK_FPTR
 
     /* Layer 9b: KV store writes moved to hook_refresh — subsystem not ready at init time. */
 
-    LOG(@"init complete — %d parsers + visibility hooks + guest gate + sidebar + %d CE gate hooks", n, 10);
+    LOG(@"init complete — %d parsers + visibility hooks + guest gate + sidebar + %d CE gate hooks + endSession hook", n, 10);
 }
