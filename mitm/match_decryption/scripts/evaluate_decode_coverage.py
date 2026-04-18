@@ -44,6 +44,7 @@ def player_score(player) -> tuple[int, bool, bool]:
     has_gold_like_gains = player.gold_like_gain_events >= 1
     has_kill_window_gains = player.kill_window_gain_events >= 1
     has_assist_window_gains = player.assist_window_gain_events >= 1
+    has_level_like = player.level_like_events >= 1
     has_cooldown_channels = (
         len(player.ability_followup_scalar_types) >= 1
         or len(player.ability_followup_prop_families) >= 1
@@ -71,6 +72,7 @@ def player_score(player) -> tuple[int, bool, bool]:
     score += 8 if has_gold_like_gains else 0
     score += 6 if has_kill_window_gains else 0
     score += 6 if has_assist_window_gains else 0
+    score += 8 if has_level_like else 0
     score += 8 if has_cooldown_channels else 0
     score += 8 if has_scalar_stats else 0
     score += 8 if has_extended_props else 0
@@ -98,6 +100,8 @@ def player_score(player) -> tuple[int, bool, bool]:
 
 def event_kind(event_text: str) -> str:
     text = event_text.lower()
+    if "level-like" in text or "level up" in text or "approx level" in text:
+        return "level"
     if "xp-like" in text or " xp " in text:
         return "xp"
     if "gold-like" in text or " gold " in text:
@@ -156,6 +160,7 @@ def main() -> int:
     gold_gain_players = 0
     kill_gain_players = 0
     assist_gain_players = 0
+    level_players = 0
     interaction_players = 0
     scalar_players = 0
     extended_players = 0
@@ -201,6 +206,8 @@ def main() -> int:
                 kill_gain_players += 1
             if player.assist_window_gain_events >= 1:
                 assist_gain_players += 1
+            if player.level_like_events >= 1:
+                level_players += 1
             if (
                 len(player.ability_followup_scalar_types) >= 1
                 or len(player.ability_followup_prop_families) >= 1
@@ -233,6 +240,7 @@ def main() -> int:
     print(f"METRIC gold_gain_players={gold_gain_players}")
     print(f"METRIC kill_gain_players={kill_gain_players}")
     print(f"METRIC assist_gain_players={assist_gain_players}")
+    print(f"METRIC level_players={level_players}")
     print(f"METRIC interaction_players={interaction_players}")
     print(f"METRIC scalar_players={scalar_players}")
     print(f"METRIC extended_players={extended_players}")
