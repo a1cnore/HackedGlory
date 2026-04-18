@@ -1,0 +1,13 @@
+{
+  "match_id": "e35c21ad-1c0e-4fd2-b23d-d0cd41bc75bc",
+  "real_host": "34.52.184.66",
+  "real_port": 7042,
+  "listen_port": 7042,
+  "force_key": false,
+  "start_time": "2026-04-04T17:20:25.173037+00:00",
+  "packets": [],
+  "end_time": "2026-04-04T17:22:25.175267+00:00",
+  "total_packets": 0,
+  "bytes_from_client": 0,
+  "bytes_from_server": 0
+}
