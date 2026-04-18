@@ -163,7 +163,7 @@ def detect_match_winner(messages, players):
 
         source_id = struct.unpack(">I", payload[0:4])[0]
         target_id = struct.unpack(">I", payload[4:8])[0]
-        losing_team = struct.unpack(">I", payload[12:16])[0]
+        winner_team_hint = struct.unpack(">I", payload[12:16])[0]
         if target_id not in expected_sources:
             maybe_commit(current_group)
             current_group = []
@@ -171,30 +171,31 @@ def detect_match_winner(messages, players):
 
         if current_group and (
             target_id != current_group[0][2]
-            or losing_team != current_group[0][3]
+            or winner_team_hint != current_group[0][3]
             or ts - current_group[-1][0] > 0.25
         ):
             maybe_commit(current_group)
             current_group = []
 
-        current_group.append((ts, source_id, target_id, losing_team))
+        current_group.append((ts, source_id, target_id, winner_team_hint))
 
     maybe_commit(current_group)
     if not best_group:
         return 0, 0, 0xFFFFFFFF
 
-    _, _, target_id, losing_team = best_group[0]
+    _, _, target_id, winner_team_hint = best_group[0]
     target_player = _get_player(players, target_id)
-    if target_player and target_player["team"] in (1, 2):
-        if losing_team not in (1, 2):
-            losing_team = target_player["team"]
-        elif target_player["team"] != losing_team:
-            return 0, 0, 0xFFFFFFFF
 
-    if losing_team not in (1, 2):
+    winning_team = 0
+    if target_player and target_player["team"] in (1, 2):
+        winning_team = target_player["team"]
+    elif winner_team_hint in (1, 2):
+        winning_team = winner_team_hint
+
+    if winning_team not in (1, 2):
         return 0, 0, 0xFFFFFFFF
 
-    winning_team = 1 if losing_team == 2 else 2
+    losing_team = 1 if winning_team == 2 else 2
     return winning_team, losing_team, target_id
 
 

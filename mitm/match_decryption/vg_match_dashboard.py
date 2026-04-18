@@ -208,7 +208,7 @@ OP_GAMEMODE_NAME = 1135  # Game mode name
 OP_ENTITY_SCALAR = 1052  # Entity scalar/stat record (24B): [2B 0][2B eid][...][4B float][1B type]
 OP_ENTITY_STAT = 1053  # Entity stat updates (16B): [2B 0][2B eid][4B float][1B type][5B]
 OP_POSITION = 1070  # Entity position (16B): [2B 0][2B eid][4B X][4B Y][2B 0]
-OP_MATCH_RESULT_BURST = 1077  # Late 7-message end-of-match burst; target team looks like loser
+OP_MATCH_RESULT_BURST = 1077  # Late 7-message end-of-match burst; target team looks like winner
 OP_ENTITY_PROP = 1086  # Entity property (24B): [2B 0][2B eid][...][1B type][...]
 OP_ENTITY_PROP_EXT = 1087  # Entity extended property stream (40B-ish) with typed u16 codes
 OP_ENTITY_STATE = 1067  # Entity state (16B): [2B 0][2B eid][1B idx][1B state][...]
@@ -414,8 +414,8 @@ def detect_match_winner(
     """Infer winner from the late 1077 post-match burst.
 
     Complete ended matches often emit 7 consecutive opcode-1077 messages that all
-    target the same player entity. Across captures examined so far, that target's
-    team matches the losing side, so the winner is the opposite team.
+    target the same player entity. The best current interpretation is that this
+    target belongs to the winning side's post-match focus / summary card.
     """
     expected_sources = {p.entity_id for p in state.players if p.team in (1, 2)}
     if len(expected_sources) < 6:
@@ -447,7 +447,7 @@ def detect_match_winner(
 
         source_id = struct.unpack(">I", payload[0:4])[0]
         target_id = struct.unpack(">I", payload[4:8])[0]
-        losing_team = struct.unpack(">I", payload[12:16])[0]
+        winner_team_hint = struct.unpack(">I", payload[12:16])[0]
         if target_id not in expected_sources:
             maybe_commit(current_group)
             current_group = []
@@ -457,32 +457,40 @@ def detect_match_winner(
             current_group
             and (
                 target_id != current_group[0][2]
-                or losing_team != current_group[0][3]
+                or winner_team_hint != current_group[0][3]
                 or ts - current_group[-1][0] > 0.25
             )
         ):
             maybe_commit(current_group)
             current_group = []
 
-        current_group.append((ts, source_id, target_id, losing_team))
+        current_group.append((ts, source_id, target_id, winner_team_hint))
 
     maybe_commit(current_group)
     if not best_group:
         return
 
-    _, _, target_id, losing_team = best_group[0]
+    _, _, target_id, winner_team_hint = best_group[0]
     target_player = _get_player_by_entity(state, target_id)
-    if target_player and target_player.team in (1, 2):
-        if losing_team not in (1, 2):
-            losing_team = target_player.team
-        elif target_player.team != losing_team:
-            return
 
-    if losing_team not in (1, 2):
+    winning_team = 0
+    if target_player and target_player.team in (1, 2):
+        winning_team = target_player.team
+        if winner_team_hint in (1, 2) and winner_team_hint != winning_team:
+            state.events.append(
+                (
+                    best_group[-1][0] - state.start_ts,
+                    f"winner hint mismatch: burst targeted {target_player.handle or f'Entity {target_id}'} on team {winning_team} but payload hinted team {winner_team_hint}",
+                )
+            )
+    elif winner_team_hint in (1, 2):
+        winning_team = winner_team_hint
+
+    if winning_team not in (1, 2):
         return
 
-    state.losing_team = losing_team
-    state.winning_team = 1 if losing_team == 2 else 2
+    state.winning_team = winning_team
+    state.losing_team = 1 if winning_team == 2 else 2
     state.winner_focus_entity_id = target_id
 
     focus_name = (
@@ -492,7 +500,7 @@ def detect_match_winner(
     state.events.append(
         (
             best_group[-1][0] - state.start_ts,
-            f"Team {team_name} win detected from end burst targeting losing-side {focus_name}",
+            f"Team {team_name} win detected from end burst targeting winning-side {focus_name}",
         )
     )
 
