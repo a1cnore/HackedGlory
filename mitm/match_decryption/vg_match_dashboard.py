@@ -539,6 +539,65 @@ def detect_interaction_timeline_events(
         )
 
 
+def detect_kill_like_interactions(
+    messages: list[tuple[float, str, int, bytes]], state: MatchState
+):
+    """Find hero-target interactions that closely precede a target death state."""
+    seen: set[tuple[int, int, int]] = set()
+
+    for i, (ts, dir_str, opcode, dec) in enumerate(messages):
+        if dir_str != "S->C" or opcode != OP_ENTITY_PROP_EXT:
+            continue
+
+        payload = dec[2:]
+        if len(payload) < 16:
+            continue
+
+        source_id = struct.unpack(">H", payload[2:4])[0]
+        target_id = struct.unpack(">H", payload[6:8])[0]
+        if source_id not in range(1500, 1506) or target_id not in range(1500, 1506):
+            continue
+        if source_id == target_id:
+            continue
+
+        death_ts = None
+        for ts2, dir_str2, opcode2, dec2 in messages[i + 1 :]:
+            if ts2 - ts > 1.0:
+                break
+            if dir_str2 != "S->C" or opcode2 != OP_ENTITY_STATE:
+                continue
+            payload2 = dec2[2:]
+            if len(payload2) < 6 or payload2[4] != 0 or payload2[5] != 3:
+                continue
+            dead_entity = struct.unpack(">H", payload2[2:4])[0]
+            if dead_entity == target_id:
+                death_ts = ts2
+                break
+
+        if death_ts is None:
+            continue
+
+        key = (source_id, target_id, int(death_ts * 10))
+        if key in seen:
+            continue
+        seen.add(key)
+
+        source_player = _get_player_by_entity(state, source_id)
+        target_player = _get_player_by_entity(state, target_id)
+        source_name = (
+            source_player.handle if source_player and source_player.handle else f"Entity {source_id}"
+        )
+        target_name = (
+            target_player.handle if target_player and target_player.handle else f"Entity {target_id}"
+        )
+        state.events.append(
+            (
+                death_ts - state.start_ts,
+                f"{source_name} kill-like interaction family 0x{payload[8]:02x} on {target_name}",
+            )
+        )
+
+
 def detect_post_death_counter_pulses(
     messages: list[tuple[float, str, int, bytes]], state: MatchState
 ):
@@ -729,6 +788,7 @@ def analyze_match(match_dir: Path) -> MatchState:
             decode_entity_state(payload, state, ts)
 
     detect_interaction_timeline_events(messages, state)
+    detect_kill_like_interactions(messages, state)
     detect_post_death_counter_pulses(messages, state)
 
     return state
