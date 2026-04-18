@@ -90,9 +90,13 @@ class Player:
     level_like_events: int = 0
     estimated_level_like: int = 0
     prop_counters: dict[int, int] = field(default_factory=dict)
-    # Tentative aliases for two well-behaved opcode-1086 counter families.
-    gold_counter: int = 0  # alias for type 0x4d (semantics still being verified)
-    xp_counter: int = 0  # alias for type 0x3e (semantics still being verified)
+    gold_updates: int = 0
+    xp_updates: int = 0
+    cs: int = 0
+    state_updates: int = 0
+    # Most plausible total-gold / total-xp candidates from opcode-1086 so far.
+    gold_counter: int = 0  # candidate total gold from type 0x4d
+    xp_counter: int = 0  # candidate total xp from type 0x3e
     # Stat snapshots from opcode 1053 (byte[8] = stat type, float = value)
     move_speed: float = 0.0  # stat_type=3
     stat_0: float = 0.0  # stat_type=0 (attack-related)
@@ -218,6 +222,17 @@ SNAP_SLOT_OFFSET = 8  # within record
 HERO_REC_OFFSET = 168  # first hero record in payload
 HERO_REC_SIZE = 168
 HERO_NAME_OFFSET = 33  # within record
+
+SCOREBOARD_COUNTER_MAX = 100_000
+CS_TARGET_DEDUPE_SECONDS = 3.0
+
+
+def decode_prop_counter_total(payload: bytes) -> int:
+    return struct.unpack(">I", payload[9:13])[0] * 256 + payload[13]
+
+
+def is_plausible_scoreboard_counter(value: int) -> bool:
+    return 0 < value <= SCOREBOARD_COUNTER_MAX
 
 
 def decode_snapshot(payload: bytes, state: MatchState, ts: float | None = None):
@@ -462,6 +477,7 @@ def decode_entity_state(payload: bytes, state: MatchState, ts: float):
 
     state_index = payload[4]
     state_value = payload[5]
+    p.state_updates += 1
 
     if state_index == 0 and state_value == 3 and p.last_state != 3:
         p.deaths += 1
@@ -564,58 +580,65 @@ def detect_interaction_timeline_events(
 def detect_kill_like_interactions(
     messages: list[tuple[float, str, int, bytes]], state: MatchState
 ):
-    """Find hero-target interactions that closely precede a target death state."""
-    seen: set[tuple[int, int, int]] = set()
+    """Attribute one tentative killer per death from the latest pre-death hero interaction."""
+    last_death_ts: dict[int, float] = {}
 
     for i, (ts, dir_str, opcode, dec) in enumerate(messages):
-        if dir_str != "S->C" or opcode != OP_ENTITY_PROP_EXT:
+        if dir_str != "S->C" or opcode != OP_ENTITY_STATE:
             continue
 
         payload = dec[2:]
-        if len(payload) < 16:
+        if len(payload) < 6 or payload[4] != 0 or payload[5] != 3:
             continue
 
-        source_id = struct.unpack(">H", payload[2:4])[0]
-        target_id = struct.unpack(">H", payload[6:8])[0]
-        if source_id not in range(1500, 1506) or target_id not in range(1500, 1506):
+        dead_entity = struct.unpack(">H", payload[2:4])[0]
+        if dead_entity not in range(1500, 1506):
             continue
-        if source_id == target_id:
+        if ts - last_death_ts.get(dead_entity, float("-inf")) < 1.0:
             continue
+        last_death_ts[dead_entity] = ts
 
-        death_ts = None
-        for ts2, dir_str2, opcode2, dec2 in messages[i + 1 :]:
-            if ts2 - ts > 1.0:
+        latest_by_source: dict[int, tuple[float, int]] = {}
+        for ts2, dir_str2, opcode2, dec2 in reversed(messages[:i]):
+            if ts - ts2 > 1.0:
                 break
-            if dir_str2 != "S->C" or opcode2 != OP_ENTITY_STATE:
+            if dir_str2 != "S->C" or opcode2 != OP_ENTITY_PROP_EXT:
                 continue
+
             payload2 = dec2[2:]
-            if len(payload2) < 6 or payload2[4] != 0 or payload2[5] != 3:
+            if len(payload2) < 16:
                 continue
-            dead_entity = struct.unpack(">H", payload2[2:4])[0]
-            if dead_entity == target_id:
-                death_ts = ts2
-                break
 
-        if death_ts is None:
+            source_id = struct.unpack(">H", payload2[2:4])[0]
+            target_id = struct.unpack(">H", payload2[6:8])[0]
+            if (
+                source_id not in range(1500, 1506)
+                or target_id != dead_entity
+                or source_id == dead_entity
+            ):
+                continue
+            if source_id not in latest_by_source:
+                latest_by_source[source_id] = (ts2, payload2[8])
+
+        if not latest_by_source:
             continue
 
-        key = (source_id, target_id, int(death_ts * 10))
-        if key in seen:
-            continue
-        seen.add(key)
-
-        source_player = _get_player_by_entity(state, source_id)
-        target_player = _get_player_by_entity(state, target_id)
+        killer_id = max(latest_by_source.items(), key=lambda item: item[1][0])[0]
+        _, family = latest_by_source[killer_id]
+        source_player = _get_player_by_entity(state, killer_id)
+        target_player = _get_player_by_entity(state, dead_entity)
+        if source_player:
+            source_player.kills += 1
         source_name = (
-            source_player.handle if source_player and source_player.handle else f"Entity {source_id}"
+            source_player.handle if source_player and source_player.handle else f"Entity {killer_id}"
         )
         target_name = (
-            target_player.handle if target_player and target_player.handle else f"Entity {target_id}"
+            target_player.handle if target_player and target_player.handle else f"Entity {dead_entity}"
         )
         state.events.append(
             (
-                death_ts - state.start_ts,
-                f"{source_name} kill-like interaction family 0x{payload[8]:02x} on {target_name}",
+                ts - state.start_ts,
+                f"{source_name} kill on {target_name} via family 0x{family:02x}",
             )
         )
 
@@ -826,12 +849,13 @@ def detect_ability_followup_channels(
 def detect_resource_gain_events(
     messages: list[tuple[float, str, int, bytes]], state: MatchState
 ):
-    """Emit xp-like / gold-like gain events around minion and death windows."""
+    """Emit raw total-XP / total-gold gain windows around farm and kill events."""
     last_counter: dict[int, dict[int, int]] = defaultdict(dict)
     active_farm_windows: list[dict] = []
     active_kill_windows: list[dict] = []
     recent_hero_interactions: list[tuple[float, int, int]] = []
     last_death_ts: dict[int, float] = {}
+    last_cs_target_ts: dict[tuple[int, int], float] = defaultdict(lambda: float("-inf"))
 
     for ts, dir_str, opcode, dec in messages:
         if dir_str != "S->C":
@@ -857,6 +881,7 @@ def detect_resource_gain_events(
                             "target": target_id,
                             "expires": ts + 0.25,
                             "emitted": set(),
+                            "counted_cs": False,
                         }
                     )
 
@@ -864,16 +889,17 @@ def detect_resource_gain_events(
             dead_entity = struct.unpack(">H", payload[2:4])[0]
             if dead_entity in range(1500, 1506) and ts - last_death_ts.get(dead_entity, float("-inf")) >= 1.0:
                 last_death_ts[dead_entity] = ts
-                attackers = []
-                for _, source_id, target_id in recent_hero_interactions:
-                    if target_id == dead_entity and source_id != dead_entity and source_id not in attackers:
-                        attackers.append(source_id)
-                if attackers:
+                latest_by_source: dict[int, float] = {}
+                for interaction_ts, source_id, target_id in recent_hero_interactions:
+                    if target_id == dead_entity and source_id != dead_entity:
+                        latest_by_source[source_id] = interaction_ts
+                if latest_by_source:
+                    killer = max(latest_by_source.items(), key=lambda item: item[1])[0]
                     active_kill_windows.append(
                         {
                             "dead": dead_entity,
-                            "killer": attackers[-1],
-                            "attackers": set(attackers),
+                            "killer": killer,
+                            "attackers": set(latest_by_source),
                             "expires": ts + 0.25,
                             "emitted": set(),
                         }
@@ -885,17 +911,20 @@ def detect_resource_gain_events(
             if entity_id not in range(1500, 1506) or prop_type not in (0x3E, 0x4D):
                 continue
 
-            combined = struct.unpack(">I", payload[9:13])[0] * 256 + payload[13]
+            combined = decode_prop_counter_total(payload)
+            if not is_plausible_scoreboard_counter(combined):
+                continue
+
             previous = last_counter[entity_id].get(prop_type)
             last_counter[entity_id][prop_type] = combined
-            if previous is None:
+            if previous is None or combined <= previous:
                 continue
 
             delta = combined - previous
-            if delta <= 0 or delta > 4096:
+            if delta > 4096:
                 continue
 
-            channel_name = "xp-like" if prop_type == 0x3E else "gold-like"
+            channel_name = "xp" if prop_type == 0x3E else "gold"
             player = _get_player_by_entity(state, entity_id)
             name = player.handle if player and player.handle else f"Entity {entity_id}"
 
@@ -908,12 +937,19 @@ def detect_resource_gain_events(
                         player.xp_like_gain_events += 1
                     else:
                         player.gold_like_gain_events += 1
+                    if not window["counted_cs"]:
+                        cs_key = (entity_id, window["target"])
+                        if ts - last_cs_target_ts[cs_key] >= CS_TARGET_DEDUPE_SECONDS:
+                            player.cs += 1
+                            last_cs_target_ts[cs_key] = ts
+                        window["counted_cs"] = True
                 state.events.append(
                     (
                         ts - state.start_ts,
                         f"{name} farm {channel_name} gain +{delta}",
                     )
                 )
+                break
 
             for window in active_kill_windows:
                 role = None
@@ -956,7 +992,11 @@ def detect_level_like_milestones(
         payload = dec[2:]
         if opcode == OP_ENTITY_PROP and len(payload) >= 14 and payload[8] == 0x3E:
             entity_id = struct.unpack(">H", payload[2:4])[0]
-            if entity_id not in range(1500, 1506) or ts - last_level_ts[entity_id] < 5.0:
+            if (
+                entity_id not in range(1500, 1506)
+                or ts - last_level_ts[entity_id] < 5.0
+                or not is_plausible_scoreboard_counter(decode_prop_counter_total(payload))
+            ):
                 continue
 
             changed_types: set[int] = set()
@@ -1150,9 +1190,9 @@ def detect_post_death_counter_pulses(
 def decode_entity_prop(payload: bytes, state: MatchState):
     """Decode opcode 1086: property updates with counter tracking.
 
-    Structure: [2B 0][2B eid][2B 0][2B eid][1B type][4B counter][1B minor][2B aux][6B 0]
-    Type 0x3e / 0x4d are currently the best-behaved counter families, but the
-    exact gameplay semantics are still being re-verified against timeline events.
+    Structure: [2B 0][2B eid][2B 0][2B eid][1B type][5B counter-ish payload][2B aux][6B 0]
+    The 0x3e / 0x4d families behave like the best current total-XP / total-gold
+    candidates, but only when the raw 5-byte value stays in a plausible scoreboard range.
     """
     if len(payload) < 14:
         return
@@ -1162,16 +1202,20 @@ def decode_entity_prop(payload: bytes, state: MatchState):
         return
 
     prop_type = payload[8]
-    major = struct.unpack(">I", payload[9:13])[0]
-    minor = payload[13]
-    combined = major * 256 + minor
+    combined = decode_prop_counter_total(payload)
 
     p.prop_counters[prop_type] = max(p.prop_counters.get(prop_type, 0), combined)
 
-    if prop_type == 0x4D:
-        p.gold_counter = max(p.gold_counter, combined)
-    elif prop_type == 0x3E:
-        p.xp_counter = max(p.xp_counter, combined)
+    if prop_type == 0x4D and is_plausible_scoreboard_counter(combined):
+        if combined >= p.gold_counter:
+            if combined > p.gold_counter:
+                p.gold_updates += 1
+            p.gold_counter = combined
+    elif prop_type == 0x3E and is_plausible_scoreboard_counter(combined):
+        if combined >= p.xp_counter:
+            if combined > p.xp_counter:
+                p.xp_updates += 1
+            p.xp_counter = combined
 
 
 # ── Main Analysis ──
@@ -1319,21 +1363,15 @@ def format_duration(seconds: float) -> str:
 
 
 def format_counter(counter: int) -> str:
-    """Format the combined counter (major*256+minor).
-
-    The counter encodes a fractional value: major is the integer part and
-    minor (0-255) is the fractional sub-tick.  We display major as the
-    meaningful quantity.
-    """
-    if counter == 0:
+    """Format a plausible raw scoreboard counter total."""
+    if counter <= 0:
         return "-"
-    major = counter // 256
-    return str(major)
+    return f"{counter:,}"
 
 
 def print_dashboard(state: MatchState):
     """Print a richly formatted terminal dashboard."""
-    W = 72
+    W = 88
 
     # Header
     print()
@@ -1359,27 +1397,31 @@ def print_dashboard(state: MatchState):
     red_players = [p for p in state.players if p.team == 2]
 
     # Scoreboard header
-    print(f"{C_BOLD}  {'PLAYER':<20s} {'HERO':<12s} {'GOLD':>6s} {'XP':>6s} {'SPD':>5s} {'POS':>15s} {'MOVES':>6s}{C_RESET}")
-    print(f"  {'-' * 68}")
+    print(
+        f"{C_BOLD}  {'PLAYER':<20s} {'HERO':<12s} {'LVL':>4s} {'K':>3s} {'D':>3s} {'CS':>4s} {'GOLD':>7s} {'XP':>7s} {'POS':>15s}{C_RESET}"
+    )
+    print(f"  {'-' * 84}")
 
     # Blue team
     print(f"  {C_BG_BLUE}{C_WHITE}{C_BOLD} TEAM BLUE (1) {C_RESET}")
+    base_level = 4 if "aral" in state.game_mode.lower() else 1 if state.game_mode else 0
+
     for p in blue_players:
-        _print_player_row(p)
+        _print_player_row(p, base_level)
 
     print()
 
     # Red team
     print(f"  {C_BG_RED}{C_WHITE}{C_BOLD} TEAM RED  (2) {C_RESET}")
     for p in red_players:
-        _print_player_row(p)
+        _print_player_row(p, base_level)
 
     # Unassigned players (if any)
     other = [p for p in state.players if p.team not in (1, 2)]
     if other:
         print(f"\n  {C_DIM}UNASSIGNED{C_RESET}")
         for p in other:
-            _print_player_row(p)
+            _print_player_row(p, base_level)
 
     print()
 
@@ -1440,7 +1482,7 @@ def print_dashboard(state: MatchState):
         1054: "Entity stat (24B)",
         1067: "Entity state change",
         1070: "Entity position",
-        1086: "Entity property (gold/xp)",
+        1086: "Entity property counters",
         1087: "Entity data (40B)",
         1107: "Hero/skin catalog",
         1108: "Game mode config",
@@ -1456,25 +1498,26 @@ def print_dashboard(state: MatchState):
     print()
 
 
-def _print_player_row(p: Player):
-    """Print one player's scoreboard row."""
+def _print_player_row(p: Player, base_level: int):
+    """Print one player's gameplay-focused scoreboard row."""
     name = p.handle[:18] if p.handle else f"Slot {p.slot}"
     hero = p.hero[:10] if p.hero else "--"
-    gold = format_counter(p.gold_counter) if p.gold_counter else "-"
-    xp = format_counter(p.xp_counter) if p.xp_counter else "-"
-    spd = f"{p.move_speed:.1f}" if p.move_speed > 0 else "-"
+    level = str(base_level + p.level_like_events) if p.snapshot_active and base_level else "-"
+    kills = str(p.kills)
+    deaths = str(p.deaths)
+    cs = str(p.cs)
+    gold = format_counter(p.gold_counter)
+    xp = format_counter(p.xp_counter)
 
     if p.pos_updates > 0:
         pos = f"({p.pos_x:>6.1f},{p.pos_y:>5.1f})"
     else:
         pos = "          -"
 
-    moves = str(p.pos_updates) if p.pos_updates else "-"
-
     tc = C_CYAN if p.team == 1 else C_RED if p.team == 2 else C_DIM
     print(
-        f"  {tc}{name:<20s}{C_RESET} {hero:<12s} {gold:>6s} {xp:>6s} "
-        f"{spd:>5s} {pos:>15s} {moves:>6s}"
+        f"  {tc}{name:<20s}{C_RESET} {hero:<12s} {level:>4s} {kills:>3s} {deaths:>3s} {cs:>4s} "
+        f"{gold:>7s} {xp:>7s} {pos:>15s}"
     )
 
 

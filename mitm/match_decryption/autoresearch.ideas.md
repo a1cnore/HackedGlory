@@ -3,3 +3,4 @@
 - `1052` common type bytes and value ranges should be nameable by correlation: e.g. constant 400/100/1.5-like values may be range/resource/multiplier stats. Cross-check against `hero_type_id` clusters.
 - `1087` likely carries inventory/loadout-like state. The first code burst per player has repeated values like `121, 122, 123, 173, 174, 254, 255, 273`; classify which are structural markers vs actual item/property IDs, then turn changes into item-buy/state events.
 - Snapshot records (`1113`/`1114`) probably contain scoreboard counters between offsets 0 and 24 and/or between offsets 56 and 104. A temporal diff over consecutive snapshots may reveal kills/deaths/CS/item slots from monotonic or slot-like fields.
+- `1086` type `0x42` spikes near clustered stat jumps more often than most other small-range counter families. Correlate it against confirmed level-up windows and ARAL base-level constraints before assuming `0x3e` alone is the XP / level driver.
