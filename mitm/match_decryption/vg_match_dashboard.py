@@ -22,6 +22,7 @@ import hashlib
 import json
 import struct
 import sys
+from bisect import bisect_left
 from collections import Counter, defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -580,7 +581,38 @@ def detect_interaction_timeline_events(
 def detect_kill_like_interactions(
     messages: list[tuple[float, str, int, bytes]], state: MatchState
 ):
-    """Attribute one tentative killer per death from the latest pre-death hero interaction."""
+    """Attribute one tentative killer per death from combat or reward windows."""
+    counter_delta_events: list[tuple[float, int]] = []
+    last_counter: dict[int, dict[int, int]] = defaultdict(dict)
+
+    for ts, dir_str, opcode, dec in messages:
+        if dir_str != "S->C" or opcode != OP_ENTITY_PROP:
+            continue
+
+        payload = dec[2:]
+        if len(payload) < 14:
+            continue
+
+        entity_id = struct.unpack(">H", payload[2:4])[0]
+        prop_type = payload[8]
+        if entity_id not in range(1500, 1506) or prop_type not in (0x3E, 0x4D):
+            continue
+
+        combined = decode_prop_counter_total(payload)
+        if not is_plausible_scoreboard_counter(combined):
+            continue
+
+        previous = last_counter[entity_id].get(prop_type)
+        last_counter[entity_id][prop_type] = combined
+        if previous is None or combined <= previous:
+            continue
+
+        delta = combined - previous
+        if delta > 4096:
+            continue
+        counter_delta_events.append((ts, entity_id))
+
+    counter_delta_times = [ts for ts, _ in counter_delta_events]
     last_death_ts: dict[int, float] = {}
 
     for i, (ts, dir_str, opcode, dec) in enumerate(messages):
@@ -598,6 +630,8 @@ def detect_kill_like_interactions(
             continue
         last_death_ts[dead_entity] = ts
 
+        killer_id = None
+        reason = ""
         latest_by_source: dict[int, tuple[float, int]] = {}
         for ts2, dir_str2, opcode2, dec2 in reversed(messages[:i]):
             if ts - ts2 > 1.0:
@@ -620,11 +654,28 @@ def detect_kill_like_interactions(
             if source_id not in latest_by_source:
                 latest_by_source[source_id] = (ts2, payload2[8])
 
-        if not latest_by_source:
+        if latest_by_source:
+            killer_id = max(latest_by_source.items(), key=lambda item: item[1][0])[0]
+            _, family = latest_by_source[killer_id]
+            reason = f"family 0x{family:02x}"
+        else:
+            reward_sources: set[int] = set()
+            reward_idx = bisect_left(counter_delta_times, ts)
+            while (
+                reward_idx < len(counter_delta_events)
+                and counter_delta_events[reward_idx][0] - ts <= 0.5
+            ):
+                _, source_id = counter_delta_events[reward_idx]
+                if source_id != dead_entity:
+                    reward_sources.add(source_id)
+                reward_idx += 1
+            if len(reward_sources) == 1:
+                killer_id = next(iter(reward_sources))
+                reason = "reward window"
+
+        if killer_id is None:
             continue
 
-        killer_id = max(latest_by_source.items(), key=lambda item: item[1][0])[0]
-        _, family = latest_by_source[killer_id]
         source_player = _get_player_by_entity(state, killer_id)
         target_player = _get_player_by_entity(state, dead_entity)
         if source_player:
@@ -638,7 +689,7 @@ def detect_kill_like_interactions(
         state.events.append(
             (
                 ts - state.start_ts,
-                f"{source_name} kill on {target_name} via family 0x{family:02x}",
+                f"{source_name} kill on {target_name} via {reason}",
             )
         )
 
