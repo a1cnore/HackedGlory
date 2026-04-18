@@ -582,7 +582,7 @@ def detect_kill_like_interactions(
     messages: list[tuple[float, str, int, bytes]], state: MatchState
 ):
     """Attribute one tentative killer per death from combat or reward windows."""
-    counter_delta_events: list[tuple[float, int]] = []
+    counter_delta_events: list[tuple[float, int, int]] = []
     last_counter: dict[int, dict[int, int]] = defaultdict(dict)
 
     for ts, dir_str, opcode, dec in messages:
@@ -610,9 +610,9 @@ def detect_kill_like_interactions(
         delta = combined - previous
         if delta > 4096:
             continue
-        counter_delta_events.append((ts, entity_id))
+        counter_delta_events.append((ts, entity_id, delta))
 
-    counter_delta_times = [ts for ts, _ in counter_delta_events]
+    counter_delta_times = [ts for ts, _, _ in counter_delta_events]
     last_death_ts: dict[int, float] = {}
 
     for i, (ts, dir_str, opcode, dec) in enumerate(messages):
@@ -659,19 +659,28 @@ def detect_kill_like_interactions(
             _, family = latest_by_source[killer_id]
             reason = f"family 0x{family:02x}"
         else:
-            reward_sources: set[int] = set()
+            reward_totals: dict[int, int] = defaultdict(int)
             reward_idx = bisect_left(counter_delta_times, ts)
             while (
                 reward_idx < len(counter_delta_events)
                 and counter_delta_events[reward_idx][0] - ts <= 0.5
             ):
-                _, source_id = counter_delta_events[reward_idx]
+                _, source_id, delta = counter_delta_events[reward_idx]
                 if source_id != dead_entity:
-                    reward_sources.add(source_id)
+                    reward_totals[source_id] += delta
                 reward_idx += 1
-            if len(reward_sources) == 1:
-                killer_id = next(iter(reward_sources))
+            if len(reward_totals) == 1:
+                killer_id = next(iter(reward_totals))
                 reason = "reward window"
+            elif len(reward_totals) >= 2:
+                ranked = sorted(
+                    reward_totals.items(),
+                    key=lambda item: (item[1], -item[0]),
+                    reverse=True,
+                )
+                if ranked[0][1] >= ranked[1][1] * 2:
+                    killer_id = ranked[0][0]
+                    reason = "dominant reward window"
 
         if killer_id is None:
             continue
