@@ -222,14 +222,14 @@ def main():
             print(
                 f"{filepath}: {info['name']} "
                 f"(v={info['vertex_count']}, idx={info['index_count']}, "
-                f"attrs={len(info['attrs'])})"
+                f"stride={info['stride']}, attrs={len(info['attrs'])})"
             )
             for a in info["attrs"]:
                 print(f"  {a['type_name']}x{a['count']} @{a['offset']} = {a['semantic_name']}")
             continue
 
         print(f"\nExtracting: {filepath}", file=sys.stderr)
-        print(f"  {info['name']}: {info['vertex_count']} verts, {info['index_count']} indices", file=sys.stderr)
+        print(f"  {info['name']}: {info['vertex_count']} verts, {info['index_count']} indices, stride={info['stride']}", file=sys.stderr)
 
         mesh = extract_mesh(data, info)
         if mesh is None:

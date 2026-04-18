@@ -1224,7 +1224,7 @@ def detect_level_like_milestones(
     fallback_targets = {
         player.entity_id
         for player in state.players
-        if player.snapshot_active and player.level_like_events == 0 and player.xp_counter >= 12_000
+        if player.snapshot_active and player.level_like_events == 0 and player.xp_counter >= 10_000
     }
     if not fallback_targets:
         return
