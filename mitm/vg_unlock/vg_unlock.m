@@ -20,6 +20,20 @@
 
 #define LOG(fmt, ...) NSLog(@"[vg_unlock] " fmt, ##__VA_ARGS__)
 
+/* TLS delegate for bridge HTTPS requests — accepts self-signed certs */
+@interface VGBridgeTLSDelegate : NSObject <NSURLSessionDelegate>
+@end
+@implementation VGBridgeTLSDelegate
+- (void)URLSession:(NSURLSession *)session
+    didReceiveChallenge:(NSURLAuthenticationChallenge *)challenge
+     completionHandler:(void (^)(NSURLSessionAuthChallengeDisposition,
+                                 NSURLCredential *))handler {
+    handler(NSURLSessionAuthChallengeUseCredential,
+            [NSURLCredential credentialForTrust:
+                challenge.protectionSpace.serverTrust]);
+}
+@end
+
 static uintptr_t g_base = 0;
 
 /* ========== Layer 1: Constants parser replacements ========== */
@@ -118,9 +132,12 @@ static void hook_refresh(void *self) {
      *
      * FUN_10012c5b0(key, value) writes an int to the store.
      *
-     * Bridge: fetch values from the interceptor's /vg_elo_config endpoint
-     * so the interceptor is the single source of truth. Falls back to
-     * hardcoded defaults if the endpoint is unreachable.
+     * Bridge: GET https://HOST_IP/vg_elo_config from the interceptor
+     * (mitmproxy on port 443) so it is the single source of truth.
+     * Falls back to hardcoded defaults if unreachable.
+     *
+     * HOST_IP is read from the platformUrl the game already connects to,
+     * which the interceptor rewrites to point at itself.
      */
     static int ranked_kv_done = 0;
     if (!ranked_kv_done) {
@@ -132,24 +149,49 @@ static void hook_refresh(void *self) {
         int bucket_5v5 = 29, bucket_3v3 = 29;
         int earned_5v5 = 3000, earned_3v3 = 3000;
 
-        /* Try to fetch config from interceptor */
+        /* Fetch config from interceptor via HTTPS (port 443).
+         * NSURLSession with a delegate that accepts the self-signed cert
+         * (NSData dataWithContentsOfURL: uses Network.framework TLS which
+         * isn't covered by the SecureTransport ssl_bypass hooks). */
         @autoreleasepool {
             const char *host = getenv("VG_HOST_IP");
-            if (!host) host = "192.168.64.1";
+            if (!host) host = "192.168.8.192";
             NSString *urlStr = [NSString stringWithFormat:
-                @"http://%s/vg_elo_config", host];
+                @"https://%s/vg_elo_config", host];
             NSURL *url = [NSURL URLWithString:urlStr];
-            NSData *data = [NSData dataWithContentsOfURL:url];
-            if (data) {
+
+            __block NSData *result = nil;
+            dispatch_semaphore_t sem = dispatch_semaphore_create(0);
+
+            NSURLSessionConfiguration *cfg =
+                [NSURLSessionConfiguration ephemeralSessionConfiguration];
+            cfg.timeoutIntervalForRequest = 3.0;
+            /* Inline delegate to accept self-signed cert */
+            NSURLSession *session = [NSURLSession
+                sessionWithConfiguration:cfg
+                delegate:(id)[[VGBridgeTLSDelegate alloc] init]
+                delegateQueue:nil];
+
+            [[session dataTaskWithURL:url
+                completionHandler:^(NSData *data, NSURLResponse *resp, NSError *err) {
+                    result = data;
+                    dispatch_semaphore_signal(sem);
+                }] resume];
+
+            dispatch_semaphore_wait(sem,
+                dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC));
+            [session invalidateAndCancel];
+
+            if (result) {
                 NSError *err = nil;
-                NSDictionary *cfg = [NSJSONSerialization JSONObjectWithData:data
-                    options:0 error:&err];
-                if (cfg && !err) {
+                NSDictionary *parsed = [NSJSONSerialization
+                    JSONObjectWithData:result options:0 error:&err];
+                if (parsed && !err) {
                     NSNumber *v;
-                    if ((v = cfg[@"5v5_eloBucket"]))  bucket_5v5 = v.intValue;
-                    if ((v = cfg[@"3v3_eloBucket"]))  bucket_3v3 = v.intValue;
-                    if ((v = cfg[@"5v5_eloEarned"])) earned_5v5 = v.intValue;
-                    if ((v = cfg[@"3v3_eloEarned"])) earned_3v3 = v.intValue;
+                    if ((v = parsed[@"5v5_eloBucket"]))  bucket_5v5 = v.intValue;
+                    if ((v = parsed[@"3v3_eloBucket"]))  bucket_3v3 = v.intValue;
+                    if ((v = parsed[@"5v5_eloEarned"])) earned_5v5 = v.intValue;
+                    if ((v = parsed[@"3v3_eloEarned"])) earned_3v3 = v.intValue;
                     LOG(@"[ranked-kv] bridge: got config from %@ "
                         @"(5v5=%d/%d, 3v3=%d/%d)",
                         urlStr, bucket_5v5, earned_5v5,
@@ -158,8 +200,8 @@ static void hook_refresh(void *self) {
                     LOG(@"[ranked-kv] bridge: JSON parse failed: %@", err);
                 }
             } else {
-                LOG(@"[ranked-kv] bridge: fetch failed, using defaults "
-                    @"(host=%s)", host);
+                LOG(@"[ranked-kv] bridge: fetch %@ failed, using defaults",
+                    urlStr);
             }
         }
 
