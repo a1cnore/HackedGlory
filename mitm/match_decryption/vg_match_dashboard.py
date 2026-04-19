@@ -687,6 +687,7 @@ def detect_kill_like_interactions(
 ):
     """Attribute one tentative killer per death from combat or reward windows."""
     counter_delta_events: list[tuple[float, int, int]] = []
+    counter_delta_42_events: list[tuple[float, int, int]] = []
     last_counter: dict[int, dict[int, int]] = defaultdict(dict)
 
     for ts, dir_str, opcode, dec in messages:
@@ -699,7 +700,7 @@ def detect_kill_like_interactions(
 
         entity_id = struct.unpack(">H", payload[2:4])[0]
         prop_type = payload[8]
-        if entity_id not in range(1500, 1506) or prop_type not in (0x3E, 0x4D):
+        if entity_id not in range(1500, 1506) or prop_type not in (0x3E, 0x42, 0x4D):
             continue
 
         combined = decode_prop_counter_total(payload)
@@ -714,9 +715,13 @@ def detect_kill_like_interactions(
         delta = combined - previous
         if delta > 4096:
             continue
-        counter_delta_events.append((ts, entity_id, delta))
+        if prop_type == 0x42:
+            counter_delta_42_events.append((ts, entity_id, delta))
+        else:
+            counter_delta_events.append((ts, entity_id, delta))
 
     counter_delta_times = [ts for ts, _, _ in counter_delta_events]
+    counter_delta_42_times = [ts for ts, _, _ in counter_delta_42_events]
     last_death_ts: dict[int, float] = {}
 
     for i, (ts, dir_str, opcode, dec) in enumerate(messages):
@@ -795,6 +800,24 @@ def detect_kill_like_interactions(
                 if ranked[0][1] >= ranked[1][1] * 2:
                     killer_id = ranked[0][0]
                     reason = "dominant reward window"
+
+            if killer_id is None:
+                reward_totals = defaultdict(int)
+                reward_idx = bisect_left(counter_delta_42_times, ts)
+                while (
+                    reward_idx < len(counter_delta_42_events)
+                    and counter_delta_42_events[reward_idx][0] - ts <= 1.0
+                ):
+                    _, source_id, delta = counter_delta_42_events[reward_idx]
+                    if source_id != dead_entity:
+                        source_player = _get_player_by_entity(state, source_id)
+                        source_team = source_player.team if source_player and source_player.team in (1, 2) else 0
+                        if not target_team or source_team != target_team:
+                            reward_totals[source_id] += delta
+                    reward_idx += 1
+                if len(reward_totals) == 1:
+                    killer_id = next(iter(reward_totals))
+                    reason = "0x42 reward window"
 
         if killer_id is None:
             continue

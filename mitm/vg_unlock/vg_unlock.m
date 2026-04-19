@@ -117,7 +117,10 @@ static void hook_refresh(void *self) {
      * happens in CE since the data starts at defaults.
      *
      * FUN_10012c5b0(key, value) writes an int to the store.
-     * Skill tier 29 = Vainglorious Gold (tier = 29/3+1 = 10, sub = 29%3 = 2).
+     *
+     * Bridge: fetch values from the interceptor's /vg_elo_config endpoint
+     * so the interceptor is the single source of truth. Falls back to
+     * hardcoded defaults if the endpoint is unreachable.
      */
     static int ranked_kv_done = 0;
     if (!ranked_kv_done) {
@@ -125,19 +128,55 @@ static void hook_refresh(void *self) {
         typedef void (*kv_write_fn)(const char *, int);
         kv_write_fn kv_write = (kv_write_fn)(g_base + 0x12c5b0);
 
-        kv_write("new5v5RankedDataEloBucket", 29);
-        kv_write("prev5v5RankedDataEloBucket", 29);
-        kv_write("new5v5RankedDatamEloBucket", 29);
-        kv_write("prev5v5RankedDatamEloEarned", 3000);
-        kv_write("new5v5RankedDatamEloEarned", 3000);
+        /* Defaults — used when interceptor is unreachable */
+        int bucket_5v5 = 29, bucket_3v3 = 29;
+        int earned_5v5 = 3000, earned_3v3 = 3000;
 
-        kv_write("new3v3RankedDataEloBucket", 29);
-        kv_write("prev3v3RankedDataEloBucket", 29);
-        kv_write("new3v3RankedDatamEloBucket", 29);
-        kv_write("prev3v3RankedDatamEloEarned", 3000);
-        kv_write("new3v3RankedDatamEloEarned", 3000);
+        /* Try to fetch config from interceptor */
+        @autoreleasepool {
+            const char *host = getenv("VG_HOST_IP");
+            if (!host) host = "192.168.64.1";
+            NSString *urlStr = [NSString stringWithFormat:
+                @"http://%s/vg_elo_config", host];
+            NSURL *url = [NSURL URLWithString:urlStr];
+            NSData *data = [NSData dataWithContentsOfURL:url];
+            if (data) {
+                NSError *err = nil;
+                NSDictionary *cfg = [NSJSONSerialization JSONObjectWithData:data
+                    options:0 error:&err];
+                if (cfg && !err) {
+                    NSNumber *v;
+                    if ((v = cfg[@"5v5_eloBucket"]))  bucket_5v5 = v.intValue;
+                    if ((v = cfg[@"3v3_eloBucket"]))  bucket_3v3 = v.intValue;
+                    if ((v = cfg[@"5v5_eloEarned"])) earned_5v5 = v.intValue;
+                    if ((v = cfg[@"3v3_eloEarned"])) earned_3v3 = v.intValue;
+                    LOG(@"[ranked-kv] bridge: got config from %@ "
+                        @"(5v5=%d/%d, 3v3=%d/%d)",
+                        urlStr, bucket_5v5, earned_5v5,
+                        bucket_3v3, earned_3v3);
+                } else {
+                    LOG(@"[ranked-kv] bridge: JSON parse failed: %@", err);
+                }
+            } else {
+                LOG(@"[ranked-kv] bridge: fetch failed, using defaults "
+                    @"(host=%s)", host);
+            }
+        }
 
-        LOG(@"[ranked-kv] wrote skill tier 29 (Vainglorious Gold) to key-value store");
+        kv_write("new5v5RankedDataEloBucket", bucket_5v5);
+        kv_write("prev5v5RankedDataEloBucket", bucket_5v5);
+        kv_write("new5v5RankedDatamEloBucket", bucket_5v5);
+        kv_write("prev5v5RankedDatamEloEarned", earned_5v5);
+        kv_write("new5v5RankedDatamEloEarned", earned_5v5);
+
+        kv_write("new3v3RankedDataEloBucket", bucket_3v3);
+        kv_write("prev3v3RankedDataEloBucket", bucket_3v3);
+        kv_write("new3v3RankedDatamEloBucket", bucket_3v3);
+        kv_write("prev3v3RankedDatamEloEarned", earned_3v3);
+        kv_write("new3v3RankedDatamEloEarned", earned_3v3);
+
+        LOG(@"[ranked-kv] wrote skill tier %d/%d (5v5/3v3) to key-value store",
+            bucket_5v5, bucket_3v3);
     }
 
     static int sidebar_fix_done = 0;
