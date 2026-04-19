@@ -16,6 +16,8 @@ The current code already derives the Blowfish key, decrypts messages correctly, 
   - `level_players` — active players with at least one decoded level-up
   - `replay_players` — active players that have gold + XP + death timeline plus at least one of kills / CS / level-ups
   - `winner_matches` — full gameplay captures where the winner/loser team is decoded from an end-of-match signal
+  - `useful_parse_score` — diagnostic secondary score for broader useful match semantics outside the core scoreboard objective (positions, ability-like triggers, item/talent signals, and tracked non-player world positions)
+  - `position_players`, `ability_trigger_players`, `minion_interaction_players`, `item_players`, `talent_choice_players`, `world_position_entities` — supporting observability metrics for broader useful parse coverage
   - `scored_matches` — full gameplay captures included in the benchmark
   - `total_players` — active player rows considered by the benchmark
 

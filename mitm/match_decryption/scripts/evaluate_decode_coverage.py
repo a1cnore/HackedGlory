@@ -15,6 +15,7 @@ FULL_MATCH_MIN_DURATION_S = 120.0
 MIN_ACTIVE_PLAYERS = 6
 MIN_RESOURCE_TOTAL = 1000
 MIN_RESOURCE_UPDATES = 5
+MIN_WORLD_POSITION_UPDATES = 3
 
 
 def match_dirs() -> list[Path]:
@@ -80,6 +81,41 @@ def player_score(player) -> tuple[int, bool, bool, bool, bool, bool, bool, bool,
     )
 
 
+def player_useful_parse_score(
+    player,
+) -> tuple[int, bool, bool, bool, bool, bool]:
+    has_position = player.pos_updates >= 1
+    has_ability_trigger = bool(
+        player.hero_interaction_families
+        or player.ability_followup_scalar_types
+        or player.ability_followup_prop_families
+    )
+    has_minion_interaction = bool(player.minion_interaction_families)
+    has_item_signal = bool(player.item_like_ids)
+    has_talent_signal = player.talent_choice_id != 0
+
+    score = 0
+    if has_position:
+        score += 2
+    if has_ability_trigger:
+        score += 6
+    if has_minion_interaction:
+        score += 4
+    if has_item_signal:
+        score += 4
+    if has_talent_signal:
+        score += 3
+
+    return (
+        score,
+        has_position,
+        has_ability_trigger,
+        has_minion_interaction,
+        has_item_signal,
+        has_talent_signal,
+    )
+
+
 def main() -> int:
     if not MATCHES_DIR.exists():
         print("matches directory not found", file=sys.stderr)
@@ -102,6 +138,13 @@ def main() -> int:
     cs_players = 0
     level_players = 0
     replay_players = 0
+    useful_parse_score = 0
+    position_players = 0
+    ability_trigger_players = 0
+    minion_interaction_players = 0
+    item_players = 0
+    talent_choice_players = 0
+    world_position_entities = 0
     total_kills = 0
     total_deaths = 0
     total_cs = 0
@@ -116,6 +159,14 @@ def main() -> int:
         if state.winning_team in (1, 2):
             winner_matches += 1
             scoreboard_score += 40
+
+        match_world_positions = sum(
+            1
+            for updates in state.world_position_updates.values()
+            if updates >= MIN_WORLD_POSITION_UPDATES
+        )
+        world_position_entities += match_world_positions
+        useful_parse_score += min(match_world_positions, 100) // 5
 
         for player in state.players:
             if not player.snapshot_active:
@@ -152,6 +203,27 @@ def main() -> int:
             if replay_ready:
                 replay_players += 1
 
+            (
+                useful_score,
+                has_position,
+                has_ability_trigger,
+                has_minion_interaction,
+                has_item_signal,
+                has_talent_signal,
+            ) = player_useful_parse_score(player)
+            useful_parse_score += useful_score
+
+            if has_position:
+                position_players += 1
+            if has_ability_trigger:
+                ability_trigger_players += 1
+            if has_minion_interaction:
+                minion_interaction_players += 1
+            if has_item_signal:
+                item_players += 1
+            if has_talent_signal:
+                talent_choice_players += 1
+
             total_kills += player.kills
             total_deaths += player.deaths
             total_cs += player.cs
@@ -169,6 +241,13 @@ def main() -> int:
     print(f"METRIC cs_players={cs_players}")
     print(f"METRIC level_players={level_players}")
     print(f"METRIC replay_players={replay_players}")
+    print(f"METRIC useful_parse_score={useful_parse_score}")
+    print(f"METRIC position_players={position_players}")
+    print(f"METRIC ability_trigger_players={ability_trigger_players}")
+    print(f"METRIC minion_interaction_players={minion_interaction_players}")
+    print(f"METRIC item_players={item_players}")
+    print(f"METRIC talent_choice_players={talent_choice_players}")
+    print(f"METRIC world_position_entities={world_position_entities}")
     print(f"METRIC total_kills={total_kills}")
     print(f"METRIC total_deaths={total_deaths}")
     print(f"METRIC total_cs={total_cs}")

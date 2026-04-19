@@ -134,6 +134,7 @@ class MatchState:
     # Timeline events
     events: list[tuple[float, str]] = field(default_factory=list)
     activated_entities: set[int] = field(default_factory=set)
+    world_position_updates: Counter = field(default_factory=Counter)
     winning_team: int = 0
     losing_team: int = 0
     winner_focus_entity_id: int = 0xFFFFFFFF
@@ -515,6 +516,8 @@ def decode_position(payload: bytes, state: MatchState):
         p.pos_x = struct.unpack(">f", payload[4:8])[0]
         p.pos_y = struct.unpack(">f", payload[8:12])[0]
         p.pos_updates += 1
+    elif entity_id not in (0, 0xFFFF):
+        state.world_position_updates[entity_id] += 1
 
 
 def decode_entity_scalar(payload: bytes, state: MatchState):
