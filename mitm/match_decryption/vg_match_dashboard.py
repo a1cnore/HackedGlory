@@ -1241,7 +1241,7 @@ def detect_level_like_milestones(
             continue
 
         payload = dec[2:]
-        if len(payload) < 14 or payload[8] != 0x42:
+        if len(payload) < 14 or payload[8] not in (0x3E, 0x42):
             continue
 
         entity_id = struct.unpack(">H", payload[2:4])[0]
@@ -1253,7 +1253,8 @@ def detect_level_like_milestones(
         ):
             continue
 
-        changed_types = collect_changed_stat_types(entity_id, i + 1, ts, 0.35)
+        lookahead_seconds = 0.35 if payload[8] == 0x42 else 0.30
+        changed_types = collect_changed_stat_types(entity_id, i + 1, ts, lookahead_seconds)
         if len(changed_types) != 1:
             continue
 
