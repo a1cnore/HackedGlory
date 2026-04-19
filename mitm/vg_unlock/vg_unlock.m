@@ -725,11 +725,51 @@ static void hook_end_session(void *self) {
 
     orig_end_session(self);
 
-    /* Restore the flag so notifyGameResults can still fire */
-    int after = *(int *)((uint8_t *)self + 0x2b08);
+    /* Restore the flag so notifyGameResults can fire */
     *(int *)((uint8_t *)self + 0x2b08) = saved_flag;
-    LOG(@"[post-match] endSession returned, +0x2b08: %d -> %d (restored to %d)",
-        saved_flag, after, saved_flag);
+    LOG(@"[post-match] endSession returned, restored +0x2b08 to %d", saved_flag);
+
+    /*
+     * Force-call notifyGameResults (FUN_1005028f8).
+     *
+     * The normal caller is CE-gated and never dispatches this vtable call.
+     * We call it directly from here since we have `self` (the session manager)
+     * and the +0x2b08 flag is still set.
+     *
+     * Signature: FUN_1005028f8(self, unused, body)
+     *   - param_2 is unused
+     *   - param_3 is the request body (std::string), built using FUN_1004f4e58
+     *     which serializes session token into the JSON request body.
+     *     Same pattern as notifyExitPostMatch uses.
+     */
+    if (saved_flag != 0) {
+        /* Build request body from session token (same as notifyExitPostMatch) */
+        uint8_t body[24];
+        memset(body, 0, sizeof(body));
+
+        long session_str = (long)self + 0x2bb8;
+        if (*(char *)((uint8_t *)self + 0x2c18) != '\0') {
+            session_str = (long)self + 0x2c20;
+        }
+
+        typedef void (*build_body_fn)(void *, long);
+        build_body_fn build_body = (build_body_fn)(g_base + 0x4f4e58);
+        build_body(body, session_str);
+
+        /* Call notifyGameResults */
+        typedef long (*notify_results_fn)(long, long, void *);
+        notify_results_fn notify = (notify_results_fn)(g_base + 0x5028f8);
+        LOG(@"[post-match] calling notifyGameResults directly...");
+        long result = notify((long)self, 0, body);
+        LOG(@"[post-match] notifyGameResults returned 0x%lx", result);
+
+        /* Clean up body if it was heap-allocated (SSO flag in last byte) */
+        if ((int8_t)body[23] < 0 && *(void **)body != NULL) {
+            typedef void (*op_delete_fn)(void *);
+            op_delete_fn del = (op_delete_fn)(g_base + 0x1148d68);
+            del(*(void **)body);
+        }
+    }
 }
 
 /* ── Probes for remaining available CE gate callers ── */
@@ -975,10 +1015,11 @@ static void vg_unlock_init(void) {
 
     /* Layer 10: Post-match — preserve session flag across endSession */
     HOOK_FPTR(0x149e760, orig_end_session,   hook_end_session,   "endSession");
-    /* Probes for remaining available CE gate callers */
+    /* Probes DISABLED — wrong signatures cause crashes
     HOOK_FPTR(0x147f110, orig_party_match,   hook_party_match,   "party_match");
     HOOK_FPTR(0x1469468, orig_tab_ctrl,      hook_tab_ctrl,      "tab_ctrl");
     HOOK_FPTR(0x146cfb0, orig_home_text,     hook_home_text,     "home_text");
+    */
 
 #undef HOOK_FPTR
 
