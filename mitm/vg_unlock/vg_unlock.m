@@ -145,19 +145,34 @@ static void hook_refresh(void *self) {
         typedef void (*kv_write_fn)(const char *, int);
         kv_write_fn kv_write = (kv_write_fn)(g_base + 0x12c5b0);
 
-        /* Defaults — used when interceptor is unreachable */
-        int bucket_5v5 = 29, bucket_3v3 = 29;
-        int earned_5v5 = 3000, earned_3v3 = 3000;
+        /* Read accountHandle from KV store for per-player elo lookup */
+        typedef void (*kv_read_string_fn)(const char *, char *, int, int);
+        kv_read_string_fn kv_read_str = (kv_read_string_fn)(g_base + 0x12caa0);
+        char account_handle[128] = {0};
+        kv_read_str("accountHandle", account_handle, 128, 0);
 
-        /* Fetch config from interceptor via HTTPS (port 443).
-         * NSURLSession with a delegate that accepts the self-signed cert
-         * (NSData dataWithContentsOfURL: uses Network.framework TLS which
-         * isn't covered by the SecureTransport ssl_bypass hooks). */
+        /* The 10 ranked KV fields — each individually configurable */
+        static const char *kv_keys[] = {
+            "new5v5RankedDataEloBucket",   "prev5v5RankedDataEloBucket",
+            "new5v5RankedDatamEloBucket",  "prev5v5RankedDatamEloEarned",
+            "new5v5RankedDatamEloEarned",  "new3v3RankedDataEloBucket",
+            "prev3v3RankedDataEloBucket",  "new3v3RankedDatamEloBucket",
+            "prev3v3RankedDatamEloEarned", "new3v3RankedDatamEloEarned",
+        };
+        /* Defaults: bucket=29 (Vainglorious Gold), earned=3000 */
+        int values[10] = { 29, 29, 29, 3000, 3000, 29, 29, 29, 3000, 3000 };
+
+        /* Fetch per-player config from interceptor via HTTPS (port 443). */
         @autoreleasepool {
             const char *host = getenv("VG_HOST_IP");
             if (!host) host = "192.168.8.192";
+            NSString *handle = [NSString stringWithUTF8String:account_handle];
+            if (handle.length == 0) handle = @"Guest";
+            NSString *encoded = [handle
+                stringByAddingPercentEncodingWithAllowedCharacters:
+                    [NSCharacterSet URLQueryAllowedCharacterSet]];
             NSString *urlStr = [NSString stringWithFormat:
-                @"https://%s/vg_elo_config", host];
+                @"https://%s/vg_elo_config?account=%@", host, encoded];
             NSURL *url = [NSURL URLWithString:urlStr];
 
             __block NSData *result = nil;
@@ -166,7 +181,6 @@ static void hook_refresh(void *self) {
             NSURLSessionConfiguration *cfg =
                 [NSURLSessionConfiguration ephemeralSessionConfiguration];
             cfg.timeoutIntervalForRequest = 3.0;
-            /* Inline delegate to accept self-signed cert */
             NSURLSession *session = [NSURLSession
                 sessionWithConfiguration:cfg
                 delegate:(id)[[VGBridgeTLSDelegate alloc] init]
@@ -187,15 +201,15 @@ static void hook_refresh(void *self) {
                 NSDictionary *parsed = [NSJSONSerialization
                     JSONObjectWithData:result options:0 error:&err];
                 if (parsed && !err) {
-                    NSNumber *v;
-                    if ((v = parsed[@"5v5_eloBucket"]))  bucket_5v5 = v.intValue;
-                    if ((v = parsed[@"3v3_eloBucket"]))  bucket_3v3 = v.intValue;
-                    if ((v = parsed[@"5v5_eloEarned"])) earned_5v5 = v.intValue;
-                    if ((v = parsed[@"3v3_eloEarned"])) earned_3v3 = v.intValue;
+                    for (int i = 0; i < 10; i++) {
+                        NSNumber *v = parsed[[NSString
+                            stringWithUTF8String:kv_keys[i]]];
+                        if (v) values[i] = v.intValue;
+                    }
                     LOG(@"[ranked-kv] bridge: got config from %@ "
-                        @"(5v5=%d/%d, 3v3=%d/%d)",
-                        urlStr, bucket_5v5, earned_5v5,
-                        bucket_3v3, earned_3v3);
+                        @"(account=%@, 5v5=%d/%d, 3v3=%d/%d)",
+                        urlStr, handle,
+                        values[0], values[3], values[5], values[8]);
                 } else {
                     LOG(@"[ranked-kv] bridge: JSON parse failed: %@", err);
                 }
@@ -205,20 +219,12 @@ static void hook_refresh(void *self) {
             }
         }
 
-        kv_write("new5v5RankedDataEloBucket", bucket_5v5);
-        kv_write("prev5v5RankedDataEloBucket", bucket_5v5);
-        kv_write("new5v5RankedDatamEloBucket", bucket_5v5);
-        kv_write("prev5v5RankedDatamEloEarned", earned_5v5);
-        kv_write("new5v5RankedDatamEloEarned", earned_5v5);
+        for (int i = 0; i < 10; i++) {
+            kv_write(kv_keys[i], values[i]);
+        }
 
-        kv_write("new3v3RankedDataEloBucket", bucket_3v3);
-        kv_write("prev3v3RankedDataEloBucket", bucket_3v3);
-        kv_write("new3v3RankedDatamEloBucket", bucket_3v3);
-        kv_write("prev3v3RankedDatamEloEarned", earned_3v3);
-        kv_write("new3v3RankedDatamEloEarned", earned_3v3);
-
-        LOG(@"[ranked-kv] wrote skill tier %d/%d (5v5/3v3) to key-value store",
-            bucket_5v5, bucket_3v3);
+        LOG(@"[ranked-kv] wrote 10 ranked fields to KV store "
+            @"(account=%s)", account_handle);
     }
 
     static int sidebar_fix_done = 0;
