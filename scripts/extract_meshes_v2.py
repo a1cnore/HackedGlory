@@ -6,7 +6,7 @@ Corrected vertex format based on reverse-engineered attribute table:
 - Stride: computed from attribute table (max attr end + 2 prefix, aligned to 4)
 - Position: big-endian float3 at byte offset +2 within each vertex
 - Vertex/index counts from submesh descriptor (attr_pos - 16 / attr_pos - 20)
-- Index buffer: uint16 LE, located right after vertex data
+- Index buffer: uint16 BE, located right after vertex data
 
 The first 2 bytes of each vertex are a prefix (bone/submesh index) not described
 by the attribute table. All float attributes appear to be big-endian.
@@ -144,27 +144,23 @@ def extract_mesh(data: bytes, info: dict) -> dict | None:
     if valid < vertex_count * 0.5:
         return None
 
-    # Extract indices
+    # Extract indices (big-endian uint16, immediately after vertex data)
     idx_start = vdata_start + vertex_count * stride
     indices = []
     for i in range(index_count):
         off = idx_start + i * 2
         if off + 2 > len(data):
             break
-        idx = struct.unpack_from("<H", data, off)[0]
-        if idx < vertex_count:
-            indices.append(idx)
+        idx = struct.unpack_from(">H", data, off)[0]
+        indices.append(idx)
 
-    # Build triangles
+    # Build triangles (clamp out-of-range indices)
     triangles = []
     for i in range(0, len(indices) - 2, 3):
-        triangles.append((indices[i], indices[i + 1], indices[i + 2]))
-
-    # Filter degenerate triangles
-    triangles = [
-        (a, b, c) for a, b, c in triangles
-        if a != b and b != c and a != c
-    ]
+        a, b, c = indices[i], indices[i + 1], indices[i + 2]
+        if a < vertex_count and b < vertex_count and c < vertex_count:
+            if a != b and b != c and a != c:
+                triangles.append((a, b, c))
 
     return {
         "name": info["name"],
