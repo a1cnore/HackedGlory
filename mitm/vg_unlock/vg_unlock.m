@@ -8,7 +8,8 @@
  * Layer 5: Replace avatar tap handler → open full profile panel
  * Layer 6: Sidebar tab activation → force all panel tabs active + visible
  * Layer 7: Patch session manager vtable → disable guest gate globally
- * Layer 8: (reserved)
+ * Layer 8: CE gate caller hooks — undo gate effects on progression UI
+ * Layer 10: Post-match — preserve session flag so notifyGameResults fires
  */
 
 #import <Foundation/Foundation.h>
@@ -18,6 +19,20 @@
 #include <string.h>
 
 #define LOG(fmt, ...) NSLog(@"[vg_unlock] " fmt, ##__VA_ARGS__)
+
+/* TLS delegate for bridge HTTPS requests — accepts self-signed certs */
+@interface VGBridgeTLSDelegate : NSObject <NSURLSessionDelegate>
+@end
+@implementation VGBridgeTLSDelegate
+- (void)URLSession:(NSURLSession *)session
+    didReceiveChallenge:(NSURLAuthenticationChallenge *)challenge
+     completionHandler:(void (^)(NSURLSessionAuthChallengeDisposition,
+                                 NSURLCredential *))handler {
+    handler(NSURLSessionAuthChallengeUseCredential,
+            [NSURLCredential credentialForTrust:
+                challenge.protectionSpace.serverTrust]);
+}
+@end
 
 static uintptr_t g_base = 0;
 
@@ -116,7 +131,13 @@ static void hook_refresh(void *self) {
      * happens in CE since the data starts at defaults.
      *
      * FUN_10012c5b0(key, value) writes an int to the store.
-     * Skill tier 29 = Vainglorious Gold (tier = 29/3+1 = 10, sub = 29%3 = 2).
+     *
+     * Bridge: GET https://HOST_IP/vg_elo_config from the interceptor
+     * (mitmproxy on port 443) so it is the single source of truth.
+     * Falls back to hardcoded defaults if unreachable.
+     *
+     * HOST_IP is read from the platformUrl the game already connects to,
+     * which the interceptor rewrites to point at itself.
      */
     static int ranked_kv_done = 0;
     if (!ranked_kv_done) {
@@ -124,19 +145,86 @@ static void hook_refresh(void *self) {
         typedef void (*kv_write_fn)(const char *, int);
         kv_write_fn kv_write = (kv_write_fn)(g_base + 0x12c5b0);
 
-        kv_write("new5v5RankedDataEloBucket", 29);
-        kv_write("prev5v5RankedDataEloBucket", 29);
-        kv_write("new5v5RankedDatamEloBucket", 29);
-        kv_write("prev5v5RankedDatamEloEarned", 3000);
-        kv_write("new5v5RankedDatamEloEarned", 3000);
+        /* Read accountHandle from KV store for per-player elo lookup */
+        typedef void (*kv_read_string_fn)(const char *, char *, int, int);
+        kv_read_string_fn kv_read_str = (kv_read_string_fn)(g_base + 0x12caa0);
+        char account_handle[128] = {0};
+        kv_read_str("accountHandle", account_handle, 128, 0);
 
-        kv_write("new3v3RankedDataEloBucket", 29);
-        kv_write("prev3v3RankedDataEloBucket", 29);
-        kv_write("new3v3RankedDatamEloBucket", 29);
-        kv_write("prev3v3RankedDatamEloEarned", 3000);
-        kv_write("new3v3RankedDatamEloEarned", 3000);
+        /* The 10 ranked KV fields — each individually configurable */
+        static const char *kv_keys[] = {
+            "new5v5RankedDataEloBucket",   "prev5v5RankedDataEloBucket",
+            "new5v5RankedDatamEloBucket",  "prev5v5RankedDatamEloEarned",
+            "new5v5RankedDatamEloEarned",  "new3v3RankedDataEloBucket",
+            "prev3v3RankedDataEloBucket",  "new3v3RankedDatamEloBucket",
+            "prev3v3RankedDatamEloEarned", "new3v3RankedDatamEloEarned",
+        };
+        /* Defaults: bucket=29 (Vainglorious Gold), earned=3000 */
+        int values[10] = { 29, 29, 29, 3000, 3000, 29, 29, 29, 3000, 3000 };
 
-        LOG(@"[ranked-kv] wrote skill tier 29 (Vainglorious Gold) to key-value store");
+        /* Fetch per-player config from interceptor via HTTPS (port 443). */
+        @autoreleasepool {
+            const char *host = getenv("VG_HOST_IP");
+            if (!host) host = "192.168.8.192";
+            NSString *handle = [NSString stringWithUTF8String:account_handle];
+            if (handle.length == 0) handle = @"Guest";
+            NSString *encoded = [handle
+                stringByAddingPercentEncodingWithAllowedCharacters:
+                    [NSCharacterSet URLQueryAllowedCharacterSet]];
+            NSString *urlStr = [NSString stringWithFormat:
+                @"https://%s/vg_elo_config?account=%@", host, encoded];
+            NSURL *url = [NSURL URLWithString:urlStr];
+
+            __block NSData *result = nil;
+            dispatch_semaphore_t sem = dispatch_semaphore_create(0);
+
+            NSURLSessionConfiguration *cfg =
+                [NSURLSessionConfiguration ephemeralSessionConfiguration];
+            cfg.timeoutIntervalForRequest = 3.0;
+            NSURLSession *session = [NSURLSession
+                sessionWithConfiguration:cfg
+                delegate:(id)[[VGBridgeTLSDelegate alloc] init]
+                delegateQueue:nil];
+
+            [[session dataTaskWithURL:url
+                completionHandler:^(NSData *data, NSURLResponse *resp, NSError *err) {
+                    result = data;
+                    dispatch_semaphore_signal(sem);
+                }] resume];
+
+            dispatch_semaphore_wait(sem,
+                dispatch_time(DISPATCH_TIME_NOW, 5 * NSEC_PER_SEC));
+            [session invalidateAndCancel];
+
+            if (result) {
+                NSError *err = nil;
+                NSDictionary *parsed = [NSJSONSerialization
+                    JSONObjectWithData:result options:0 error:&err];
+                if (parsed && !err) {
+                    for (int i = 0; i < 10; i++) {
+                        NSNumber *v = parsed[[NSString
+                            stringWithUTF8String:kv_keys[i]]];
+                        if (v) values[i] = v.intValue;
+                    }
+                    LOG(@"[ranked-kv] bridge: got config from %@ "
+                        @"(account=%@, 5v5=%d/%d, 3v3=%d/%d)",
+                        urlStr, handle,
+                        values[0], values[3], values[5], values[8]);
+                } else {
+                    LOG(@"[ranked-kv] bridge: JSON parse failed: %@", err);
+                }
+            } else {
+                LOG(@"[ranked-kv] bridge: fetch %@ failed, using defaults",
+                    urlStr);
+            }
+        }
+
+        for (int i = 0; i < 10; i++) {
+            kv_write(kv_keys[i], values[i]);
+        }
+
+        LOG(@"[ranked-kv] wrote 10 ranked fields to KV store "
+            @"(account=%s)", account_handle);
     }
 
     static int sidebar_fix_done = 0;
@@ -696,6 +784,71 @@ static void hook_market_tabs(void *self) {
     if (!log_once) { log_once = 1; LOG(@"[ce-gate] market tabs hook fired"); }
 }
 
+/* ========== Layer 10: Post-match session flag preservation ========== */
+
+/*
+ * FUN_1004fd37c: endSession RPC sender (fptr g_base+0x149e760)
+ *
+ * ROOT CAUSE of missing spoils screen:
+ *   1. Match ends → endSession fires
+ *   2. endSession clears *(param_1 + 0x2b08) = 0 (session-active flag)
+ *   3. notifyGameResults sender (FUN_1005028f8) checks +0x2b08 == 0 → aborts
+ *   4. Spoils screen never gets its data → skipped
+ *
+ * Fix: save +0x2b08 before calling original, restore after.
+ * This keeps the session flag alive for notifyGameResults to fire.
+ *
+ * All three functions share the same vtable (RPC session manager):
+ *   FUN_1004fd37c (endSession)        → fptr at g_base+0x149e760
+ *   FUN_1004fdaf0 (notifyExitPostMatch) → fptr at g_base+0x149e788
+ *   FUN_1005028f8 (notifyGameResults)   → fptr at g_base+0x149e938
+ */
+typedef void (*end_session_fn)(void *self);
+static end_session_fn orig_end_session = NULL;
+static void hook_end_session(void *self) {
+    /* Save the session-active flag before endSession clears it */
+    int saved_flag = *(int *)((uint8_t *)self + 0x2b08);
+    LOG(@"[post-match] endSession called, +0x2b08=%d (saving)", saved_flag);
+
+    orig_end_session(self);
+
+    /* Restore the flag so notifyGameResults can fire via the normal game path.
+     *
+     * NOTE: Direct calls to FUN_1004f4e58 (build_body) and FUN_1005028f8
+     * (notifyGameResults) were removed — FUN_1004f4e58 writes to its own
+     * __TEXT address (x19 = &FUN_1004f4e58), causing KERN_PROTECTION_FAILURE.
+     * The function address or calling convention is incorrect.
+     *
+     * Restoring +0x2b08 is sufficient: the game's own notifyGameResults
+     * dispatcher checks this flag and will fire if it's non-zero.
+     */
+    *(int *)((uint8_t *)self + 0x2b08) = saved_flag;
+    LOG(@"[post-match] endSession returned, restored +0x2b08 to %d", saved_flag);
+}
+
+/* ── Probes for remaining available CE gate callers ── */
+
+typedef void (*party_match_fn)(void *self);
+static party_match_fn orig_party_match = NULL;
+static void hook_party_match(void *self) {
+    LOG(@"[probe] FUN_10028c348 (party/matchmaking) CALLED self=%p", self);
+    orig_party_match(self);
+}
+
+typedef void (*tab_ctrl_fn)(void *self);
+static tab_ctrl_fn orig_tab_ctrl = NULL;
+static void hook_tab_ctrl(void *self) {
+    LOG(@"[probe] FUN_1001e0550 (tab controller) CALLED self=%p", self);
+    orig_tab_ctrl(self);
+}
+
+typedef void (*home_text_fn)(void *self, void *param2);
+static home_text_fn orig_home_text = NULL;
+static void hook_home_text(void *self, void *param2) {
+    LOG(@"[probe] FUN_1001f4efc (home panel text) CALLED self=%p", self);
+    orig_home_text(self, param2);
+}
+
 /* ========== Layer 9: Direct trophy data population ========== */
 
 /*
@@ -914,9 +1067,17 @@ static void vg_unlock_init(void) {
     HOOK_FPTR(0x1469478, orig_tab_init,       hook_tab_init,       "tab_init");
     HOOK_FPTR(0x147a120, orig_market_tabs,    hook_market_tabs,    "market_tabs");
 
+    /* Layer 10: Post-match — preserve session flag across endSession */
+    HOOK_FPTR(0x149e760, orig_end_session,   hook_end_session,   "endSession");
+    /* Probes DISABLED — wrong signatures cause crashes
+    HOOK_FPTR(0x147f110, orig_party_match,   hook_party_match,   "party_match");
+    HOOK_FPTR(0x1469468, orig_tab_ctrl,      hook_tab_ctrl,      "tab_ctrl");
+    HOOK_FPTR(0x146cfb0, orig_home_text,     hook_home_text,     "home_text");
+    */
+
 #undef HOOK_FPTR
 
     /* Layer 9b: KV store writes moved to hook_refresh — subsystem not ready at init time. */
 
-    LOG(@"init complete — %d parsers + visibility hooks + guest gate + sidebar + %d CE gate hooks", n, 10);
+    LOG(@"init complete — %d parsers + visibility hooks + guest gate + sidebar + %d CE gate hooks + endSession hook", n, 10);
 }

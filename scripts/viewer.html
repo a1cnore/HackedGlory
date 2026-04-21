@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>VG Model Viewer</title>
+<style>
+body { margin: 0; background: #1a1a2e; overflow: hidden; font-family: monospace; }
+canvas { display: block; }
+#info { position: absolute; top: 10px; left: 10px; color: #e0e0e0; font-size: 13px; }
+#controls { position: absolute; top: 10px; right: 10px; color: #e0e0e0; font-size: 12px;
+  background: rgba(0,0,0,0.6); padding: 10px; border-radius: 6px; max-width: 250px; }
+#controls label { display: block; margin: 4px 0; }
+#controls input[type="file"] { margin: 6px 0; }
+#drop-zone { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+  color: #888; font-size: 18px; pointer-events: none; }
+</style>
+</head>
+<body>
+<div id="info">VG Model Viewer</div>
+<div id="drop-zone">Drop .obj file here or use file picker →</div>
+<div id="controls">
+  <input type="file" id="file-input" accept=".obj">
+  <label><input type="checkbox" id="wireframe"> Wireframe</label>
+  <label><input type="checkbox" id="flat-shading" checked> Flat shading</label>
+  <label><input type="checkbox" id="show-axes" checked> Axes</label>
+  <label>BG: <input type="color" id="bg-color" value="#1a1a2e"></label>
+</div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+  }
+}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x1a1a2e);
+
+const camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 0.1, 10000);
+camera.position.set(0, 100, 300);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(innerWidth, innerHeight);
+renderer.setPixelRatio(devicePixelRatio);
+document.body.appendChild(renderer.domElement);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+
+// Lights
+scene.add(new THREE.AmbientLight(0x404060, 2));
+const dir1 = new THREE.DirectionalLight(0xffffff, 3);
+dir1.position.set(100, 200, 150);
+scene.add(dir1);
+const dir2 = new THREE.DirectionalLight(0x8888ff, 1.5);
+dir2.position.set(-100, 50, -100);
+scene.add(dir2);
+
+// Grid and axes
+const grid = new THREE.GridHelper(500, 50, 0x333355, 0x222244);
+scene.add(grid);
+
+const axes = new THREE.AxesHelper(100);
+scene.add(axes);
+
+let currentMesh = null;
+
+function loadOBJ(text) {
+  if (currentMesh) { scene.remove(currentMesh); currentMesh = null; }
+
+  const loader = new OBJLoader();
+  const obj = loader.parse(text);
+
+  obj.traverse(child => {
+    if (child.isMesh) {
+      child.material = new THREE.MeshStandardMaterial({
+        color: 0x7799cc,
+        metalness: 0.2,
+        roughness: 0.7,
+        flatShading: document.getElementById('flat-shading').checked,
+        wireframe: document.getElementById('wireframe').checked,
+        side: THREE.DoubleSide,
+      });
+      child.geometry.computeBoundingBox();
+    }
+  });
+
+  scene.add(obj);
+  currentMesh = obj;
+
+  // Auto-frame
+  const box = new THREE.Box3().setFromObject(obj);
+  const center = box.getCenter(new THREE.Vector3());
+  const size = box.getSize(new THREE.Vector3());
+  const maxDim = Math.max(size.x, size.y, size.z);
+
+  controls.target.copy(center);
+  camera.position.copy(center).add(new THREE.Vector3(maxDim, maxDim * 0.8, maxDim * 1.5));
+  controls.update();
+
+  document.getElementById('drop-zone').style.display = 'none';
+  const geo = obj.children[0]?.geometry;
+  const vCount = geo ? geo.attributes.position.count : '?';
+  const iCount = geo?.index ? geo.index.count / 3 : '?';
+  document.getElementById('info').textContent =
+    `VG Model Viewer | ${vCount} vertices | ${iCount} triangles | bbox: ${size.x.toFixed(1)} × ${size.y.toFixed(1)} × ${size.z.toFixed(1)}`;
+}
+
+// File input
+document.getElementById('file-input').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (file) file.text().then(loadOBJ);
+});
+
+// Drag and drop
+document.body.addEventListener('dragover', e => { e.preventDefault(); });
+document.body.addEventListener('drop', e => {
+  e.preventDefault();
+  const file = e.dataTransfer.files[0];
+  if (file) file.text().then(loadOBJ);
+});
+
+// Controls
+document.getElementById('wireframe').addEventListener('change', e => {
+  if (currentMesh) currentMesh.traverse(c => { if (c.isMesh) c.material.wireframe = e.target.checked; });
+});
+document.getElementById('flat-shading').addEventListener('change', e => {
+  if (currentMesh) currentMesh.traverse(c => {
+    if (c.isMesh) { c.material.flatShading = e.target.checked; c.material.needsUpdate = true; }
+  });
+});
+document.getElementById('show-axes').addEventListener('change', e => {
+  axes.visible = e.target.checked;
+  grid.visible = e.target.checked;
+});
+document.getElementById('bg-color').addEventListener('input', e => {
+  scene.background = new THREE.Color(e.target.value);
+});
+
+// Resize
+addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+
+// Render loop
+(function animate() {
+  requestAnimationFrame(animate);
+  controls.update();
+  renderer.render(scene, camera);
+})();
+
+// Auto-load from URL param
+const params = new URLSearchParams(location.search);
+const objUrl = params.get('obj');
+if (objUrl) fetch(objUrl).then(r => r.text()).then(loadOBJ);
+</script>
+</body>
+</html>

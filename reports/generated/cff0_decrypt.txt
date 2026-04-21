@@ -1,0 +1,97 @@
+// === FUN_1010b8c4c @ 0x1010b8c4c (size=112) ===
+// Calls:
+//   FUN_100015208 @ 100015208
+
+void FUN_1010b8c4c(uint *param_1,uint param_2,undefined4 param_3,ulong param_4)
+
+{
+  uint *puVar1;
+  uint uVar2;
+  uint uVar3;
+  undefined4 local_34;
+  
+  puVar1 = (uint *)((long)param_1 + (ulong)(param_2 & 0xfffffffc));
+  local_34 = param_3;
+  uVar2 = FUN_100015208(&local_34,4,param_4);
+  for (; param_1 < puVar1; param_1 = param_1 + 1) {
+    uVar3 = (uint)param_4;
+    param_4 = (ulong)*param_1;
+    *param_1 = uVar2 ^ (uVar3 >> 0x1f | uVar3 << 1) ^ *param_1;
+  }
+  return;
+}
+
+
+
+// === FUN_1010a2d30 @ 0x1010a2d30 (size=112) ===
+// Calls:
+
+ulong FUN_1010a2d30(uint *param_1,int param_2,uint param_3)
+
+{
+  uint uVar1;
+  ulong uVar2;
+  ulong uVar3;
+  
+  uVar2 = *(long *)(param_1 + 2) + (ulong)*param_1;
+  uVar3 = (ulong)param_3 - 1;
+  uVar1 = *param_1 + param_2;
+  if ((uVar3 & uVar2) != 0) {
+    uVar1 = (param_3 + uVar1) - 1;
+    if (uVar1 < (param_1[4] & 0x7fffffff)) {
+      *param_1 = uVar1;
+      uVar3 = uVar3 + uVar2;
+    }
+    return uVar3 & -(ulong)param_3;
+  }
+  if (uVar1 < (param_1[4] & 0x7fffffff)) {
+    *param_1 = uVar1;
+    return uVar2;
+  }
+  return 0;
+}
+
+
+
+// === FUN_1010a2c54 @ 0x1010a2c54 (size=108) ===
+// Calls:
+//   FUN_100015208 @ 100015208
+//   FUN_1010a39e8 @ 1010a39e8
+//   FUN_1004d2524 @ 1004d2524
+
+void FUN_1010a2c54(long param_1,undefined8 param_2,undefined8 param_3,undefined8 param_4)
+
+{
+  undefined4 uVar1;
+  undefined4 local_48 [2];
+  undefined8 local_40;
+  undefined8 uStack_38;
+  
+  uVar1 = FUN_1004d2524(param_2);
+  local_48[0] = FUN_100015208(param_2,uVar1,0x12345678);
+  local_40 = param_3;
+  uStack_38 = param_4;
+  FUN_1010a39e8(param_1 + 0x18,local_48,local_48);
+  return;
+}
+
+
+
+// === DAT_101873140 (key/algorithm table) ===
+// Bytes: 3b a1 0d 6e 8f a9 da 50 4f fa 5f 2d eb c3 c6 56 dd 1d d3 ca 6a be f7 04 61 e9 c4 d5 92 ef e2 7f 6d 8a bb cc 5b 87 b6 19 4c 60 3b 43 e4 1e 7b ba 2e 87 ea 9d 0a e1 c2 a8 ff a2 30 ed a4 f9 a8 16 
+// [0] = 0x6e0da13b (1846387003)
+// [1] = 0x50daa98f (1356507535)
+// [2] = 0x2d5ffa4f (761264719)
+// [3] = 0x56c6c3eb (1455866859)
+// [4] = 0xcad31ddd (-892133923)
+// [5] = 0x4f7be6a (83345002)
+// [6] = 0xd5c4e961 (-708515487)
+// [7] = 0x7fe2ef92 (2145578898)
+// [8] = 0xccbb8a6d (-860124563)
+// [9] = 0x19b6875b (431392603)
+// [10] = 0x433b604c (1127964748)
+// [11] = 0xba7b1ee4 (-1166336284)
+// [12] = 0x9dea872e (-1645574354)
+// [13] = 0xa8c2e10a (-1463623414)
+// [14] = 0xed30a2ff (-315579649)
+// [15] = 0x16a8f9a4 (380172708)
