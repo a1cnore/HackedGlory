@@ -1,0 +1,35 @@
+# Stub replacements for 10023.c
+# 32 functions extracted to ui/
+
+Line 7-46: thunk_FUN_100231648 -> ui/trophies/trophy_panel.c
+Line 81-140: thunk_FUN_100231480 -> ui/trophies/trophy_panel.c
+Line 145-201: thunk_FUN_100231764 -> ui/trophies/trophy_panel.c
+Line 206-254: thunk_FUN_100231900 -> ui/trophies/trophy_panel.c
+Line 259-423: FUN_100230134 -> ui/profile/profile_panel.c
+Line 785-1027: FUN_100230dc8 -> ui/profile/profile_panel.c
+Line 1059-1118: FUN_100231480 -> ui/trophies/trophy_panel.c
+Line 1123-1162: FUN_100231648 -> ui/trophies/trophy_panel.c
+Line 1200-1256: FUN_100231764 -> ui/trophies/trophy_panel.c
+Line 1271-1319: FUN_100231900 -> ui/trophies/trophy_panel.c
+Line 1541-1780: FUN_100231e58 -> ui/profile/profile_panel.c
+Line 2476-2579: thunk_FUN_1002365d8 -> ui/trophies/trophy_panel.c
+Line 3464-3702: FUN_100234ccc -> ui/profile/profile_panel.c
+Line 4410-4513: FUN_1002365d8 -> ui/trophies/trophy_panel.c
+Line 4518-4687: FUN_100236874 -> ui/profile/profile_panel.c
+Line 4997-5583: FUN_1002372c8 -> ui/season/season_panel.c
+Line 5802-5823: FUN_1002381f4 -> ui/trophies/trophy_panel.c
+Line 8211-8401: FUN_10023b4b8 -> ui/main_menu.c
+Line 8581-8771: thunk_FUN_10023b4b8 -> ui/main_menu.c
+Line 8888-8986: FUN_10023bd9c -> ui/season/season_panel.c
+Line 9284-9485: FUN_10023c69c -> ui/season/season_panel.c
+Line 9698-9801: FUN_10023cf74 -> ui/profile/profile_panel.c
+Line 9939-10022: FUN_10023d348 -> ui/profile/profile_panel.c
+Line 10037-10122: FUN_10023d4ec -> ui/social/social_panel.c
+Line 10217-10251: FUN_10023d810 -> ui/misc_ui.c
+Line 10266-10318: FUN_10023d920 -> ui/social/social_panel.c
+Line 10333-10385: FUN_10023dab0 -> ui/social/social_panel.c
+Line 10648-10660: FUN_10023df24 -> ui/season/season_panel.c
+Line 10898-10910: thunk_FUN_10023f2f4 -> ui/trophies/trophy_panel.c
+Line 10915-10927: thunk_FUN_10023f358 -> ui/trophies/trophy_panel.c
+Line 11595-11607: FUN_10023f2f4 -> ui/trophies/trophy_panel.c
+Line 11612-11624: FUN_10023f358 -> ui/trophies/trophy_panel.c

@@ -1,0 +1,1120 @@
+// functions/014e8 — 68 functions
+#include "libGameKindred.h"
+
+
+
+
+int FUN_014e8004(int param_1,float *param_2)
+
+{
+  int iVar1;
+  int iVar2;
+  int iVar3;
+  int iVar4;
+  
+  iVar1 = param_1;
+  if (0 < param_1) {
+    do {
+      iVar2 = rand();
+      iVar3 = rand();
+      iVar4 = rand();
+      *param_2 = ((float)iVar2 * 4.656613e-10 + (float)iVar2 * 4.656613e-10 + -1.0) * 5.0;
+      param_2[1] = -((float)iVar3 * 4.656613e-10 * 1.2 + -0.2);
+      iVar1 = iVar1 + -1;
+      param_2[2] = ((float)iVar4 * 4.656613e-10 + (float)iVar4 * 4.656613e-10 + -1.0) * 5.0;
+      param_2 = param_2 + 3;
+    } while (iVar1 != 0);
+  }
+  return param_1;
+}
+
+
+
+
+undefined8 FUN_014e80d8(undefined8 param_1,undefined4 *param_2)
+
+{
+  *param_2 = 0x40000000;
+  return 1;
+}
+
+
+
+
+undefined8 FUN_014e80e8(undefined8 param_1,undefined4 *param_2)
+
+{
+  *param_2 = 0x41200000;
+  return 1;
+}
+
+
+
+
+undefined8 FUN_014e80f8(undefined8 param_1,undefined4 *param_2)
+
+{
+  *param_2 = 0;
+  return 1;
+}
+
+
+
+
+undefined8 FUN_014e8104(undefined8 param_1,undefined8 *param_2)
+
+{
+  undefined1 auVar1 [16];
+  
+  auVar1 = NEON_fmov(0x3f800000,4);
+  param_2[1] = auVar1._8_8_;
+  *param_2 = auVar1._0_8_;
+  return 1;
+}
+
+
+
+
+int FUN_014e8114(int param_1,float *param_2)
+
+{
+  int iVar1;
+  int iVar2;
+  
+  iVar1 = param_1;
+  if (0 < param_1) {
+    do {
+      iVar2 = rand();
+      iVar1 = iVar1 + -1;
+      *param_2 = (float)iVar2 * 4.656613e-10 * 5.0 + 1.0;
+      param_2 = param_2 + 1;
+    } while (iVar1 != 0);
+  }
+  return param_1;
+}
+
+
+
+
+undefined8 FUN_014e818c(undefined8 param_1,undefined8 *param_2)
+
+{
+  *param_2 = 0x3dcccccd3dcccccd;
+  return 1;
+}
+
+
+
+
+int FUN_014e81a4(int param_1,float *param_2)
+
+{
+  int iVar1;
+  int iVar2;
+  
+  iVar1 = param_1;
+  if (0 < param_1) {
+    do {
+      iVar2 = rand();
+      iVar1 = iVar1 + -1;
+      *param_2 = (float)iVar2 * 4.656613e-10 * 360.0 + 0.0;
+      param_2 = param_2 + 1;
+    } while (iVar1 != 0);
+  }
+  return param_1;
+}
+
+
+
+
+int FUN_014e8220(int param_1,float *param_2)
+
+{
+  int iVar1;
+  int iVar2;
+  
+  iVar1 = param_1;
+  if (0 < param_1) {
+    do {
+      iVar2 = rand();
+      iVar1 = iVar1 + -1;
+      *param_2 = (float)iVar2 * 4.656613e-10 * 0.5 + 0.5;
+      param_2 = param_2 + 1;
+    } while (iVar1 != 0);
+  }
+  return param_1;
+}
+
+
+
+
+void FUN_014e828c(int param_1,undefined4 *param_2)
+
+{
+  if (0 < param_1) {
+    do {
+      param_1 = param_1 + -1;
+      *param_2 = 0x41b570a4;
+      param_2 = param_2 + 1;
+    } while (param_1 != 0);
+  }
+  return;
+}
+
+
+
+
+void FUN_014e82b0(int param_1,undefined4 *param_2)
+
+{
+  if (0 < param_1) {
+    do {
+      param_1 = param_1 + -1;
+      *param_2 = 0x3e99999a;
+      param_2 = param_2 + 1;
+    } while (param_1 != 0);
+  }
+  return;
+}
+
+
+
+
+void FUN_014e82d4(float param_1,uint param_2,float *param_3,ushort *param_4,long param_5)
+
+{
+  uint uVar1;
+  ulong uVar2;
+  uint uVar3;
+  float fVar4;
+  float fVar5;
+  float fVar6;
+  
+  if (0 < (int)param_2) {
+    uVar2 = (ulong)param_2;
+    do {
+      fVar6 = (param_1 - *(float *)(param_5 + 0x48000 + (ulong)*param_4 * 4)) /
+              *(float *)(param_5 + 0x50000 + (ulong)*param_4 * 4);
+      fVar4 = 0.0;
+      fVar5 = 1.0;
+      if (fVar6 < 1.0) {
+        fVar5 = 0.1;
+        if (0.0 < fVar6) {
+          uVar1 = (int)(fVar6 * 64.0) + 1;
+          fVar5 = 1.0;
+          if (uVar1 < 0x40) {
+            fVar5 = *(float *)(&DAT_01d2d650 + (ulong)(uint)(int)(fVar6 * 64.0) * 4) +
+                    (fVar6 * 64.0 - (float)(int)(fVar6 * 64.0)) *
+                    (*(float *)(&DAT_01d2d650 + (ulong)uVar1 * 4) -
+                    *(float *)(&DAT_01d2d650 + (ulong)(uint)(int)(fVar6 * 64.0) * 4));
+          }
+        }
+        if (fVar6 <= 0.2) {
+          fVar4 = 1.0;
+        }
+        else {
+          fVar6 = (fVar6 + -0.2) / 0.8;
+          uVar3 = (uint)(fVar6 * 64.0);
+          uVar1 = uVar3 + 1;
+          fVar4 = 0.0;
+          if (uVar1 < 0x40) {
+            fVar6 = fVar6 * 64.0;
+            fVar4 = *(float *)(&DAT_01d4da50 + (ulong)uVar3 * 4) +
+                    (fVar6 - (float)(int)fVar6) *
+                    (*(float *)(&DAT_01d4da50 + (ulong)uVar1 * 4) -
+                    *(float *)(&DAT_01d4da50 + (ulong)uVar3 * 4));
+          }
+        }
+      }
+      *param_3 = fVar5;
+      param_3[1] = fVar4;
+      param_3[2] = 0.0;
+      param_3[3] = 1.0;
+      param_4 = param_4 + 1;
+      uVar2 = uVar2 - 1;
+      param_3 = param_3 + 4;
+    } while (uVar2 != 0);
+  }
+  return;
+}
+
+
+
+
+undefined8 FUN_014e83f8(undefined8 param_1,undefined8 *param_2)
+
+{
+  *param_2 = 0;
+  *(undefined4 *)(param_2 + 1) = 0;
+  return 1;
+}
+
+
+
+
+undefined8 FUN_014e8408(undefined8 param_1,undefined4 *param_2)
+
+{
+  *param_2 = 0;
+  return 1;
+}
+
+
+
+
+undefined8 FUN_014e8414(undefined8 param_1,undefined4 *param_2)
+
+{
+  *param_2 = 0;
+  return 1;
+}
+
+
+
+
+undefined8 FUN_014e8420(undefined8 param_1,undefined8 *param_2)
+
+{
+  *param_2 = 0;
+  *(undefined4 *)(param_2 + 1) = 0;
+  return 1;
+}
+
+
+
+
+undefined8 FUN_014e8430(undefined8 param_1,undefined4 *param_2)
+
+{
+  *param_2 = 0x40e00000;
+  return 1;
+}
+
+
+
+
+undefined8 FUN_014e8440(undefined8 param_1,undefined4 *param_2)
+
+{
+  *param_2 = 0x3f800000;
+  return 1;
+}
+
+
+
+
+undefined8 FUN_014e8450(undefined8 param_1,undefined4 *param_2)
+
+{
+  *param_2 = 0;
+  return 1;
+}
+
+
+
+
+int FUN_014e845c(int param_1,undefined8 *param_2)
+
+{
+  int iVar1;
+  int iVar2;
+  undefined8 uVar3;
+  
+  if (0 < param_1) {
+    uVar3 = NEON_fmov(0x3f800000,4);
+    iVar1 = param_1;
+    do {
+      *param_2 = uVar3;
+      *(undefined4 *)(param_2 + 1) = 0x3f800000;
+      iVar2 = rand();
+      iVar1 = iVar1 + -1;
+      *(float *)((long)param_2 + 0xc) = (float)iVar2 * 4.656613e-10 * 3.14 + 0.0;
+      param_2 = param_2 + 2;
+    } while (iVar1 != 0);
+  }
+  return param_1;
+}
+
+
+
+
+undefined8 FUN_014e84ec(undefined8 param_1,undefined4 *param_2)
+
+{
+  *param_2 = 0x3dcccccd;
+  return 1;
+}
+
+
+
+
+undefined8 FUN_014e8500(undefined8 param_1,undefined8 *param_2)
+
+{
+  *param_2 = 0x4140000040800000;
+  return 1;
+}
+
+
+
+
+undefined8 FUN_014e8514(undefined8 param_1,undefined4 *param_2)
+
+{
+  *param_2 = 0x42b40000;
+  return 1;
+}
+
+
+
+
+undefined8 FUN_014e8524(undefined8 param_1,undefined4 *param_2)
+
+{
+  *param_2 = 0x3f000000;
+  return 1;
+}
+
+
+
+
+uint FUN_014e8534(uint param_1,void *param_2)
+
+{
+  if (0 < (int)param_1) {
+    memset(param_2,0,(ulong)param_1 << 2);
+  }
+  return param_1;
+}
+
+
+
+
+void FUN_014e8570(int param_1,undefined4 *param_2)
+
+{
+  if (0 < param_1) {
+    do {
+      param_1 = param_1 + -1;
+      *param_2 = 0x3fc00000;
+      param_2 = param_2 + 1;
+    } while (param_1 != 0);
+  }
+  return;
+}
+
+
+
+
+uint FUN_014e8590(uint param_1,void *param_2)
+
+{
+  if (0 < (int)param_1) {
+    memset(param_2,0,(ulong)param_1 << 2);
+  }
+  return param_1;
+}
+
+
+
+
+uint FUN_014e85cc(uint param_1,void *param_2)
+
+{
+  if (0 < (int)param_1) {
+    memset(param_2,0,(ulong)param_1 << 2);
+  }
+  return param_1;
+}
+
+
+
+
+void FUN_014e8608(float param_1,uint param_2,undefined8 *param_3,ushort *param_4,long param_5)
+
+{
+  uint uVar1;
+  ulong uVar2;
+  undefined8 uVar3;
+  float fVar4;
+  float fVar5;
+  
+  if (0 < (int)param_2) {
+    uVar2 = (ulong)param_2;
+    uVar3 = NEON_fmov(0x3f800000,4);
+    do {
+      *param_3 = uVar3;
+      *(undefined4 *)(param_3 + 1) = 0x3f800000;
+      fVar4 = (param_1 - *(float *)(param_5 + 0x48000 + (ulong)*param_4 * 4)) /
+              *(float *)(param_5 + 0x50000 + (ulong)*param_4 * 4);
+      fVar5 = -0.0;
+      if ((fVar4 < 1.0) && (fVar5 = 2.0, 0.0 < fVar4)) {
+        uVar1 = (int)(fVar4 * 64.0) + 1;
+        fVar5 = -0.0;
+        if (uVar1 < 0x40) {
+          fVar5 = *(float *)(&DAT_01d2d750 + (ulong)(uint)(int)(fVar4 * 64.0) * 4) +
+                  (fVar4 * 64.0 - (float)(int)(fVar4 * 64.0)) *
+                  (*(float *)(&DAT_01d2d750 + (ulong)uVar1 * 4) -
+                  *(float *)(&DAT_01d2d750 + (ulong)(uint)(int)(fVar4 * 64.0) * 4));
+        }
+      }
+      *(float *)((long)param_3 + 0xc) = fVar5;
+      param_4 = param_4 + 1;
+      uVar2 = uVar2 - 1;
+      param_3 = param_3 + 2;
+    } while (uVar2 != 0);
+  }
+  return;
+}
+
+
+
+
+undefined8 FUN_014e86c4(undefined8 param_1,undefined8 *param_2)
+
+{
+  *param_2 = 0;
+  *(undefined4 *)(param_2 + 1) = 0;
+  return 1;
+}
+
+
+
+
+undefined8 FUN_014e86d4(undefined8 param_1,undefined4 *param_2)
+
+{
+  *param_2 = 0;
+  return 1;
+}
+
+
+
+
+undefined8 FUN_014e86e0(undefined8 param_1,undefined4 *param_2)
+
+{
+  *param_2 = 0;
+  return 1;
+}
+
+
+
+
+undefined8 FUN_014e86ec(undefined8 param_1,undefined8 *param_2)
+
+{
+  *param_2 = 0;
+  *(undefined4 *)(param_2 + 1) = 0;
+  return 1;
+}
+
+
+
+
+undefined8 FUN_014e86fc(undefined8 param_1,undefined4 *param_2)
+
+{
+  *param_2 = 0x40800000;
+  return 1;
+}
+
+
+
+
+undefined8 FUN_014e870c(undefined8 param_1,undefined4 *param_2)
+
+{
+  *param_2 = 0x40000000;
+  return 1;
+}
+
+
+
+
+undefined8 FUN_014e871c(undefined8 param_1,undefined4 *param_2)
+
+{
+  *param_2 = 0;
+  return 1;
+}
+
+
+
+
+undefined8 FUN_014e8728(undefined8 param_1,undefined8 *param_2)
+
+{
+  undefined1 auVar1 [16];
+  
+  auVar1 = NEON_fmov(0x3f800000,4);
+  param_2[1] = auVar1._8_8_;
+  *param_2 = auVar1._0_8_;
+  return 1;
+}
+
+
+
+
+undefined8 FUN_014e8738(undefined8 param_1,undefined4 *param_2)
+
+{
+  *param_2 = 0xc0e00000;
+  return 1;
+}
+
+
+
+
+undefined8 FUN_014e8748(undefined8 param_1,undefined8 *param_2)
+
+{
+  *param_2 = 0x4100000040000000;
+  return 1;
+}
+
+
+
+
+undefined8 FUN_014e875c(undefined8 param_1,undefined4 *param_2)
+
+{
+  *param_2 = 0x42b40000;
+  return 1;
+}
+
+
+
+
+undefined8 FUN_014e876c(undefined8 param_1,undefined4 *param_2)
+
+{
+  *param_2 = 0x3f000000;
+  return 1;
+}
+
+
+
+
+uint FUN_014e877c(uint param_1,void *param_2)
+
+{
+  if (0 < (int)param_1) {
+    memset(param_2,0,(ulong)param_1 << 2);
+  }
+  return param_1;
+}
+
+
+
+
+void FUN_014e87b8(int param_1,undefined4 *param_2)
+
+{
+  if (0 < param_1) {
+    do {
+      param_1 = param_1 + -1;
+      *param_2 = 0x3fc00000;
+      param_2 = param_2 + 1;
+    } while (param_1 != 0);
+  }
+  return;
+}
+
+
+
+
+uint FUN_014e87d8(uint param_1,void *param_2)
+
+{
+  if (0 < (int)param_1) {
+    memset(param_2,0,(ulong)param_1 << 2);
+  }
+  return param_1;
+}
+
+
+
+
+uint FUN_014e8814(uint param_1,void *param_2)
+
+{
+  if (0 < (int)param_1) {
+    memset(param_2,0,(ulong)param_1 << 2);
+  }
+  return param_1;
+}
+
+
+
+
+void FUN_014e8850(float param_1,uint param_2,float *param_3,ushort *param_4,long param_5)
+
+{
+  uint uVar1;
+  ulong uVar2;
+  uint uVar3;
+  float fVar4;
+  float fVar5;
+  float fVar6;
+  
+  if (0 < (int)param_2) {
+    uVar2 = (ulong)param_2;
+    do {
+      fVar6 = (param_1 - *(float *)(param_5 + 0x48000 + (ulong)*param_4 * 4)) /
+              *(float *)(param_5 + 0x50000 + (ulong)*param_4 * 4);
+      fVar5 = 0.0;
+      if (1.0 <= fVar6) {
+        fVar4 = 1.0;
+      }
+      else {
+        fVar5 = 1.5;
+        fVar4 = -0.3;
+        if (0.0 < fVar6) {
+          uVar3 = (uint)(fVar6 * 64.0);
+          uVar1 = uVar3 + 1;
+          fVar6 = fVar6 * 64.0;
+          if (uVar1 < 0x40) {
+            fVar5 = *(float *)(&DAT_01d2d850 + (ulong)uVar3 * 4) +
+                    (fVar6 - (float)(int)fVar6) *
+                    (*(float *)(&DAT_01d2d850 + (ulong)uVar1 * 4) -
+                    *(float *)(&DAT_01d2d850 + (ulong)uVar3 * 4));
+            fVar4 = *(float *)(&DAT_01d46950 + (ulong)uVar3 * 4) +
+                    (fVar6 - (float)(int)fVar6) *
+                    (*(float *)(&DAT_01d46950 + (ulong)uVar1 * 4) -
+                    *(float *)(&DAT_01d46950 + (ulong)uVar3 * 4));
+          }
+          else {
+            fVar5 = 0.0;
+            fVar4 = 1.0;
+          }
+        }
+      }
+      *param_3 = fVar4;
+      param_3[1] = param_1;
+      param_3[2] = fVar5;
+      fVar6 = (param_1 - *(float *)(param_5 + 0x48000 + (ulong)*param_4 * 4)) /
+              *(float *)(param_5 + 0x50000 + (ulong)*param_4 * 4);
+      fVar5 = -0.0;
+      if ((fVar6 < 1.0) && (fVar5 = 1.0, 0.4 < fVar6)) {
+        fVar6 = (fVar6 + -0.4) / 0.6;
+        uVar3 = (uint)(fVar6 * 64.0);
+        uVar1 = uVar3 + 1;
+        fVar5 = -0.0;
+        if (uVar1 < 0x40) {
+          fVar6 = fVar6 * 64.0;
+          fVar5 = *(float *)(&DAT_01d49d50 + (ulong)uVar3 * 4) +
+                  (fVar6 - (float)(int)fVar6) *
+                  (*(float *)(&DAT_01d49d50 + (ulong)uVar1 * 4) -
+                  *(float *)(&DAT_01d49d50 + (ulong)uVar3 * 4));
+        }
+      }
+      param_3[3] = fVar5;
+      param_4 = param_4 + 1;
+      uVar2 = uVar2 - 1;
+      param_3 = param_3 + 4;
+    } while (uVar2 != 0);
+  }
+  return;
+}
+
+
+
+
+undefined8 FUN_014e89d8(undefined8 param_1,undefined8 *param_2)
+
+{
+  *param_2 = 0;
+  *(undefined4 *)(param_2 + 1) = 0;
+  return 1;
+}
+
+
+
+
+void FUN_014e89e8(float param_1,uint param_2,float *param_3,ushort *param_4,long param_5)
+
+{
+  uint uVar1;
+  ulong uVar2;
+  float fVar3;
+  float fVar4;
+  
+  if (0 < (int)param_2) {
+    uVar2 = (ulong)param_2;
+    do {
+      fVar3 = (param_1 - *(float *)(param_5 + 0x48000 + (ulong)*param_4 * 4)) /
+              *(float *)(param_5 + 0x50000 + (ulong)*param_4 * 4);
+      fVar4 = 1.0;
+      if ((fVar3 < 1.0) && (fVar4 = 0.1, 0.0 < fVar3)) {
+        uVar1 = (int)(fVar3 * 64.0) + 1;
+        fVar4 = 1.0;
+        if (uVar1 < 0x40) {
+          fVar4 = *(float *)(&DAT_01d2d950 + (ulong)(uint)(int)(fVar3 * 64.0) * 4) +
+                  (fVar3 * 64.0 - (float)(int)(fVar3 * 64.0)) *
+                  (*(float *)(&DAT_01d2d950 + (ulong)uVar1 * 4) -
+                  *(float *)(&DAT_01d2d950 + (ulong)(uint)(int)(fVar3 * 64.0) * 4));
+        }
+      }
+      uVar2 = uVar2 - 1;
+      *param_3 = fVar4 + fVar4;
+      param_4 = param_4 + 1;
+      param_3 = param_3 + 1;
+    } while (uVar2 != 0);
+  }
+  return;
+}
+
+
+
+
+undefined8 FUN_014e8a90(undefined8 param_1,undefined4 *param_2)
+
+{
+  *param_2 = 0;
+  return 1;
+}
+
+
+
+
+undefined8 FUN_014e8a9c(undefined8 param_1,undefined8 *param_2)
+
+{
+  *(undefined4 *)(param_2 + 1) = 0;
+  *param_2 = 0xc080000000000000;
+  return 1;
+}
+
+
+
+
+undefined8 FUN_014e8ab4(undefined8 param_1,undefined4 *param_2)
+
+{
+  *param_2 = 0x41200000;
+  return 1;
+}
+
+
+
+
+undefined8 FUN_014e8ac4(undefined8 param_1,undefined4 *param_2)
+
+{
+  *param_2 = 0x3f800000;
+  return 1;
+}
+
+
+
+
+undefined8 FUN_014e8ad4(undefined8 param_1,undefined4 *param_2)
+
+{
+  *param_2 = 0x42c80000;
+  return 1;
+}
+
+
+
+
+undefined8 FUN_014e8ae4(undefined8 param_1,undefined8 *param_2)
+
+{
+  undefined1 auVar1 [16];
+  
+  auVar1 = NEON_fmov(0x3f800000,4);
+  param_2[1] = auVar1._8_8_;
+  *param_2 = auVar1._0_8_;
+  return 1;
+}
+
+
+
+
+int FUN_014e8af4(int param_1,float *param_2)
+
+{
+  int iVar1;
+  int iVar2;
+  
+  iVar1 = param_1;
+  if (0 < param_1) {
+    do {
+      iVar2 = rand();
+      iVar1 = iVar1 + -1;
+      *param_2 = (float)iVar2 * 4.656613e-10 * 5.0 + 15.0;
+      param_2 = param_2 + 1;
+    } while (iVar1 != 0);
+  }
+  return param_1;
+}
+
+
+
+
+int FUN_014e8b6c(float param_1,int param_2,float *param_3)
+
+{
+  uint uVar1;
+  int iVar2;
+  bool bVar3;
+  float fVar4;
+  bool bVar5;
+  int iVar6;
+  int iVar7;
+  uint uVar8;
+  float fVar9;
+  float fVar10;
+  float fVar11;
+  
+  if (0 < param_2) {
+    bVar5 = 0.2 <= param_1;
+    fVar9 = (param_1 + -0.05) / 0.15;
+    uVar8 = (uint)(fVar9 * 64.0);
+    uVar1 = uVar8 + 1;
+    bVar3 = 0.05 < param_1;
+    fVar9 = fVar9 * 64.0;
+    fVar9 = fVar9 - (float)(int)fVar9;
+    iVar2 = param_2;
+    fVar4 = 1.0;
+    if (bVar3 || bVar5) {
+      fVar4 = 0.4;
+    }
+    do {
+      fVar10 = fVar4;
+      if ((bVar3 && !bVar5) && uVar1 < 0x40) {
+        fVar10 = *(float *)(&DAT_01d34050 + (ulong)uVar8 * 4) +
+                 fVar9 * (*(float *)(&DAT_01d34050 + (ulong)uVar1 * 4) -
+                         *(float *)(&DAT_01d34050 + (ulong)uVar8 * 4));
+      }
+      iVar6 = rand();
+      fVar11 = fVar4;
+      if ((bVar3 && !bVar5) && uVar1 < 0x40) {
+        fVar11 = *(float *)(&DAT_01d34050 + (ulong)uVar8 * 4) +
+                 fVar9 * (*(float *)(&DAT_01d34050 + (ulong)uVar1 * 4) -
+                         *(float *)(&DAT_01d34050 + (ulong)uVar8 * 4));
+      }
+      iVar7 = rand();
+      iVar2 = iVar2 + -1;
+      *param_3 = fVar10 * ((float)iVar6 * 4.656613e-10 + (float)iVar6 * 4.656613e-10 + 2.0);
+      param_3[1] = fVar11 * ((float)iVar7 * 4.656613e-10 + (float)iVar7 * 4.656613e-10 + 2.0);
+      param_3 = param_3 + 2;
+    } while (iVar2 != 0);
+  }
+  return param_2;
+}
+
+
+
+
+int FUN_014e8cd0(int param_1,float *param_2)
+
+{
+  int iVar1;
+  int iVar2;
+  
+  iVar1 = param_1;
+  if (0 < param_1) {
+    do {
+      iVar2 = rand();
+      iVar1 = iVar1 + -1;
+      *param_2 = (float)iVar2 * 4.656613e-10 * 360.0 + 0.0;
+      param_2 = param_2 + 1;
+    } while (iVar1 != 0);
+  }
+  return param_1;
+}
+
+
+
+
+int FUN_014e8d4c(int param_1,float *param_2)
+
+{
+  int iVar1;
+  int iVar2;
+  
+  iVar1 = param_1;
+  if (0 < param_1) {
+    do {
+      iVar2 = rand();
+      iVar1 = iVar1 + -1;
+      *param_2 = (float)iVar2 * 4.656613e-10 * 0.39999998 + 0.3;
+      param_2 = param_2 + 1;
+    } while (iVar1 != 0);
+  }
+  return param_1;
+}
+
+
+
+
+void FUN_014e8dcc(int param_1,undefined4 *param_2)
+
+{
+  if (0 < param_1) {
+    do {
+      param_1 = param_1 + -1;
+      *param_2 = 0x41200000;
+      param_2 = param_2 + 1;
+    } while (param_1 != 0);
+  }
+  return;
+}
+
+
+
+
+void FUN_014e8dec(float param_1,int param_2,float *param_3)
+
+{
+  uint uVar1;
+  bool bVar2;
+  float fVar3;
+  float fVar4;
+  
+  if (0 < param_2) {
+    param_1 = param_1 * 4.0;
+    uVar1 = (int)(param_1 * 64.0) + 1;
+    bVar2 = param_1 < 1.0;
+    fVar3 = 1.0;
+    if (bVar2) {
+      fVar3 = 0.0;
+    }
+    if (bVar2 && 0.0 < param_1) {
+      fVar3 = 1.0;
+    }
+    do {
+      fVar4 = fVar3;
+      if ((bVar2 && 0.0 < param_1) && uVar1 < 0x40) {
+        fVar4 = *(float *)(&DAT_01d4db50 + (ulong)(uint)(int)(param_1 * 64.0) * 4) +
+                (param_1 * 64.0 - (float)(int)(param_1 * 64.0)) *
+                (*(float *)(&DAT_01d4db50 + (ulong)uVar1 * 4) -
+                *(float *)(&DAT_01d4db50 + (ulong)(uint)(int)(param_1 * 64.0) * 4));
+      }
+      param_2 = param_2 + -1;
+      *param_3 = fVar4 * 8.0;
+      param_3 = param_3 + 1;
+    } while (param_2 != 0);
+  }
+  return;
+}
+
+
+
+
+uint FUN_014e8e8c(uint param_1,void *param_2)
+
+{
+  if (0 < (int)param_1) {
+    memset(param_2,0,(ulong)param_1 << 2);
+  }
+  return param_1;
+}
+
+
+
+
+uint FUN_014e8ec8(uint param_1,void *param_2)
+
+{
+  if (0 < (int)param_1) {
+    memset(param_2,0,(ulong)param_1 << 2);
+  }
+  return param_1;
+}
+
+
+
+
+void FUN_014e8f04(float param_1,uint param_2,undefined8 *param_3,ushort *param_4,long param_5)
+
+{
+  uint uVar1;
+  ulong uVar2;
+  undefined8 uVar3;
+  float fVar4;
+  float fVar5;
+  
+  if (0 < (int)param_2) {
+    uVar2 = (ulong)param_2;
+    uVar3 = NEON_fmov(0x3f800000,4);
+    do {
+      *param_3 = uVar3;
+      *(undefined4 *)(param_3 + 1) = 0x3f800000;
+      fVar4 = (param_1 - *(float *)(param_5 + 0x48000 + (ulong)*param_4 * 4)) /
+              *(float *)(param_5 + 0x50000 + (ulong)*param_4 * 4);
+      fVar5 = -0.0;
+      if ((fVar4 < 1.0) && (fVar5 = 2.0, 0.0 < fVar4)) {
+        uVar1 = (int)(fVar4 * 64.0) + 1;
+        fVar5 = -0.0;
+        if (uVar1 < 0x40) {
+          fVar5 = *(float *)(&DAT_01d2da50 + (ulong)(uint)(int)(fVar4 * 64.0) * 4) +
+                  (fVar4 * 64.0 - (float)(int)(fVar4 * 64.0)) *
+                  (*(float *)(&DAT_01d2da50 + (ulong)uVar1 * 4) -
+                  *(float *)(&DAT_01d2da50 + (ulong)(uint)(int)(fVar4 * 64.0) * 4));
+        }
+      }
+      *(float *)((long)param_3 + 0xc) = fVar5;
+      param_4 = param_4 + 1;
+      uVar2 = uVar2 - 1;
+      param_3 = param_3 + 2;
+    } while (uVar2 != 0);
+  }
+  return;
+}
+
+
+
+
+undefined8 FUN_014e8fc0(undefined8 param_1,undefined8 *param_2)
+
+{
+  *param_2 = 0;
+  *(undefined4 *)(param_2 + 1) = 0;
+  return 1;
+}
+
+
+
+
+undefined8 FUN_014e8fd0(undefined8 param_1,undefined4 *param_2)
+
+{
+  *param_2 = 0xbf000000;
+  return 1;
+}
+
+
+
+
+undefined8 FUN_014e8fe0(undefined8 param_1,undefined4 *param_2)
+
+{
+  *param_2 = 0;
+  return 1;
+}
+
+
+
+
+undefined8 FUN_014e8fec(undefined8 param_1,undefined8 *param_2)
+
+{
+  *param_2 = 0;
+  *(undefined4 *)(param_2 + 1) = 0;
+  return 1;
+}
+
+
+
+
+undefined8 FUN_014e8ffc(undefined8 param_1,undefined4 *param_2)
+
+{
+  *param_2 = 0x40e00000;
+  return 1;
+}
+

@@ -1,0 +1,5 @@
+# Stub replacements for 1000f.c
+# 2 functions extracted to ui/
+
+Line 748-948: FUN_1000f18d4 -> ui/social/social_panel.c
+Line 1518-1586: FUN_1000f2950 -> ui/misc_ui.c

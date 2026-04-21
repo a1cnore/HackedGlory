@@ -1,0 +1,6 @@
+# Stub replacements for 10031.c
+# 3 functions extracted to ui/
+
+Line 1539-3232: FUN_100312f24 -> ui/gates/ce_gate.c
+Line 7879-7973: FUN_10031a97c -> ui/nav_bar.c
+Line 8919-8948: FUN_10031bb04 -> ui/nav_bar.c

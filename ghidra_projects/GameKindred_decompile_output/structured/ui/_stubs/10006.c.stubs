@@ -1,0 +1,6 @@
+# Stub replacements for 10006.c
+# 3 functions extracted to ui/
+
+Line 5398-5850: FUN_100067e64 -> ui/misc_ui.c
+Line 6013-6178: FUN_100068f28 -> ui/misc_ui.c
+Line 6571-7023: thunk_FUN_100067e64 -> ui/misc_ui.c

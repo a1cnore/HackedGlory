@@ -1,0 +1,16 @@
+# Stub replacements for 1001d.c
+# 13 functions extracted to ui/
+
+Line 808-950: FUN_1001d0fc4 -> ui/misc_ui.c
+Line 1046-1058: FUN_1001d19d4 -> ui/misc_ui.c
+Line 2427-2442: FUN_1001d3bdc -> ui/misc_ui.c
+Line 2447-2475: FUN_1001d3c58 -> ui/misc_ui.c
+Line 3710-3814: FUN_1001d57d8 -> ui/misc_ui.c
+Line 3819-3923: thunk_FUN_1001d57d8 -> ui/misc_ui.c
+Line 3997-4012: FUN_1001d5f88 -> ui/misc_ui.c
+Line 4417-4465: FUN_1001d6afc -> ui/misc_ui.c
+Line 8011-8061: FUN_1001db360 -> ui/misc_ui.c
+Line 8883-9121: FUN_1001dc54c -> ui/social/social_panel.c
+Line 9495-9733: thunk_FUN_1001dc54c -> ui/social/social_panel.c
+Line 9806-10254: FUN_1001dd630 -> ui/social/social_panel.c
+Line 11279-11327: FUN_1001df760 -> ui/gates/ce_gate.c

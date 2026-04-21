@@ -1,0 +1,11 @@
+# Stub replacements for 1001b.c
+# 8 functions extracted to ui/
+
+Line 1332-1467: FUN_1001b189c -> ui/misc_ui.c
+Line 4224-4350: FUN_1001b53a8 -> ui/misc_ui.c
+Line 6857-7051: FUN_1001b88c4 -> ui/misc_ui.c
+Line 7194-7424: FUN_1001b8ee8 -> ui/market/market_tabs.c
+Line 7429-7626: FUN_1001b94bc -> ui/misc_ui.c
+Line 7631-7839: FUN_1001b9b48 -> ui/misc_ui.c
+Line 7844-7992: FUN_1001ba218 -> ui/market/market_tabs.c
+Line 8966-9058: FUN_1001bbea0 -> ui/misc_ui.c

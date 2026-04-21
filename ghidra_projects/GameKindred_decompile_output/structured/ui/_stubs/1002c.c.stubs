@@ -1,0 +1,11 @@
+# Stub replacements for 1002c.c
+# 8 functions extracted to ui/
+
+Line 285-337: FUN_1002c04cc -> ui/misc_ui.c
+Line 2325-2363: FUN_1002c2f48 -> ui/social/social_panel.c
+Line 5641-5748: FUN_1002c76f4 -> ui/misc_ui.c
+Line 5768-5875: thunk_FUN_1002c76f4 -> ui/misc_ui.c
+Line 7821-7877: FUN_1002ca2e0 -> ui/misc_ui.c
+Line 9092-9198: FUN_1002cbfe8 -> ui/misc_ui.c
+Line 11322-11469: FUN_1002cf3b4 -> ui/misc_ui.c
+Line 11474-11515: FUN_1002cf6bc -> ui/misc_ui.c

@@ -1,0 +1,35 @@
+# Stub replacements for 1002a.c
+# 32 functions extracted to ui/
+
+Line 241-357: FUN_1002a0778 -> ui/misc_ui.c
+Line 410-526: thunk_FUN_1002a0778 -> ui/misc_ui.c
+Line 634-662: FUN_1002a0e58 -> ui/misc_ui.c
+Line 667-725: FUN_1002a0f1c -> ui/misc_ui.c
+Line 1496-1560: FUN_1002a1e94 -> ui/gates/ce_gate.c
+Line 2341-2552: FUN_1002a2f6c -> ui/market/market_tabs.c
+Line 2557-2698: thunk_FUN_1002a56cc -> ui/trophies/trophy_panel.c
+Line 2703-2771: thunk_FUN_1002a5ad0 -> ui/trophies/trophy_panel.c
+Line 2776-2788: thunk_FUN_1002a5cac -> ui/trophies/trophy_panel.c
+Line 3039-3075: FUN_1002a3998 -> ui/misc_ui.c
+Line 3503-3593: FUN_1002a47cc -> ui/misc_ui.c
+Line 3843-3858: FUN_1002a4e9c -> ui/misc_ui.c
+Line 4126-4267: FUN_1002a56cc -> ui/trophies/trophy_panel.c
+Line 4303-4370: FUN_1002a5ad0 -> ui/trophies/trophy_panel.c
+Line 4375-4387: FUN_1002a5cac -> ui/trophies/trophy_panel.c
+Line 4628-4760: FUN_1002a616c -> ui/nav_bar.c
+Line 4795-4817: FUN_1002a669c -> ui/social/social_panel.c
+Line 4822-4954: thunk_FUN_1002a616c -> ui/nav_bar.c
+Line 5177-5241: FUN_1002a6b3c -> ui/nav_bar.c
+Line 5919-5985: FUN_1002a7f60 -> ui/market/market_tabs.c
+Line 6002-6068: thunk_FUN_1002a7f60 -> ui/market/market_tabs.c
+Line 6510-6703: FUN_1002a88f0 -> ui/nav_bar.c
+Line 6809-7002: thunk_FUN_1002a88f0 -> ui/nav_bar.c
+Line 7020-7063: FUN_1002a8f20 -> ui/nav_bar.c
+Line 9577-9636: FUN_1002ac800 -> ui/misc_ui.c
+Line 10570-10697: FUN_1002ade3c -> ui/bag/bag_constructor.c
+Line 10885-10982: FUN_1002ae6ec -> ui/misc_ui.c
+Line 11385-11496: FUN_1002af074 -> ui/bag/bag_constructor.c
+Line 11546-11657: thunk_FUN_1002af074 -> ui/bag/bag_constructor.c
+Line 11839-11844: thunk_FUN_1002af930 -> ui/gates/ce_gate.c
+Line 11849-11890: FUN_1002af930 -> ui/gates/ce_gate.c
+Line 11895-11905: FUN_1002afb68 -> ui/tab_system.c

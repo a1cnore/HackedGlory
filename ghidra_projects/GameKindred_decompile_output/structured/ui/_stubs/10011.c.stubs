@@ -1,0 +1,6 @@
+# Stub replacements for 10011.c
+# 3 functions extracted to ui/
+
+Line 5192-5214: FUN_10011661c -> ui/misc_ui.c
+Line 5219-5236: FUN_1001166a0 -> ui/misc_ui.c
+Line 5241-5265: FUN_100116718 -> ui/misc_ui.c

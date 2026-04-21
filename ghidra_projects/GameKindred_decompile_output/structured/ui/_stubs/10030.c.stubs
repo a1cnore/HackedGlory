@@ -1,0 +1,12 @@
+# Stub replacements for 10030.c
+# 9 functions extracted to ui/
+
+Line 2763-2847: FUN_100304198 -> ui/market/market_tabs.c
+Line 2852-2936: thunk_FUN_100304198 -> ui/market/market_tabs.c
+Line 2953-3021: FUN_1003044c8 -> ui/misc_ui.c
+Line 3537-3609: FUN_100305108 -> ui/misc_ui.c
+Line 3627-3699: thunk_FUN_100305108 -> ui/misc_ui.c
+Line 5532-5646: FUN_1003079ac -> ui/misc_ui.c
+Line 10217-10337: FUN_10030caec -> ui/misc_ui.c
+Line 10456-10503: FUN_10030cf24 -> ui/misc_ui.c
+Line 11913-12686: FUN_10030e680 -> ui/misc_ui.c

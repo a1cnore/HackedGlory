@@ -1,0 +1,16 @@
+# Stub replacements for 10020.c
+# 13 functions extracted to ui/
+
+Line 3681-3738: FUN_100204584 -> ui/market/market_tabs.c
+Line 4910-5002: FUN_1002057d4 -> ui/trophies/trophy_panel.c
+Line 5126-5218: thunk_FUN_1002057d4 -> ui/trophies/trophy_panel.c
+Line 6820-6834: FUN_100206f70 -> ui/gates/ce_gate.c
+Line 10667-10684: FUN_100209ff0 -> ui/social/social_panel.c
+Line 10956-10970: FUN_10020a500 -> ui/social/social_panel.c
+Line 12086-12228: FUN_10020b540 -> ui/social/social_panel.c
+Line 12264-12472: FUN_10020b93c -> ui/social/social_panel.c
+Line 12487-12695: FUN_10020bd1c -> ui/social/social_panel.c
+Line 13891-13989: FUN_10020cfb8 -> ui/social/social_panel.c
+Line 13994-14092: thunk_FUN_10020cfb8 -> ui/social/social_panel.c
+Line 14686-14715: FUN_10020dbd0 -> ui/social/social_panel.c
+Line 14984-15061: FUN_10020f108 -> ui/social/social_panel.c

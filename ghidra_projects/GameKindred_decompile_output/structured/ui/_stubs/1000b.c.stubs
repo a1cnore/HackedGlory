@@ -1,0 +1,4 @@
+# Stub replacements for 1000b.c
+# 1 functions extracted to ui/
+
+Line 603-699: FUN_1000b13ec -> ui/misc_ui.c

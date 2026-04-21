@@ -1,0 +1,9 @@
+# Stub replacements for 10017.c
+# 6 functions extracted to ui/
+
+Line 9000-9063: FUN_10017b958 -> ui/social/social_panel.c
+Line 9136-9199: thunk_FUN_10017b958 -> ui/social/social_panel.c
+Line 10106-10210: FUN_10017d3ec -> ui/misc_ui.c
+Line 10492-10749: FUN_10017e180 -> ui/misc_ui.c
+Line 11302-11359: FUN_10017f868 -> ui/misc_ui.c
+Line 11502-11827: FUN_10017fbf4 -> ui/misc_ui.c

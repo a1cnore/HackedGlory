@@ -1,0 +1,27 @@
+# Stub replacements for 10029.c
+# 24 functions extracted to ui/
+
+Line 231-261: FUN_1002903a8 -> ui/gates/ce_gate.c
+Line 612-715: FUN_100290de0 -> ui/misc_ui.c
+Line 1650-2191: FUN_1002926b8 -> ui/profile/profile_panel.c
+Line 2312-2853: thunk_FUN_1002926b8 -> ui/profile/profile_panel.c
+Line 3390-3451: FUN_100294c7c -> ui/profile/profile_panel.c
+Line 3850-3921: FUN_100295c20 -> ui/misc_ui.c
+Line 3969-4040: thunk_FUN_100295c20 -> ui/misc_ui.c
+Line 4109-4197: FUN_100296204 -> ui/market/market_tabs.c
+Line 4202-4290: thunk_FUN_100296204 -> ui/market/market_tabs.c
+Line 5019-5163: FUN_1002973d8 -> ui/misc_ui.c
+Line 5183-5328: thunk_FUN_1002973d8 -> ui/misc_ui.c
+Line 5527-5575: FUN_100297e54 -> ui/misc_ui.c
+Line 5671-5761: FUN_10029818c -> ui/misc_ui.c
+Line 8176-8227: FUN_10029b498 -> ui/market/market_tabs.c
+Line 8232-8422: FUN_10029b654 -> ui/trophies/trophy_panel.c
+Line 8736-8845: FUN_10029bffc -> ui/misc_ui.c
+Line 8880-8989: thunk_FUN_10029bffc -> ui/misc_ui.c
+Line 9267-9442: FUN_10029c8b8 -> ui/profile/profile_panel.c
+Line 9577-9752: thunk_FUN_10029c8b8 -> ui/profile/profile_panel.c
+Line 10193-10282: FUN_10029deb4 -> ui/social/social_panel.c
+Line 10361-10491: FUN_10029e270 -> ui/social/social_panel.c
+Line 10537-10626: thunk_FUN_10029deb4 -> ui/social/social_panel.c
+Line 11244-11345: FUN_10029fee8 -> ui/social/social_panel.c
+Line 11350-11451: thunk_FUN_10029fee8 -> ui/social/social_panel.c

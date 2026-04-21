@@ -1,0 +1,15 @@
+# Stub replacements for 1002f.c
+# 12 functions extracted to ui/
+
+Line 167-222: FUN_1002f0390 -> ui/misc_ui.c
+Line 304-325: FUN_1002f07f4 -> ui/misc_ui.c
+Line 480-637: FUN_1002f10ac -> ui/misc_ui.c
+Line 732-889: thunk_FUN_1002f10ac -> ui/misc_ui.c
+Line 1209-1309: FUN_1002f1e1c -> ui/misc_ui.c
+Line 2859-3540: FUN_1002f4548 -> ui/market/market_tabs.c
+Line 4165-4238: FUN_1002f66ac -> ui/misc_ui.c
+Line 6484-6549: FUN_1002f9cf8 -> ui/nav_bar.c
+Line 6554-6619: thunk_FUN_1002f9cf8 -> ui/nav_bar.c
+Line 7577-7592: FUN_1002fb690 -> ui/misc_ui.c
+Line 8221-8242: FUN_1002fc7b0 -> ui/misc_ui.c
+Line 10833-10841: FUN_1002ffbcc -> ui/misc_ui.c

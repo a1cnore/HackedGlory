@@ -1,0 +1,14 @@
+# Stub replacements for 1000d.c
+# 11 functions extracted to ui/
+
+Line 140-237: FUN_1000d0380 -> ui/misc_ui.c
+Line 839-851: FUN_1000d100c -> ui/misc_ui.c
+Line 1505-2051: FUN_1000d1c68 -> ui/misc_ui.c
+Line 2261-2807: thunk_FUN_1000d1c68 -> ui/misc_ui.c
+Line 4347-4365: FUN_1000d6068 -> ui/misc_ui.c
+Line 4451-4468: FUN_1000d6210 -> ui/misc_ui.c
+Line 4572-4590: FUN_1000d6464 -> ui/misc_ui.c
+Line 4787-4800: FUN_1000d68bc -> ui/misc_ui.c
+Line 5143-5173: FUN_1000d7188 -> ui/misc_ui.c
+Line 5768-6264: FUN_1000d7f6c -> ui/misc_ui.c
+Line 7520-7551: FUN_1000daec0 -> ui/misc_ui.c

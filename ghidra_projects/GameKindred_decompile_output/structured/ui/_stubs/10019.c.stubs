@@ -1,0 +1,21 @@
+# Stub replacements for 10019.c
+# 18 functions extracted to ui/
+
+Line 684-692: FUN_100190bd0 -> ui/misc_ui.c
+Line 1527-1900: FUN_100191e28 -> ui/profile/profile_panel.c
+Line 1990-2013: FUN_100192d64 -> ui/misc_ui.c
+Line 2220-2593: thunk_FUN_100191e28 -> ui/profile/profile_panel.c
+Line 2598-2935: FUN_1001933ac -> ui/season/season_panel.c
+Line 5203-5300: FUN_100196cac -> ui/misc_ui.c
+Line 5498-5605: FUN_100197960 -> ui/market/market_tabs.c
+Line 7697-7875: FUN_10019a2d4 -> ui/gates/ce_gate.c
+Line 7915-8093: thunk_FUN_10019a2d4 -> ui/gates/ce_gate.c
+Line 9813-10026: FUN_10019cfbc -> ui/misc_ui.c
+Line 10071-10284: thunk_FUN_10019cfbc -> ui/misc_ui.c
+Line 10502-10837: FUN_10019de4c -> ui/social/social_panel.c
+Line 10943-10988: FUN_10019e818 -> ui/social/social_panel.c
+Line 10993-11305: FUN_10019e90c -> ui/social/social_panel.c
+Line 11310-11561: FUN_10019ef80 -> ui/misc_ui.c
+Line 11566-11761: FUN_10019f470 -> ui/misc_ui.c
+Line 11899-12030: FUN_10019ff68 -> ui/gates/ce_gate.c
+Line 12035-12166: thunk_FUN_10019ff68 -> ui/gates/ce_gate.c

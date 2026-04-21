@@ -1,0 +1,18 @@
+# Stub replacements for 1001c.c
+# 15 functions extracted to ui/
+
+Line 2192-2210: FUN_1001c38b8 -> ui/misc_ui.c
+Line 2297-2351: FUN_1001c397c -> ui/profile/profile_panel.c
+Line 2366-2420: thunk_FUN_1001c397c -> ui/profile/profile_panel.c
+Line 2805-2871: FUN_1001c43fc -> ui/misc_ui.c
+Line 2876-2942: thunk_FUN_1001c43fc -> ui/misc_ui.c
+Line 5594-5685: FUN_1001c81d8 -> ui/gates/ce_gate.c
+Line 5690-5781: thunk_FUN_1001c81d8 -> ui/gates/ce_gate.c
+Line 6747-6816: FUN_1001c9e20 -> ui/market/market_tabs.c
+Line 6873-6942: thunk_FUN_1001c9e20 -> ui/market/market_tabs.c
+Line 7304-7477: FUN_1001ca764 -> ui/market/market_tabs.c
+Line 7536-7709: thunk_FUN_1001ca764 -> ui/market/market_tabs.c
+Line 7996-8056: FUN_1001cb41c -> ui/market/market_tabs.c
+Line 8162-8263: FUN_1001cb784 -> ui/market/market_tabs.c
+Line 9794-9878: FUN_1001cd5ec -> ui/misc_ui.c
+Line 9898-9982: thunk_FUN_1001cd5ec -> ui/misc_ui.c

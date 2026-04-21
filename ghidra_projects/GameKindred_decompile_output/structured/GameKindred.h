@@ -1,0 +1,1 @@
+headers/GameKindred.h

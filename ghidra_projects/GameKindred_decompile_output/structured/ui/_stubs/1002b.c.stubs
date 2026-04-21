@@ -1,0 +1,15 @@
+# Stub replacements for 1002b.c
+# 12 functions extracted to ui/
+
+Line 1445-1553: FUN_1002b1c34 -> ui/misc_ui.c
+Line 3251-3324: FUN_1002b4970 -> ui/nav_bar.c
+Line 4029-4294: FUN_1002b5b58 -> ui/misc_ui.c
+Line 4508-4697: FUN_1002b6c3c -> ui/misc_ui.c
+Line 4702-4891: thunk_FUN_1002b6c3c -> ui/misc_ui.c
+Line 5058-5271: FUN_1002b7898 -> ui/misc_ui.c
+Line 5827-5943: FUN_1002b8c10 -> ui/misc_ui.c
+Line 5948-6064: thunk_FUN_1002b8c10 -> ui/misc_ui.c
+Line 6467-6523: FUN_1002b9a24 -> ui/misc_ui.c
+Line 10749-11028: FUN_1002be9e0 -> ui/misc_ui.c
+Line 11033-11312: thunk_FUN_1002be9e0 -> ui/misc_ui.c
+Line 11474-11666: FUN_1002bf894 -> ui/misc_ui.c

@@ -1,0 +1,4 @@
+# Stub replacements for 10013.c
+# 1 functions extracted to ui/
+
+Line 1194-1198: FUN_100131560 -> ui/gates/ce_gate.c

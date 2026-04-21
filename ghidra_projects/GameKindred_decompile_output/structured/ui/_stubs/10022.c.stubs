@@ -1,0 +1,32 @@
+# Stub replacements for 10022.c
+# 29 functions extracted to ui/
+
+Line 511-522: FUN_100220a38 -> ui/profile/profile_panel.c
+Line 660-669: FUN_100220d08 -> ui/profile/profile_panel.c
+Line 1586-1597: FUN_100221f98 -> ui/profile/profile_panel.c
+Line 1612-1781: FUN_100221ff0 -> ui/profile/profile_panel.c
+Line 1876-1931: FUN_100222878 -> ui/profile/profile_panel.c
+Line 3594-3613: FUN_1002249cc -> ui/misc_ui.c
+Line 5267-5597: FUN_1002268e4 -> ui/gates/ce_gate.c
+Line 5765-6095: thunk_FUN_1002268e4 -> ui/gates/ce_gate.c
+Line 6319-6380: FUN_100227d90 -> ui/gates/ce_gate.c
+Line 6398-6431: FUN_100227fb8 -> ui/profile/profile_panel.c
+Line 6436-6498: FUN_100228088 -> ui/profile/profile_panel.c
+Line 6503-6569: FUN_100228358 -> ui/profile/profile_panel.c
+Line 6574-6640: FUN_100228648 -> ui/profile/profile_panel.c
+Line 6645-6677: FUN_100228938 -> ui/profile/profile_panel.c
+Line 6682-6714: FUN_100228ad8 -> ui/profile/profile_panel.c
+Line 6719-6807: FUN_100228c78 -> ui/profile/profile_panel.c
+Line 6812-6878: FUN_100228f50 -> ui/profile/profile_panel.c
+Line 6883-6949: FUN_100229240 -> ui/profile/profile_panel.c
+Line 7011-7081: FUN_100229634 -> ui/gates/ce_gate.c
+Line 7167-7223: FUN_10022990c -> ui/misc_ui.c
+Line 7304-7360: FUN_100229b18 -> ui/misc_ui.c
+Line 7441-7467: FUN_100229d24 -> ui/misc_ui.c
+Line 7544-7590: FUN_100229e0c -> ui/misc_ui.c
+Line 7610-7642: FUN_100229f70 -> ui/profile/profile_panel.c
+Line 7719-7771: FUN_10022a07c -> ui/misc_ui.c
+Line 7776-7828: FUN_10022a27c -> ui/misc_ui.c
+Line 10696-11061: FUN_10022d51c -> ui/main_menu.c
+Line 11090-11455: thunk_FUN_10022d51c -> ui/main_menu.c
+Line 11701-12244: FUN_10022e748 -> ui/misc_ui.c

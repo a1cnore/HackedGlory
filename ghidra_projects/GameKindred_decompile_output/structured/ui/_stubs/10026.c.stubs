@@ -1,0 +1,25 @@
+# Stub replacements for 10026.c
+# 22 functions extracted to ui/
+
+Line 47-96: FUN_100260244 -> ui/trophies/trophy_panel.c
+Line 101-131: FUN_1002603e8 -> ui/trophies/trophy_panel.c
+Line 136-185: thunk_FUN_100260244 -> ui/trophies/trophy_panel.c
+Line 700-1020: FUN_100260edc -> ui/main_menu.c
+Line 1346-1666: thunk_FUN_100260edc -> ui/main_menu.c
+Line 2288-2312: FUN_1002629d0 -> ui/misc_ui.c
+Line 2342-2355: FUN_100262b04 -> ui/trophies/trophy_panel.c
+Line 2734-2838: FUN_100263288 -> ui/social/social_panel.c
+Line 2843-3236: FUN_10026350c -> ui/trophies/trophy_panel.c
+Line 3791-3872: FUN_100264e14 -> ui/main_menu.c
+Line 3887-3968: thunk_FUN_100264e14 -> ui/main_menu.c
+Line 4197-4202: thunk_FUN_1002654ec -> ui/trophies/trophy_panel.c
+Line 4207-4262: FUN_1002654ec -> ui/trophies/trophy_panel.c
+Line 4567-4632: FUN_100265bd4 -> ui/trophies/trophy_panel.c
+Line 4648-4711: FUN_100265dbc -> ui/trophies/trophy_panel.c
+Line 4746-4829: FUN_100265ef0 -> ui/profile/profile_panel.c
+Line 5431-5503: FUN_100266a50 -> ui/main_menu.c
+Line 5728-5800: thunk_FUN_100266a50 -> ui/main_menu.c
+Line 10556-10598: thunk_FUN_10026c38c -> ui/trophies/trophy_panel.c
+Line 11032-11074: FUN_10026c38c -> ui/trophies/trophy_panel.c
+Line 11166-11198: thunk_FUN_10026c6d0 -> ui/trophies/trophy_panel.c
+Line 11220-11252: FUN_10026c6d0 -> ui/trophies/trophy_panel.c

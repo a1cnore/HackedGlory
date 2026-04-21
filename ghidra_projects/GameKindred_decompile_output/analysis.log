@@ -1,0 +1,208 @@
+2026-04-04 13:32:57 INFO  (LoggingInitialization) Using log config file: jar:file:/opt/homebrew/Cellar/ghidra/12.0.4/libexec/Ghidra/Framework/Generic/lib/Generic.jar!/generic.log4j.xml  
+2026-04-04 13:32:57 INFO  (LoggingInitialization) Using log file: /Users/marvinkleinpass/ghidra_projects/GameKindred_decompile_output/analysis.log  
+2026-04-04 13:32:57 INFO  (Preferences) Loading user preferences: /Users/marvinkleinpass/Library/ghidra/ghidra_12.0.4_PUBLIC/preferences  
+2026-04-04 13:32:57 INFO  (ClassSearcher) Searching for classes...  
+2026-04-04 13:32:58 INFO  (ClassSearcher) Class search complete (774 ms)  
+2026-04-04 13:32:58 INFO  (DefaultSSLContextInitializer) Initializing SSL Context  
+2026-04-04 13:32:58 INFO  (SecureRandomFactory) Initializing Random Number Generator...  
+2026-04-04 13:32:58 INFO  (SecureRandomFactory) Random Number Generator initialization complete: NativePRNGNonBlocking  
+2026-04-04 13:32:58 INFO  (DefaultTrustManagerFactory) Trust manager disabled, cacerts have not been set  
+2026-04-04 13:33:26 INFO  (LoggingInitialization) Using log config file: jar:file:/opt/homebrew/Cellar/ghidra/12.0.4/libexec/Ghidra/Framework/Generic/lib/Generic.jar!/generic.log4j.xml  
+2026-04-04 13:33:26 INFO  (LoggingInitialization) Using log file: /Users/marvinkleinpass/ghidra_projects/GameKindred_decompile_output/analysis.log  
+2026-04-04 13:33:26 INFO  (Preferences) Loading user preferences: /Users/marvinkleinpass/Library/ghidra/ghidra_12.0.4_PUBLIC/preferences  
+2026-04-04 13:33:26 INFO  (ClassSearcher) Searching for classes...  
+2026-04-04 13:33:27 INFO  (ClassSearcher) Class search complete (766 ms)  
+2026-04-04 13:33:27 INFO  (DefaultSSLContextInitializer) Initializing SSL Context  
+2026-04-04 13:33:27 INFO  (SecureRandomFactory) Initializing Random Number Generator...  
+2026-04-04 13:33:27 INFO  (SecureRandomFactory) Random Number Generator initialization complete: NativePRNGNonBlocking  
+2026-04-04 13:33:27 INFO  (DefaultTrustManagerFactory) Trust manager disabled, cacerts have not been set  
+2026-04-04 13:33:29 INFO  (AnalyzeHeadless) Headless startup complete (3261 ms)  
+2026-04-04 13:33:29 INFO  (ClassSearcher) Class searcher loaded 176 extension points (86 false positives)  
+2026-04-04 13:33:29 INFO  (HeadlessAnalyzer) HEADLESS Script Paths:
+    /opt/homebrew/Cellar/ghidra/12.0.4/libexec/Ghidra/Features/Jython/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.0.4/libexec/Ghidra/Features/Base/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.0.4/libexec/Ghidra/Features/SystemEmulation/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.0.4/libexec/Ghidra/Features/FileFormats/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.0.4/libexec/Ghidra/Features/WildcardAssembler/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.0.4/libexec/Ghidra/Processors/DATA/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.0.4/libexec/Ghidra/Features/FunctionID/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.0.4/libexec/Ghidra/Features/PyGhidra/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.0.4/libexec/Ghidra/Features/BSim/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.0.4/libexec/Ghidra/Features/MicrosoftCodeAnalyzer/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.0.4/libexec/Ghidra/Features/SwiftDemangler/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.0.4/libexec/Ghidra/Processors/8051/ghidra_scripts
+    /Users/marvinkleinpass/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.0.4/libexec/Ghidra/Features/PDB/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.0.4/libexec/Ghidra/Processors/JVM/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.0.4/libexec/Ghidra/Features/BytePatterns/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.0.4/libexec/Ghidra/Processors/Atmel/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.0.4/libexec/Ghidra/Features/Decompiler/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.0.4/libexec/Ghidra/Features/GnuDemangler/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.0.4/libexec/Ghidra/Debug/Debugger-rmi-trace/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.0.4/libexec/Ghidra/Features/VersionTracking/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.0.4/libexec/Ghidra/Features/DecompilerDependent/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.0.4/libexec/Ghidra/Processors/PIC/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.0.4/libexec/Ghidra/Debug/Debugger/ghidra_scripts  
+2026-04-04 13:33:29 INFO  (HeadlessAnalyzer) HEADLESS: execution starts  
+2026-04-04 13:33:29 INFO  (HeadlessAnalyzer) Creating project: /Users/marvinkleinpass/ghidra_projects/GameKindred_decompile  
+2026-04-04 13:33:29 INFO  (DefaultProject) Creating project: /Users/marvinkleinpass/ghidra_projects/GameKindred_decompile  
+2026-04-04 13:33:29 INFO  (HeadlessAnalyzer) REPORT: Processing input files:   
+2026-04-04 13:33:29 INFO  (HeadlessAnalyzer)      project: /Users/marvinkleinpass/ghidra_projects/GameKindred_decompile  
+2026-04-04 13:33:29 INFO  (HeadlessAnalyzer) IMPORTING: file:///Users/marvinkleinpass/Developer/vphone/vgf/Payload/GameKindred.app/GameKindred  
+2026-04-04 13:33:29 INFO  (ProgramLoader) Using Loader: Mac OS X Mach-O  
+2026-04-04 13:33:29 INFO  (ProgramLoader) Using Language/Compiler: AARCH64:LE:64:AppleSilicon:default  
+2026-04-04 13:33:29 INFO  (ProgramLoader) Using Library Search Path: [., /System/Library/dyld/dyld_shared_cache_arm64e, /System/Library/dyld/dyld_shared_cache_x86_64, /System/Library/dyld/dyld_shared_cache_x86_64h, /System/Cryptexes/OS/System/Library/dyld/dyld_shared_cache_arm64e, /System/Cryptexes/OS/System/Library/dyld/dyld_shared_cache_x86_64, /System/Cryptexes/OS/System/Library/dyld/dyld_shared_cache_x86_64h, /Users/marvinkleinpass/Library/Java/Extensions, /Library/Java/Extensions, /Network/Library/Java/Extensions, /System/Library/Java/Extensions, /usr/lib/java]  
+2026-04-04 13:33:34 INFO  (ProgramLoader) Additional info:
+Loading file:///Users/marvinkleinpass/Developer/vphone/vgf/Payload/GameKindred.app/GameKindred?MD5=408cc628a4c1184dc3821c76aa91ff33...
+------------------------------------------------
+
+Linking the External Programs of 'GameKindred' to imported libraries...
+  [/System/Library/Frameworks/CoreGraphics.framework/CoreGraphics] -> not found in project
+  [/System/Library/Frameworks/CoreMotion.framework/CoreMotion] -> not found in project
+  [/System/Library/Frameworks/Foundation.framework/Foundation] -> not found in project
+  [/System/Library/Frameworks/MediaPlayer.framework/MediaPlayer] -> not found in project
+  [/System/Library/Frameworks/Security.framework/Security] -> not found in project
+  [/System/Library/Frameworks/StoreKit.framework/StoreKit] -> not found in project
+  [/System/Library/Frameworks/UIKit.framework/UIKit] -> not found in project
+  [/System/Library/Frameworks/QuartzCore.framework/QuartzCore] -> not found in project
+  [/System/Library/Frameworks/Metal.framework/Metal] -> not found in project
+  [/System/Library/Frameworks/AudioToolbox.framework/AudioToolbox] -> not found in project
+  [/System/Library/Frameworks/CoreAudio.framework/CoreAudio] -> not found in project
+  [/System/Library/Frameworks/AVFoundation.framework/AVFoundation] -> not found in project
+  [/System/Library/Frameworks/GameController.framework/GameController] -> not found in project
+  [/usr/lib/libz.1.dylib] -> not found in project
+  [/System/Library/Frameworks/AdSupport.framework/AdSupport] -> not found in project
+  [/System/Library/Frameworks/iAd.framework/iAd] -> not found in project
+  [/usr/lib/libsqlite3.dylib] -> not found in project
+  [/usr/lib/libobjc.A.dylib] -> not found in project
+  [/usr/lib/libc++.1.dylib] -> not found in project
+  [/usr/lib/libSystem.B.dylib] -> not found in project
+  [/System/Library/Frameworks/AVKit.framework/AVKit] -> not found in project
+  [/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation] -> not found in project
+  [/System/Library/Frameworks/CoreTelephony.framework/CoreTelephony] -> not found in project
+  [/System/Library/Frameworks/SystemConfiguration.framework/SystemConfiguration] -> not found in project
+  [@executable_path/Dylibs/PatchPGO] -> not found in project
+  [@executable_path/ssl_bypass.dylib] -> not found in project
+  [@executable_path/vg_unlock.dylib] -> not found in project
+------------------------------------------------
+
+  
+2026-04-04 13:33:34 INFO  (HeadlessAnalyzer) IMPORTING: Loaded 0 additional files  
+2026-04-04 13:33:34 INFO  (HeadlessAnalyzer) ANALYZING all memory and code: file:///Users/marvinkleinpass/Developer/vphone/vgf/Payload/GameKindred.app/GameKindred  
+2026-04-04 13:33:39 INFO  (DecompilerSwitchAnalyzer) hit non-returning function, restarting decompiler switch analyzer later  
+2026-04-04 13:34:20 ERROR (CreateFunctionCmd) Failed to create function at 100329b7c since its body contains referring thunk at 100329c28  
+2026-04-04 13:34:20 ERROR (CreateFunctionCmd) Failed to create function at 10033830c since its body contains referring thunk at 1003383c4  
+2026-04-04 13:34:20 ERROR (CreateFunctionCmd) Failed to create function at 100340994 since its body contains referring thunk at 100340a48  
+2026-04-04 13:35:27 ERROR (VarnodeContext) VarnodeContext: out of address spaces at @1004c9f60 for: x0-1004c9f60  
+2026-04-04 13:37:08 ERROR (CreateFunctionCmd) Failed to create function at 100217ec8 since its body contains referring thunk at 100217fa4  
+2026-04-04 13:37:57 DEBUG (FidAnalyzer) No FID Libraries apply for language AARCH64:LE:64:AppleSilicon  
+2026-04-04 13:37:57 INFO  (PackedDatabaseCache) Packed database cache: /var/tmp/marvinkleinpass-ghidra/packed-db-cache  
+2026-04-04 13:37:57 DEBUG (PackedDatabaseCache) Using cached packed database: /opt/homebrew/Cellar/ghidra/12.0.4/libexec/Ghidra/Features/Base/data/typeinfo/mac_10.9/mac_osx.gdt  
+2026-04-04 13:37:58 INFO  (ApplyDataArchiveAnalyzer) Applied data type archive: mac_osx  
+2026-04-04 13:39:41 ERROR (VarnodeContext) VarnodeContext: out of address spaces at @1004c9af4 for: x1-1004c9af4  
+2026-04-04 13:43:54 INFO  (AutoAnalysisManager) -----------------------------------------------------
+    AARCH64 ELF PLT Thunks                     0.000 secs
+    ASCII Strings                              1.180 secs
+    Apply Data Archives                        0.566 secs
+    Basic Constant Reference Analyzer        103.607 secs
+    CFStrings                                  0.080 secs
+    Call Convention ID                         8.015 secs
+    Call-Fixup Installer                      15.563 secs
+    Create Address Tables                      2.887 secs
+    Create Address Tables - One Time           7.992 secs
+    Create Function                            3.790 secs
+    Data Reference                            19.746 secs
+    Decompiler Switch Analysis                34.526 secs
+    Decompiler Switch Analysis - One Time      2.470 secs
+    Demangler GNU                              0.528 secs
+    Disassemble                               33.550 secs
+    Disassemble Entry Points                   0.242 secs
+    Disassemble Entry Points - One Time        0.005 secs
+    Embedded Media                             0.137 secs
+    External Entry References                  0.000 secs
+    Function ID                                0.051 secs
+    Function Start Search                      3.675 secs
+    Function Start Search After Code           2.726 secs
+    Function Start Search After Data           3.141 secs
+    Function Start Search delayed - One Time   6.769 secs
+    Mach-O Function Starts                    22.957 secs
+    Non-Returning Functions - Discovered       5.560 secs
+    Non-Returning Functions - Known            0.008 secs
+    Objective-C 2 Class                        2.991 secs
+    Objective-C 2 Decompiler Message         210.698 secs
+    Reference                                  4.869 secs
+    Shared Return Calls                        9.216 secs
+    Stack                                     90.572 secs
+    Subroutine References                     21.614 secs
+    Subroutine References - One Time           0.003 secs
+-----------------------------------------------------
+     Total Time   619 secs
+-----------------------------------------------------
+  
+2026-04-04 13:43:54 INFO  (HeadlessAnalyzer) REPORT: Analysis succeeded for file: file:///Users/marvinkleinpass/Developer/vphone/vgf/Payload/GameKindred.app/GameKindred  
+2026-04-04 13:43:54 INFO  (HeadlessAnalyzer) REPORT: Execute script: DecompileAllToC.java   
+2026-04-04 13:43:55 INFO  (HeadlessAnalyzer) SCRIPT: /Users/marvinkleinpass/ghidra_scripts/DecompileAllToC.java  
+2026-04-04 13:43:55 INFO  (GhidraScript) DecompileAllToC.java> Starting full C/C++ export...  
+2026-04-04 13:43:55 INFO  (GhidraScript) DecompileAllToC.java> Output: /Users/marvinkleinpass/ghidra_projects/GameKindred_decompile_output/GameKindred.c  
+2026-04-04 13:44:58 WARN  (CppExporter) Error decompiling: 
+Low-level Error: Conditional execution: Illegal op in iblock  
+2026-04-04 13:45:25 WARN  (CppExporter) Error decompiling: Exception while decompiling 1004be784: process: timeout
+  
+2026-04-04 13:47:21 INFO  (GhidraScript) DecompileAllToC.java> SUCCESS: Export completed to /Users/marvinkleinpass/ghidra_projects/GameKindred_decompile_output/GameKindred.c  
+2026-04-04 13:47:21 INFO  (GhidraScript) DecompileAllToC.java> GameKindred.c size: 95886138 bytes  
+2026-04-04 13:47:21 INFO  (HeadlessAnalyzer) ANALYZING changes made by post scripts: file:///Users/marvinkleinpass/Developer/vphone/vgf/Payload/GameKindred.app/GameKindred  
+2026-04-04 13:47:21 INFO  (HeadlessAnalyzer) REPORT: Post-analysis succeeded for file: file:///Users/marvinkleinpass/Developer/vphone/vgf/Payload/GameKindred.app/GameKindred  
+2026-04-04 13:47:22 INFO  (LocalFileSystem) /GameKindred: file created (marvinkleinpass)  
+2026-04-04 13:47:22 INFO  (HeadlessAnalyzer) REPORT: Save succeeded for: /GameKindred (GameKindred_decompile:/GameKindred)  
+2026-04-04 13:47:22 INFO  (HeadlessAnalyzer) REPORT: Import succeeded  
+2026-04-04 13:54:06 INFO  (LoggingInitialization) Using log config file: jar:file:/opt/homebrew/Cellar/ghidra/12.0.4/libexec/Ghidra/Framework/Generic/lib/Generic.jar!/generic.log4j.xml  
+2026-04-04 13:54:06 INFO  (LoggingInitialization) Using log file: /Users/marvinkleinpass/ghidra_projects/GameKindred_decompile_output/analysis.log  
+2026-04-04 13:54:06 INFO  (Preferences) Loading user preferences: /Users/marvinkleinpass/Library/ghidra/ghidra_12.0.4_PUBLIC/preferences  
+2026-04-04 13:54:06 INFO  (ClassSearcher) Searching for classes...  
+2026-04-04 13:54:07 INFO  (ClassSearcher) Class search complete (774 ms)  
+2026-04-04 13:54:07 INFO  (DefaultSSLContextInitializer) Initializing SSL Context  
+2026-04-04 13:54:07 INFO  (SecureRandomFactory) Initializing Random Number Generator...  
+2026-04-04 13:54:07 INFO  (SecureRandomFactory) Random Number Generator initialization complete: NativePRNGNonBlocking  
+2026-04-04 13:54:07 INFO  (DefaultTrustManagerFactory) Trust manager disabled, cacerts have not been set  
+2026-04-04 13:54:07 INFO  (AnalyzeHeadless) Headless startup complete (1640 ms)  
+2026-04-04 13:54:07 INFO  (ClassSearcher) Class searcher loaded 58 extension points (18 false positives)  
+2026-04-04 13:54:07 INFO  (HeadlessAnalyzer) HEADLESS Script Paths:
+    /opt/homebrew/Cellar/ghidra/12.0.4/libexec/Ghidra/Features/Jython/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.0.4/libexec/Ghidra/Features/Base/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.0.4/libexec/Ghidra/Features/SystemEmulation/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.0.4/libexec/Ghidra/Features/FileFormats/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.0.4/libexec/Ghidra/Features/WildcardAssembler/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.0.4/libexec/Ghidra/Processors/DATA/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.0.4/libexec/Ghidra/Features/FunctionID/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.0.4/libexec/Ghidra/Features/PyGhidra/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.0.4/libexec/Ghidra/Features/BSim/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.0.4/libexec/Ghidra/Features/MicrosoftCodeAnalyzer/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.0.4/libexec/Ghidra/Features/SwiftDemangler/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.0.4/libexec/Ghidra/Processors/8051/ghidra_scripts
+    /Users/marvinkleinpass/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.0.4/libexec/Ghidra/Features/PDB/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.0.4/libexec/Ghidra/Processors/JVM/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.0.4/libexec/Ghidra/Features/BytePatterns/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.0.4/libexec/Ghidra/Processors/Atmel/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.0.4/libexec/Ghidra/Features/Decompiler/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.0.4/libexec/Ghidra/Features/GnuDemangler/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.0.4/libexec/Ghidra/Debug/Debugger-rmi-trace/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.0.4/libexec/Ghidra/Features/VersionTracking/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.0.4/libexec/Ghidra/Features/DecompilerDependent/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.0.4/libexec/Ghidra/Processors/PIC/ghidra_scripts
+    /opt/homebrew/Cellar/ghidra/12.0.4/libexec/Ghidra/Debug/Debugger/ghidra_scripts  
+2026-04-04 13:54:07 INFO  (HeadlessAnalyzer) HEADLESS: execution starts  
+2026-04-04 13:54:07 INFO  (HeadlessAnalyzer) Opening existing project: /Users/marvinkleinpass/ghidra_projects/GameKindred_decompile  
+2026-04-04 13:54:07 INFO  (HeadlessProject) Opening project: /Users/marvinkleinpass/ghidra_projects/GameKindred_decompile  
+2026-04-04 13:54:09 INFO  (HeadlessAnalyzer) REPORT: Processing project file: /GameKindred  
+2026-04-04 13:54:09 INFO  (HeadlessAnalyzer) REPORT: Execute script: DecompileAllToC.java   
+2026-04-04 13:54:10 INFO  (HeadlessAnalyzer) SCRIPT: /Users/marvinkleinpass/ghidra_scripts/DecompileAllToC.java  
+2026-04-04 13:54:10 INFO  (GhidraScript) DecompileAllToC.java> Starting full C/C++ export with header...  
+2026-04-04 13:54:59 WARN  (CppExporter) Error decompiling: 
+Low-level Error: Conditional execution: Illegal op in iblock  
+2026-04-04 13:55:26 WARN  (CppExporter) Error decompiling: Exception while decompiling 1004be784: process: timeout
+  
+2026-04-04 13:57:12 INFO  (GhidraScript) DecompileAllToC.java> SUCCESS: Export completed  
+2026-04-04 13:57:12 INFO  (GhidraScript) DecompileAllToC.java> GameKindred.c size: 95836628 bytes  
+2026-04-04 13:57:12 INFO  (GhidraScript) DecompileAllToC.java> GameKindred.h size: 16708970 bytes  
+2026-04-04 13:57:12 INFO  (HeadlessAnalyzer) REPORT: Save succeeded for processed file: /GameKindred  

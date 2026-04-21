@@ -1,0 +1,17 @@
+# Stub replacements for 1001a.c
+# 14 functions extracted to ui/
+
+Line 498-513: FUN_1001a0d78 -> ui/gates/ce_gate.c
+Line 656-732: FUN_1001a1114 -> ui/misc_ui.c
+Line 737-813: thunk_FUN_1001a1114 -> ui/misc_ui.c
+Line 1206-1265: FUN_1001a1cec -> ui/misc_ui.c
+Line 1676-1775: FUN_1001a2604 -> ui/market/market_tabs.c
+Line 1800-1899: thunk_FUN_1001a2604 -> ui/market/market_tabs.c
+Line 2127-2548: FUN_1001a2cfc -> ui/profile/profile_panel.c
+Line 3332-3547: FUN_1001a4bb0 -> ui/misc_ui.c
+Line 9884-10122: FUN_1001ab780 -> ui/misc_ui.c
+Line 10127-10137: thunk_FUN_1001acbb8 -> ui/trophies/trophy_panel.c
+Line 10151-10389: thunk_FUN_1001ab780 -> ui/misc_ui.c
+Line 10925-10935: FUN_1001acbb8 -> ui/trophies/trophy_panel.c
+Line 11306-11337: FUN_1001ad64c -> ui/misc_ui.c
+Line 11352-11383: thunk_FUN_1001ad64c -> ui/misc_ui.c

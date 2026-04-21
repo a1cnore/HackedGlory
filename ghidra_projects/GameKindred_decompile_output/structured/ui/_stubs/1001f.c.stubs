@@ -1,0 +1,23 @@
+# Stub replacements for 1001f.c
+# 20 functions extracted to ui/
+
+Line 709-743: FUN_1001f0968 -> ui/social/social_panel.c
+Line 841-875: thunk_FUN_1001f0968 -> ui/social/social_panel.c
+Line 1615-1663: FUN_1001f1d14 -> ui/misc_ui.c
+Line 3469-3486: FUN_1001f3b40 -> ui/gates/ce_gate.c
+Line 4235-4341: FUN_1001f4228 -> ui/main_menu.c
+Line 4346-4438: FUN_1001f4444 -> ui/main_menu.c
+Line 5290-5335: FUN_1001f4efc -> ui/gates/ce_gate.c
+Line 5380-5527: FUN_1001f505c -> ui/profile/profile_panel.c
+Line 6230-6363: FUN_1001f59e8 -> ui/bag/bag_constructor.c
+Line 6368-6394: FUN_1001f5d50 -> ui/bag/bag_constructor.c
+Line 6399-6532: thunk_FUN_1001f59e8 -> ui/bag/bag_constructor.c
+Line 7026-7036: FUN_1001f63c8 -> ui/bag/bag_constructor.c
+Line 9794-9917: FUN_1001f9230 -> ui/gates/ce_gate.c
+Line 10003-10126: thunk_FUN_1001f9230 -> ui/gates/ce_gate.c
+Line 10544-10579: FUN_1001f9e34 -> ui/misc_ui.c
+Line 11033-11106: FUN_1001fa7b0 -> ui/profile/profile_panel.c
+Line 12790-12804: FUN_1001fc0e8 -> ui/gates/ce_gate.c
+Line 14010-14252: FUN_1001fd570 -> ui/main_menu.c
+Line 14445-14687: thunk_FUN_1001fd570 -> ui/main_menu.c
+Line 14995-15121: FUN_1001fe194 -> ui/misc_ui.c

@@ -1,0 +1,12 @@
+# Stub replacements for 1000e.c
+# 9 functions extracted to ui/
+
+Line 3715-3895: FUN_1000e3fe4 -> ui/misc_ui.c
+Line 3926-4106: thunk_FUN_1000e3fe4 -> ui/misc_ui.c
+Line 7557-8491: FUN_1000e9024 -> ui/misc_ui.c
+Line 8535-8666: FUN_1000ea654 -> ui/misc_ui.c
+Line 8934-8947: FUN_1000eaff0 -> ui/misc_ui.c
+Line 9239-9285: FUN_1000eb664 -> ui/market/market_tabs.c
+Line 9312-9358: FUN_1000eb7dc -> ui/market/market_tabs.c
+Line 9363-9473: FUN_1000eb8dc -> ui/misc_ui.c
+Line 10144-10336: FUN_1000ecf08 -> ui/misc_ui.c

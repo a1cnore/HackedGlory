@@ -1,0 +1,23 @@
+# Stub replacements for 10024.c
+# 20 functions extracted to ui/
+
+Line 329-665: FUN_100240a58 -> ui/misc_ui.c
+Line 792-1128: thunk_FUN_100240a58 -> ui/misc_ui.c
+Line 1283-1423: FUN_100241aa8 -> ui/misc_ui.c
+Line 2224-2330: FUN_100242e6c -> ui/academy/academy_constructor.c
+Line 2346-2452: thunk_FUN_100242e6c -> ui/academy/academy_constructor.c
+Line 2822-2944: FUN_100243ebc -> ui/misc_ui.c
+Line 2949-3007: FUN_10024415c -> ui/market/market_tabs.c
+Line 3012-3137: FUN_10024432c -> ui/market/market_tabs.c
+Line 3142-3236: FUN_100244654 -> ui/misc_ui.c
+Line 3739-3844: FUN_100245664 -> ui/misc_ui.c
+Line 5288-5372: FUN_100247778 -> ui/misc_ui.c
+Line 5651-5702: FUN_100247d2c -> ui/academy/academy_constructor.c
+Line 5723-5774: thunk_FUN_100247d2c -> ui/academy/academy_constructor.c
+Line 6599-6623: FUN_10024b30c -> ui/gates/ce_gate.c
+Line 6813-6971: thunk_FUN_10024e69c -> ui/gates/ce_gate.c
+Line 7464-7469: thunk_FUN_10024bf9c -> ui/gates/ce_gate.c
+Line 7474-8286: FUN_10024bf9c -> ui/gates/ce_gate.c
+Line 8407-8556: FUN_10024dcf8 -> ui/main_menu.c
+Line 8719-8776: FUN_10024e4a4 -> ui/market/market_tabs.c
+Line 8800-8958: FUN_10024e69c -> ui/gates/ce_gate.c

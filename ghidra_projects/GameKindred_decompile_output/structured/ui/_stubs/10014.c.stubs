@@ -1,0 +1,12 @@
+# Stub replacements for 10014.c
+# 9 functions extracted to ui/
+
+Line 10495-10526: FUN_10014d844 -> ui/misc_ui.c
+Line 10531-10561: FUN_10014d910 -> ui/misc_ui.c
+Line 10693-10706: FUN_10014dbd4 -> ui/misc_ui.c
+Line 10711-10744: FUN_10014dc54 -> ui/misc_ui.c
+Line 10749-10761: FUN_10014dd94 -> ui/misc_ui.c
+Line 10766-10778: FUN_10014de08 -> ui/misc_ui.c
+Line 10783-10797: FUN_10014de7c -> ui/misc_ui.c
+Line 10802-10817: FUN_10014df00 -> ui/misc_ui.c
+Line 11063-11075: FUN_10014e20c -> ui/gates/ce_gate.c

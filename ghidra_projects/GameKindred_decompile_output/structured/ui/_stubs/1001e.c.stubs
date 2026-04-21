@@ -1,0 +1,15 @@
+# Stub replacements for 1001e.c
+# 12 functions extracted to ui/
+
+Line 294-365: FUN_1001e115c -> ui/tab_system.c
+Line 2376-2396: FUN_1001e338c -> ui/nav_bar.c
+Line 2629-2749: FUN_1001e3fe8 -> ui/misc_ui.c
+Line 4572-4586: FUN_1001e6c4c -> ui/tab_system.c
+Line 5785-5829: FUN_1001e843c -> ui/market/market_tabs.c
+Line 6207-6247: FUN_1001e8a44 -> ui/misc_ui.c
+Line 7850-7987: FUN_1001ea07c -> ui/profile/profile_panel.c
+Line 7992-8142: FUN_1001ea2d8 -> ui/profile/profile_panel.c
+Line 8233-8286: FUN_1001ea714 -> ui/market/market_tabs.c
+Line 8541-8591: FUN_1001eab54 -> ui/market/market_tabs.c
+Line 10941-11021: FUN_1001ed078 -> ui/misc_ui.c
+Line 12278-12371: FUN_1001eeb60 -> ui/profile/profile_panel.c

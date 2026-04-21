@@ -1,0 +1,9 @@
+# Stub replacements for 10032.c
+# 6 functions extracted to ui/
+
+Line 1791-1895: FUN_1003219a8 -> ui/gates/ce_gate.c
+Line 2022-3165: FUN_100321ee0 -> ui/nav_bar.c
+Line 3548-3671: FUN_100323fe4 -> ui/misc_ui.c
+Line 3676-4158: FUN_10032426c -> ui/misc_ui.c
+Line 8829-8891: FUN_100329dc4 -> ui/trophies/trophy_panel.c
+Line 8990-9052: thunk_FUN_100329dc4 -> ui/trophies/trophy_panel.c

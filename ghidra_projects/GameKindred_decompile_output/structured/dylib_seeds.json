@@ -1,0 +1,376 @@
+{
+  "seeds": {
+    "FUN_1002a8f20": {
+      "component": "nav_bar",
+      "layer": 2,
+      "desc": "nav bar refresh — hides leaderboard button",
+      "fptr_offset": "0x14829e8",
+      "layout": {
+        "+0xe8": "tiv button",
+        "+0xf0": "news button",
+        "+0xf8": "leaderboards button (hidden by original)",
+        "+0x100": "academy button",
+        "+0x108": "settings button"
+      },
+      "notes": "Clears bit 2 of leaderboard button flags at [button+0x84]. Dylib re-sets bit after call."
+    },
+    "FUN_1001e6c4c": {
+      "component": "tab_system",
+      "layer": 3,
+      "desc": "setTabVisible — sets bit 2 of [tab_panel+0x2c2c]",
+      "fptr_offset": "0x1469fb8",
+      "notes": "Signature: void setTabVisible(void *tab_panel, int visible). Controls sidebar button visibility."
+    },
+    "FUN_1001e5084": {
+      "component": "tab_system",
+      "layer": 3,
+      "desc": "sidebar tab init loop — sets all 7 tabs visible initially",
+      "notes": "Referenced in Layer 3 comment. All tabs start visible, then code hides PEOPLE tab later."
+    },
+    "FUN_1001e115c": {
+      "component": "tab_system",
+      "layer": 8,
+      "desc": "tab system init",
+      "fptr_offset": "0x1469478",
+      "notes": "Original sets empty string when gate=1."
+    },
+    "FUN_100260244": {
+      "component": "trophies",
+      "layer": 4,
+      "desc": "trophy sub-panel constructor/refresh",
+      "fptr_offset": "0x147b868",
+      "layout": {
+        "+0x6a4": "trophy panel 1 visibility flags",
+        "+0xc94": "trophy panel 2 visibility flags"
+      },
+      "notes": "Unconditionally clears bit 2 on both trophy scroll panels. Thunk at 0x100260494."
+    },
+    "FUN_100265dbc": {
+      "component": "trophies",
+      "layer": 4,
+      "desc": "profile data handler — forces trophy enable flags",
+      "fptr_offset": "0x147bec8",
+      "layout": {
+        "+0x18ef8": "trophy count (uint32)",
+        "+0x18f00": "trophy array pointer (long*)",
+        "+0x18f20": "own profile flag",
+        "+0x18f21": "trophy data enabled flag"
+      },
+      "notes": "Also calls ensure_trophy_data to populate trophy array if empty."
+    },
+    "FUN_1002654ec": {
+      "component": "trophies",
+      "layer": 4,
+      "desc": "profile layout refresh — forces +0x18f21 before layout",
+      "fptr_offset": "0x147be00",
+      "notes": "Thunk for FUN_1002654e8. Ensures trophy renderer sees enabled flag."
+    },
+    "FUN_100265bd4": {
+      "component": "trophies",
+      "layer": 9,
+      "desc": "trophy renderer — loops over entries from profile object",
+      "layout": {
+        "entry_size": "0x50",
+        "entry+0x18": "std::string trophy name (SSO, 24 bytes)",
+        "entry+0x48": "uint32 season index",
+        "entry+0x4c": "uint32 trophy value (0-29 scale)"
+      },
+      "notes": "Reads count from +0x18ef8, array from +0x18f00, flag from +0x18f21."
+    },
+    "FUN_1001eeb60": {
+      "component": "profile",
+      "layer": 5,
+      "desc": "simplified profile popup — creates 0x4458-byte popup via FUN_100220a38",
+      "fptr_offset": "0x146b2d0",
+      "notes": "One of 3 profile openers. Redirected to FUN_100221f98 by dylib."
+    },
+    "FUN_1001f505c": {
+      "component": "profile",
+      "layer": 5,
+      "desc": "guest-gated profile opener — calls FUN_100220d08 or FUN_100221f98",
+      "fptr_offset": "0x146cf98",
+      "notes": "Has guest gate. Calls different profile panel based on guest status."
+    },
+    "FUN_1001fa7b0": {
+      "component": "profile",
+      "layer": 5,
+      "desc": "simplified profile card — always creates simplified popup",
+      "fptr_offset": "0x146e788",
+      "notes": "Third profile opener. Redirected to full profile by dylib."
+    },
+    "FUN_100221f98": {
+      "component": "profile",
+      "layer": 5,
+      "desc": "full profile panel — creates 0x28848-byte profile panel",
+      "notes": "The target all profile openers are redirected to. Called with 'homepanel_profile_avatar'."
+    },
+    "FUN_100220a38": {
+      "component": "profile",
+      "layer": 5,
+      "desc": "popup creation — creates 0x4458-byte simplified popup object",
+      "notes": "Referenced in Layer 5 comment."
+    },
+    "FUN_100220d08": {
+      "component": "profile",
+      "layer": 5,
+      "desc": "profile display variant — called by guest-gated opener",
+      "notes": "Alternative to FUN_100221f98 when guest."
+    },
+    "FUN_1001fd570": {
+      "component": "main_menu",
+      "layer": 6,
+      "desc": "main menu constructor — creates panels, registers with sidebar",
+      "layout": {
+        "+0x70": "sidebar controller",
+        "+0xb0": "HOME panel ref (registered)",
+        "+0xb8": "BAG panel ref (registered)",
+        "+0xc0": "ACADEMY panel ref (CE-gated, index 2)",
+        "+0xc8": "PARTY panel ref (index 3)",
+        "+0xd0": "SOCIAL panel ref (CE-gated, index 4)",
+        "+0xe0": "HOME panel object",
+        "+0xe8": "MARKET panel object (size 0x2cf68, contains PARTY at +0x2c50)",
+        "+0xf0": "small SOCIAL panel object (CE-gated, created by thunk_FUN_10020cfb8)",
+        "+0x100": "ACADEMY panel object (CE-gated, size 0x9ca0)",
+        "+0x108": "BAG panel wrapper (size 0x60, +0x48=tab array, +0x8=container)"
+      },
+      "notes": "Root of entire sidebar/panel hierarchy. DAT_101dc2920 = root parent, *(parent+0x80) = menuObj."
+    },
+    "FUN_1001fc9c4": {
+      "component": "sidebar",
+      "layer": 6,
+      "desc": "register sidebar panel — FUN_1001fc9c4(sidebarCtrl, panelSubObj, index)",
+      "notes": "Called to register HOME(0), BAG(1), ACADEMY(2), PARTY(3), SOCIAL(4) with sidebar."
+    },
+    "FUN_10020cfb8": {
+      "component": "social",
+      "layer": 6,
+      "desc": "small social panel constructor (thunked)",
+      "notes": "Creates social panel stored at menuObj+0xf0. CE-gated (never registered in CE)."
+    },
+    "FUN_10020a500": {
+      "component": "social",
+      "layer": 8,
+      "desc": "social panel feature — returns early when gate=1",
+      "fptr_offset": "0x1471108",
+      "notes": "Original returns early. Dylib calls inner function FUN_100209ff0 directly."
+    },
+    "FUN_100209ff0": {
+      "component": "social",
+      "layer": 8,
+      "desc": "social panel inner function — actual work",
+      "notes": "Called directly by dylib hook bypassing gate in FUN_10020a500."
+    },
+    "FUN_100222878": {
+      "component": "profile",
+      "layer": 8,
+      "desc": "profile panel ranked tabs",
+      "fptr_offset": "0x14752f8",
+      "layout": {
+        "+0x2853c": "5v5 ranked tab visibility",
+        "+0x2866c": "3v3 ranked tab visibility",
+        "+0x2879c": "stats tab visibility",
+        "+0x2cea8": "ranked data display flag",
+        "+0x2ceab": "has progression data flag",
+        "+0x2ce98": "ranked mode count",
+        "+0x2cde0": "ranked mode data source count"
+      },
+      "notes": "Dylib forces all ranked tab visibility bits and display flags after original runs."
+    },
+    "FUN_10025d954": {
+      "component": "profile",
+      "layer": 8,
+      "desc": "profile body display — gates visibility of profile body elements",
+      "fptr_offset": "0x147af60",
+      "layout": {
+        "+0x20b04": "season/trophy element visibility",
+        "+0x216d4": "another profile element visibility",
+        "+0x1d0": "profile body setup offset (passed to FUN_100227fb8)",
+        "+0x25f50": "guest flag that blocks setup"
+      },
+      "notes": "Checks FUN_10014e20c (guest) and FUN_10052b840 (online status)."
+    },
+    "FUN_10025d3f0": {
+      "component": "profile",
+      "layer": 8,
+      "desc": "profile data loader — called when opening profile",
+      "fptr_offset": "0x147af38",
+      "layout": {
+        "+0x21a1c": "create-account button visibility (conditional on FUN_100131228)",
+        "+0x20b04": "profile section visibility (cleared when offline)"
+      },
+      "notes": "Dylib hides create-account button, ensures profile sections stay visible."
+    },
+    "FUN_100227fb8": {
+      "component": "profile",
+      "layer": 8,
+      "desc": "profile body setup — skipped for guests by gate",
+      "notes": "Called as FUN_100227fb8(self+0x1d0, 1) by profile body hook."
+    },
+    "FUN_10023bd9c": {
+      "component": "season",
+      "layer": 8,
+      "desc": "season/trophy panel handler",
+      "fptr_offset": "0x1477d38",
+      "notes": "Calls setTabVisible, registers season trophy tooltips, handles guild/team trophy display."
+    },
+    "FUN_10023df24": {
+      "component": "season",
+      "layer": 8,
+      "desc": "season display update",
+      "fptr_offset": "0x1477d48"
+    },
+    "FUN_10024e4a4": {
+      "component": "market",
+      "layer": 8,
+      "desc": "market panel tabs",
+      "fptr_offset": "0x147a120",
+      "layout": {
+        "+0x2cf20+0x10": "additional market tab",
+        "+0xda10": "market filter"
+      },
+      "notes": "Gate blocks additional market tab and filter."
+    },
+    "FUN_100242e6c": {
+      "component": "academy",
+      "layer": 6,
+      "desc": "academy panel constructor (thunked)",
+      "notes": "Size 0x9ca0. Never created in CE because FUN_100131560 returns 1. +0x2c88 = subobject for sidebar registration."
+    },
+    "FUN_10025129c": {
+      "component": "progression",
+      "layer": 8,
+      "desc": "skill tier display",
+      "fptr_offset": "0x147a1d8",
+      "notes": "Checks gate + platform. If returns early, skill tier icon/text never set."
+    },
+    "FUN_100168220": {
+      "component": "gates",
+      "layer": 8,
+      "desc": "data fetch/sync with CE gate",
+      "fptr_offset": "0x145c170",
+      "layout": {
+        "+0x278": "fetch target object",
+        "+0x18": "primary fetch target"
+      },
+      "notes": "Gate blocks additional data fetch at +0x278. Inner fetch: FUN_100169cec."
+    },
+    "FUN_100131560": {
+      "component": "gates",
+      "layer": 8,
+      "desc": "CE master gate — hardcoded 'return 1'",
+      "notes": "116 callers identified. Cannot be patched (read-only __TEXT). All callers treat return 1 as CE mode. 197 references across 25 function files."
+    },
+    "FUN_10014e20c": {
+      "component": "gates",
+      "layer": 7,
+      "desc": "isGuest check — returns 1 if guest, 0 if account",
+      "notes": "Derived from FUN_1004ef1b4() which calls vtable[12](). Result ^ 1 = isGuest."
+    },
+    "FUN_1004fe5ec": {
+      "component": "gates",
+      "layer": 7,
+      "desc": "session manager has_account — vtable[12]",
+      "fptr_offset": "0x149e4a0",
+      "layout": {
+        "+0x2bd0": "registered account string"
+      },
+      "notes": "Checks if account string at self+0x2bd0 is empty. Returns 0 (guest) or 1 (has account). Vtable at __DATA.__const+0x149e440, slot 12 at offset 0x60."
+    },
+    "FUN_1001f59e8": {
+      "component": "bag",
+      "layer": 6,
+      "desc": "BAG constructor — creates 6 tabs always, 4 more when gate=0",
+      "notes": "CE-gated tabs include TROPHIES. Tab registration via FUN_1002afb68."
+    },
+    "FUN_10021844c": {
+      "component": "trophies",
+      "layer": 6,
+      "desc": "trophy tab constructor — operator_new(0x50)",
+      "layout": {
+        "+0x28": "subObj (tab sub-object)",
+        "vt[2](self)": "content object getter",
+        "vt[3](self)": "section name getter",
+        "vt[4](self)": "title getter (calls FUN_1004e0150)"
+      },
+      "notes": "Created by dylib for BAG panel. SubObj at tab+0x28 used for registration."
+    },
+    "FUN_1002afb68": {
+      "component": "tab_system",
+      "layer": 6,
+      "desc": "tab registration — FUN_1002afb68(container, title, 0, icon, section)",
+      "notes": "Registers a tab with its container. Called for BAG trophies tab."
+    },
+    "FUN_1001f5d50": {
+      "component": "bag",
+      "layer": 6,
+      "desc": "array add for tab sub-objects",
+      "notes": "arr_add(tabArray, &subObj) — adds tab to BAG's tab array at wrapper+0x48."
+    },
+    "FUN_10012c5b0": {
+      "component": "gates",
+      "layer": 9,
+      "desc": "key-value store write — FUN_10012c5b0(key, value)",
+      "notes": "Writes int to persistent KV store. Used for ranked data (ELO buckets)."
+    },
+    "FUN_10012c8f0": {
+      "component": "gates",
+      "layer": 9,
+      "desc": "key-value store read — FUN_10012c8f0(key, default)",
+      "notes": "Reads int from KV store. Profile card reads skill tier from 'new5v5RankedDataEloBucket'."
+    }
+  },
+
+  "ui_infra_functions": [
+    "FUN_1004e0150",
+    "FUN_1001e6c4c",
+    "FUN_1001fc9c4",
+    "FUN_1002afb68",
+    "FUN_100220a38",
+    "FUN_100221f98",
+    "FUN_100131560",
+    "FUN_10014e20c"
+  ],
+
+  "ui_string_patterns": [
+    "MENU_", "PANEL_", "POPUP_", "DIALOG_", "SCREEN_",
+    "BUTTON_", "TAB_", "WIDGET_", "UI::EVENT",
+    "main_nav_", "secondary_nav_", "MAIN_MENU_"
+  ],
+
+  "component_string_map": {
+    "MENU_PROFILE": "profile",
+    "MENU_FRIENDS": "social",
+    "MENU_LEADERBOARDS": "nav_bar",
+    "MENU_PLAY": "nav_bar",
+    "MENU_MATCHING": "nav_bar",
+    "MENU_MARKET": "market",
+    "MENU_PARTY": "main_menu",
+    "MENU_SOCIAL": "social",
+    "MENU_BAG": "bag",
+    "MENU_HOME": "main_menu",
+    "MENU_HEROES": "bag",
+    "MENU_ACADEMY": "academy",
+    "MENU_CURRENCY": "market",
+    "MENU_GUILD": "social",
+    "MENU_SEASON": "season",
+    "MENU_TROPHY": "trophies",
+    "MENU_RANKED": "progression",
+    "MENU_SKILL": "progression",
+    "main_nav_home": "main_menu",
+    "main_nav_heroes": "bag",
+    "main_nav_market": "market",
+    "main_nav_social": "social",
+    "main_nav_party": "main_menu",
+    "secondary_nav_news": "nav_bar",
+    "secondary_nav_settings": "nav_bar",
+    "secondary_nav_leaderboards": "nav_bar",
+    "secondary_nav_academy": "nav_bar",
+    "secondary_nav_today": "nav_bar"
+  },
+
+  "global_refs": {
+    "DAT_101dc2920": "root/parent object (*(parent+0x80) = menuObj)",
+    "DAT_101e94738": "session manager pointer",
+    "DAT_101e3cf00": "data manager pointer"
+  }
+}

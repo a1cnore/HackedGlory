@@ -1,0 +1,14 @@
+# Stub replacements for 10033.c
+# 11 functions extracted to ui/
+
+Line 3159-3366: FUN_100334848 -> ui/misc_ui.c
+Line 3613-3630: FUN_1003355a0 -> ui/profile/profile_panel.c
+Line 3661-3730: FUN_1003356ec -> ui/market/market_tabs.c
+Line 3761-3831: FUN_100335990 -> ui/market/market_tabs.c
+Line 7450-7837: FUN_10033bb58 -> ui/misc_ui.c
+Line 7946-7971: thunk_FUN_10033ccd4 -> ui/trophies/trophy_panel.c
+Line 7976-7992: thunk_FUN_10033cd9c -> ui/trophies/trophy_panel.c
+Line 7997-8013: thunk_FUN_10033ce30 -> ui/trophies/trophy_panel.c
+Line 8146-8171: FUN_10033ccd4 -> ui/trophies/trophy_panel.c
+Line 8176-8192: FUN_10033cd9c -> ui/trophies/trophy_panel.c
+Line 8197-8213: FUN_10033ce30 -> ui/trophies/trophy_panel.c

@@ -1,0 +1,4 @@
+# Stub replacements for 10064.c
+# 1 functions extracted to ui/
+
+Line 5307-5350: FUN_100644fd8 -> ui/misc_ui.c

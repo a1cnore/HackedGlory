@@ -1,0 +1,31 @@
+# Stub replacements for 10025.c
+# 28 functions extracted to ui/
+
+Line 94-99: thunk_FUN_100251990 -> ui/gates/ce_gate.c
+Line 198-481: FUN_10025023c -> ui/misc_ui.c
+Line 813-842: FUN_10025129c -> ui/progression/progression_display.c
+Line 847-852: thunk_FUN_10025129c -> ui/progression/progression_display.c
+Line 1230-1261: FUN_100251990 -> ui/gates/ce_gate.c
+Line 1266-1337: FUN_100251a50 -> ui/gates/ce_gate.c
+Line 1413-1630: FUN_100251d70 -> ui/main_menu.c
+Line 1645-1862: FUN_1002522fc -> ui/main_menu.c
+Line 3022-3234: FUN_100253ee8 -> ui/misc_ui.c
+Line 3443-3634: FUN_1002549f0 -> ui/misc_ui.c
+Line 4254-4716: FUN_100255b9c -> ui/gates/ce_gate.c
+Line 4899-5024: FUN_100256bac -> ui/profile/profile_panel.c
+Line 5029-5491: thunk_FUN_100255b9c -> ui/gates/ce_gate.c
+Line 5977-6039: FUN_100257708 -> ui/gates/ce_gate.c
+Line 6099-6407: FUN_100257ca8 -> ui/gates/ce_gate.c
+Line 6545-6580: FUN_100258824 -> ui/gates/ce_gate.c
+Line 7638-7654: FUN_100259dd0 -> ui/misc_ui.c
+Line 9520-9871: FUN_10025c044 -> ui/gates/ce_gate.c
+Line 9897-9919: thunk_FUN_10025e0c4 -> ui/profile/profile_panel.c
+Line 10071-10422: thunk_FUN_10025c044 -> ui/gates/ce_gate.c
+Line 10675-10710: FUN_10025d3f0 -> ui/profile/profile_panel.c
+Line 10827-10860: FUN_10025d954 -> ui/profile/profile_panel.c
+Line 10926-10968: FUN_10025db5c -> ui/misc_ui.c
+Line 10983-11062: FUN_10025dc94 -> ui/social/social_panel.c
+Line 11180-11202: FUN_10025e0c4 -> ui/profile/profile_panel.c
+Line 11963-12043: FUN_10025f7f4 -> ui/misc_ui.c
+Line 12195-12333: FUN_10025fd1c -> ui/trophies/trophy_panel.c
+Line 12338-12476: thunk_FUN_10025fd1c -> ui/trophies/trophy_panel.c

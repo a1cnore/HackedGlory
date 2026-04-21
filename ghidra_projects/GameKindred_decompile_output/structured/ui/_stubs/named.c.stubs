@@ -1,0 +1,24 @@
+# Stub replacements for named.c
+# 21 functions extracted to ui/
+
+Line 6526-6672: FUN_1000f71f0 -> ui/misc_ui.c
+Line 13515-13669: FUN_100168220 -> ui/gates/ce_gate.c
+Line 14394-14563: FUN_100186c14 -> ui/misc_ui.c
+Line 14561-14771: FUN_10019719c -> ui/misc_ui.c
+Line 14769-14980: thunk_FUN_10019719c -> ui/misc_ui.c
+Line 16032-16197: FUN_1001e8008 -> ui/misc_ui.c
+Line 16483-16716: FUN_1001f6fec -> ui/nav_bar.c
+Line 17024-17738: FUN_10020df80 -> ui/social/social_panel.c
+Line 17890-18722: FUN_100212ff8 -> ui/gates/ce_gate.c
+Line 18887-19110: FUN_10021e12c -> ui/misc_ui.c
+Line 19285-19770: FUN_100232f00 -> ui/main_menu.c
+Line 19768-20251: thunk_FUN_100232f00 -> ui/main_menu.c
+Line 20353-20554: FUN_100243b00 -> ui/misc_ui.c
+Line 20824-21135: thunk_FUN_100245c98 -> ui/market/market_tabs.c
+Line 21132-21445: FUN_100245c98 -> ui/market/market_tabs.c
+Line 21440-22457: FUN_100248d18 -> ui/gates/ce_gate.c
+Line 22452-23570: thunk_FUN_100248d18 -> ui/gates/ce_gate.c
+Line 23718-24374: FUN_10026dad4 -> ui/social/social_panel.c
+Line 25212-26024: FUN_10027a11c -> ui/social/social_panel.c
+Line 27521-28391: FUN_10030f984 -> ui/gates/ce_gate.c
+Line 30551-30752: FUN_100336048 -> ui/misc_ui.c

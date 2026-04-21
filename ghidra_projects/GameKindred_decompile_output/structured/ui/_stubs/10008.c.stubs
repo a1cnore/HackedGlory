@@ -1,0 +1,7 @@
+# Stub replacements for 10008.c
+# 4 functions extracted to ui/
+
+Line 2687-2837: FUN_100083968 -> ui/misc_ui.c
+Line 4073-4197: FUN_10008569c -> ui/misc_ui.c
+Line 7785-8049: FUN_10008944c -> ui/misc_ui.c
+Line 11263-11367: FUN_10008e1f8 -> ui/misc_ui.c

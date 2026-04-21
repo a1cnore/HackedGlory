@@ -1,0 +1,16 @@
+# Stub replacements for 1002d.c
+# 13 functions extracted to ui/
+
+Line 326-537: FUN_1002d03ec -> ui/misc_ui.c
+Line 616-827: thunk_FUN_1002d03ec -> ui/misc_ui.c
+Line 2430-2487: FUN_1002d3590 -> ui/misc_ui.c
+Line 3554-3693: FUN_1002d54d8 -> ui/progression/progression_display.c
+Line 4071-4172: FUN_1002d6080 -> ui/misc_ui.c
+Line 4716-4745: FUN_1002d6fd0 -> ui/misc_ui.c
+Line 5995-6154: FUN_1002d8cac -> ui/market/market_tabs.c
+Line 7015-7088: FUN_1002da05c -> ui/gates/ce_gate.c
+Line 7110-7386: FUN_1002da328 -> ui/gates/ce_gate.c
+Line 7484-7760: thunk_FUN_1002da328 -> ui/gates/ce_gate.c
+Line 7931-7951: FUN_1002db4bc -> ui/gates/ce_gate.c
+Line 8186-8321: FUN_1002dbb5c -> ui/social/social_panel.c
+Line 10288-10515: FUN_1002dff1c -> ui/misc_ui.c

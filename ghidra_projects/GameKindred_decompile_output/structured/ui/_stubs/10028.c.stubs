@@ -1,0 +1,30 @@
+# Stub replacements for 10028.c
+# 27 functions extracted to ui/
+
+Line 1625-1776: FUN_10028279c -> ui/season/season_panel.c
+Line 1781-1808: FUN_100282aa0 -> ui/season/season_panel.c
+Line 1813-1962: FUN_100282b84 -> ui/profile/profile_panel.c
+Line 2082-2261: FUN_100283144 -> ui/profile/profile_panel.c
+Line 2266-2350: FUN_100283340 -> ui/profile/profile_panel.c
+Line 2355-2537: FUN_10028353c -> ui/profile/profile_panel.c
+Line 2542-2679: FUN_100283764 -> ui/profile/profile_panel.c
+Line 2684-2732: FUN_100283ab4 -> ui/profile/profile_panel.c
+Line 3349-3439: FUN_100284480 -> ui/profile/profile_panel.c
+Line 3859-4492: FUN_1002850d0 -> ui/main_menu.c
+Line 4497-4522: thunk_FUN_10028a890 -> ui/trophies/trophy_panel.c
+Line 4988-5621: thunk_FUN_1002850d0 -> ui/main_menu.c
+Line 6767-6922: FUN_100288b0c -> ui/profile/profile_panel.c
+Line 6927-6954: FUN_100288e44 -> ui/misc_ui.c
+Line 7043-7189: FUN_100289120 -> ui/profile/profile_panel.c
+Line 7270-7382: FUN_100289680 -> ui/profile/profile_panel.c
+Line 7387-7471: FUN_1002898b0 -> ui/profile/profile_panel.c
+Line 7476-7592: FUN_100289aac -> ui/profile/profile_panel.c
+Line 7597-7719: FUN_100289d14 -> ui/profile/profile_panel.c
+Line 7724-7772: FUN_10028a004 -> ui/profile/profile_panel.c
+Line 8098-8210: thunk_FUN_100289680 -> ui/profile/profile_panel.c
+Line 8245-8361: thunk_FUN_100289aac -> ui/profile/profile_panel.c
+Line 8523-8645: thunk_FUN_100289d14 -> ui/profile/profile_panel.c
+Line 8728-8753: FUN_10028a890 -> ui/trophies/trophy_panel.c
+Line 8831-8921: FUN_10028aafc -> ui/profile/profile_panel.c
+Line 12114-12301: FUN_10028f5d0 -> ui/main_menu.c
+Line 12376-12563: thunk_FUN_10028f5d0 -> ui/main_menu.c

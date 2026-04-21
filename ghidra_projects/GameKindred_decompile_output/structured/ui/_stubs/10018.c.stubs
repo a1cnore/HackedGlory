@@ -1,0 +1,11 @@
+# Stub replacements for 10018.c
+# 8 functions extracted to ui/
+
+Line 1850-1945: FUN_100182684 -> ui/gates/ce_gate.c
+Line 1963-2058: thunk_FUN_100182684 -> ui/gates/ce_gate.c
+Line 5116-5199: FUN_1001867fc -> ui/main_menu.c
+Line 5204-5371: thunk_FUN_1001886fc -> ui/main_menu.c
+Line 6287-13127: FUN_100187d2c -> ui/trophies/trophy_panel.c
+Line 13184-13229: FUN_100187eec -> ui/misc_ui.c
+Line 13554-13721: FUN_1001886fc -> ui/misc_ui.c
+Line 16366-16397: FUN_10018c088 -> ui/misc_ui.c

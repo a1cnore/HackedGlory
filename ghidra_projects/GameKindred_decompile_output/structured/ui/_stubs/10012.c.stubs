@@ -1,0 +1,5 @@
+# Stub replacements for 10012.c
+# 2 functions extracted to ui/
+
+Line 12881-12916: FUN_10012c5b0 -> ui/gates/ce_gate.c
+Line 13042-13122: FUN_10012c8f0 -> ui/gates/ce_gate.c

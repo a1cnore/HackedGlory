@@ -1,0 +1,4 @@
+# Stub replacements for 10002.c
+# 1 functions extracted to ui/
+
+Line 14493-14580: FUN_10002fa74 -> ui/misc_ui.c

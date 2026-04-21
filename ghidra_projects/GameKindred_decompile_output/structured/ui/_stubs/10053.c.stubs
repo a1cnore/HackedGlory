@@ -1,0 +1,4 @@
+# Stub replacements for 10053.c
+# 1 functions extracted to ui/
+
+Line 9024-9063: FUN_100538e54 -> ui/misc_ui.c

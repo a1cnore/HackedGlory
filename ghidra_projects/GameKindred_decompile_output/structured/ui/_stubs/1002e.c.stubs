@@ -1,0 +1,20 @@
+# Stub replacements for 1002e.c
+# 17 functions extracted to ui/
+
+Line 58-82: FUN_1002e0448 -> ui/misc_ui.c
+Line 87-209: FUN_1002e0520 -> ui/misc_ui.c
+Line 214-410: FUN_1002e0920 -> ui/social/social_panel.c
+Line 501-697: thunk_FUN_1002e0920 -> ui/social/social_panel.c
+Line 980-1309: FUN_1002e17ec -> ui/social/social_panel.c
+Line 2082-2127: FUN_1002e3364 -> ui/misc_ui.c
+Line 2142-2187: thunk_FUN_1002e3364 -> ui/misc_ui.c
+Line 4727-4743: FUN_1002e647c -> ui/gates/ce_gate.c
+Line 5711-5784: FUN_1002e76d8 -> ui/gates/ce_gate.c
+Line 6460-6479: FUN_1002e85c8 -> ui/misc_ui.c
+Line 7134-7210: FUN_1002e94b0 -> ui/social/social_panel.c
+Line 8744-8805: FUN_1002eb970 -> ui/gates/ce_gate.c
+Line 10293-10366: FUN_1002ed72c -> ui/misc_ui.c
+Line 10371-10444: thunk_FUN_1002ed72c -> ui/misc_ui.c
+Line 11333-11373: FUN_1002eeabc -> ui/misc_ui.c
+Line 11884-12002: FUN_1002efc48 -> ui/misc_ui.c
+Line 12007-12125: thunk_FUN_1002efc48 -> ui/misc_ui.c

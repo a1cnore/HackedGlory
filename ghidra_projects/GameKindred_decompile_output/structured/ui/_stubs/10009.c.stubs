@@ -1,0 +1,7 @@
+# Stub replacements for 10009.c
+# 4 functions extracted to ui/
+
+Line 7737-7864: FUN_10009a7ec -> ui/misc_ui.c
+Line 7944-8103: FUN_10009acd4 -> ui/misc_ui.c
+Line 8210-8369: thunk_FUN_10009acd4 -> ui/misc_ui.c
+Line 9770-9875: FUN_10009d64c -> ui/misc_ui.c

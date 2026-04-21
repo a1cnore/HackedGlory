@@ -1,0 +1,13 @@
+# Stub replacements for 10021.c
+# 10 functions extracted to ui/
+
+Line 5616-5669: FUN_1002173e0 -> ui/market/market_tabs.c
+Line 5686-5788: FUN_100217520 -> ui/trophies/trophy_panel.c
+Line 5793-5895: thunk_FUN_100217520 -> ui/trophies/trophy_panel.c
+Line 7026-7045: FUN_10021844c -> ui/trophies/trophy_panel.c
+Line 7050-7069: thunk_FUN_10021844c -> ui/trophies/trophy_panel.c
+Line 10028-10268: FUN_10021c2d4 -> ui/misc_ui.c
+Line 10609-10648: FUN_10021d4a4 -> ui/misc_ui.c
+Line 10681-10720: FUN_10021d634 -> ui/misc_ui.c
+Line 12148-12163: FUN_10021febc -> ui/market/market_tabs.c
+Line 12168-12183: FUN_10021ff2c -> ui/market/market_tabs.c
