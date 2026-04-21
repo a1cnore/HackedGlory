@@ -129,21 +129,6 @@ The authoritative writeup is [`reports/protocol_decryption_writeup.md`](reports/
 
 The match-decryption work has moved beyond "can packets decrypt?" into replay-usable match state. The active benchmark focuses on scoreboard state over time: levels, kills, deaths, creep score, total gold, total XP, and winner signals.
 
-Latest recorded autoresearch metrics in [`mitm/match_decryption/autoresearch.jsonl`](mitm/match_decryption/autoresearch.jsonl) show:
-
-- `scoreboard_score=7032`
-- `scored_matches=7`
-- `winner_matches=7`
-- `gold_players=42`, `xp_players=42`
-- `death_timeline_players=41`, `death_players=30`
-- `kill_players=27`, `total_kills=110`
-- `cs_players=18`, `total_cs=361`
-- `level_players=35`, `total_level_ups=86`
-- `replay_players=41`
-- broader diagnostics include positions for 41 players, talent-choice signals for 41 players, ability-like trigger signals for 16 players, and 780 tracked non-player world-position entities
-
-These are heuristic replay metrics, not ground truth. The value is that the heuristics are repeatable across the committed capture corpus and are benchmarked with explicit regression metrics.
-
 ## Ghidra And Decompiled Output
 
 Ghidra is the static-analysis backbone of the repository. The current repo includes both scripts and generated decompiler output, which makes it possible to inspect many findings without rebuilding the projects locally.
