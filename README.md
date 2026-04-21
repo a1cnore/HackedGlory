@@ -375,19 +375,6 @@ There is no single bootstrap command for the whole repo. The project is organize
 - platform-specific unlock experiments in `mitm/vg_unlock/` and `mitm/vg_unlock_android/`
 - asset and balance extraction through `scripts/` plus `reports/generated/`
 
-## Open Work
-
-Current technical frontiers:
-
-- find stronger, independent validation for match winner signals beyond the late `1077` burst
-- improve creep-score decoding without loosening noisy farm/reward heuristics
-- map hero assignment and item purchases more directly in the in-match protocol
-- identify exact health/mana/current-resource fields and richer C->S input semantics
-- finish Android verification for unresolved function pointers and field offsets
-- separate Android-safe default hooks from parity/experimental hooks more cleanly in documentation and builds
-- continue RSC0 texture/mesh parsing until assets can be extracted and rendered with fewer manual assumptions
-- expand the mock platform server from inferred schemas into a practical offline client bootstrap harness
-
 ## License
 
 This project is released under the [MIT License](https://opensource.org/licenses/MIT).
