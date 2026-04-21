@@ -257,51 +257,6 @@ def patch_game_library(src_path: Path, dst_path: Path, dependency_name: str) -> 
     binary.write(str(dst_path))
 
 
-def rewrite_soname(blob: bytes, new_soname: str) -> bytes:
-    """Rewrite DT_SONAME in an ELF blob.
-
-    The stock libGameKindred.so and the loader shim both carry
-    DT_SONAME = "libGameKindred.so". Bionic's namespace-aware dlopen()
-    deduplicates loaded libraries by soname, so a subsequent
-    dlopen("libGameKindred_real.so") from the shim can return the shim's own
-    handle — which makes dlsym(handle, "JNI_OnLoad") resolve to the shim's
-    JNI_OnLoad and blows the stack with unbounded recursion.
-    Give the renamed real library its own soname so the two stay distinct.
-    """
-    if lief is None:
-        raise RuntimeError("Missing dependency 'lief'. Install it with: pip install lief")
-
-    tmp_in = Path(tempfile.mkstemp(prefix="vg_soname_in_", suffix=".so")[1])
-    tmp_out = Path(tempfile.mkstemp(prefix="vg_soname_out_", suffix=".so")[1])
-    try:
-        tmp_in.write_bytes(blob)
-        binary = lief.parse(str(tmp_in))
-        if binary is None:
-            raise RuntimeError("lief failed to parse embedded libGameKindred.so for SONAME rewrite")
-
-        soname_entry = None
-        for entry in binary.dynamic_entries:
-            if entry.tag == lief.ELF.DynamicEntry.TAG.SONAME:
-                soname_entry = entry
-                break
-
-        if soname_entry is None:
-            raise RuntimeError("DT_SONAME missing in embedded libGameKindred.so")
-
-        if str(soname_entry.name) == new_soname:
-            return blob
-
-        soname_entry.name = new_soname
-        binary.write(str(tmp_out))
-        return tmp_out.read_bytes()
-    finally:
-        for path in (tmp_in, tmp_out):
-            try:
-                path.unlink()
-            except OSError:
-                pass
-
-
 def ensure_zip_entry(
     dst: zipfile.ZipFile,
     entry_name: str,
@@ -346,11 +301,17 @@ def rewrite_apk_loader_shim(src_apk: Path, dst_apk: Path, loader_lib: Path, hook
                 continue
 
             if info.filename == ARM64_GAME_LIB:
+                # Rename the stock libGameKindred.so to libGameKindred_real.so.
+                # Do NOT rewrite its DT_SONAME here: lief.write() re-lays the
+                # ELF (shifts section offsets) and that invalidates every
+                # `g_base + 0xXXXX` hook offset baked into libvg_unlock.so.
+                # The SONAME-collision problem (bionic soname dedup causing
+                # JNI_OnLoad recursion) is avoided by giving the loader shim
+                # a distinct DT_SONAME at build time (see build.ps1/build.sh).
                 original_bytes = src.read(info.filename)
-                renamed_bytes = rewrite_soname(original_bytes, "libGameKindred_real.so")
                 original_info = clone_zip_info(info)
                 original_info.filename = ARM64_REAL_GAME_LIB
-                dst.writestr(original_info, renamed_bytes, compress_type=original_info.compress_type)
+                dst.writestr(original_info, original_bytes, compress_type=original_info.compress_type)
 
                 loader_info = clone_zip_info(info)
                 loader_info.filename = ARM64_GAME_LIB

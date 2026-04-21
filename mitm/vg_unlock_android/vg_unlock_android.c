@@ -954,6 +954,8 @@ static void patch_bl_sites(const uintptr_t *sites, int count, uint32_t replaceme
 #define ARM64_NOP 0xd503201fu
 /* ARM64: ORR W9, W9, #0x4 = 0x321e0129 (set bit 2 → visible) */
 #define ARM64_ORR_W9_W9_4 0x321e0129u
+/* ARM64: AND W9, W9, #0xfffffffb = 0x121d7929 (clear bit 2 → hidden) */
+#define ARM64_AND_W9_W9_NOT4 0x121d7929u
 
 static void bypass_ce_gate_calls(void) {
     /* CE gate (0x8480e0): returns 1 = CE restricted. Patch to return 0 = unrestricted.
@@ -1006,14 +1008,58 @@ static void bypass_ce_gate_calls(void) {
                    (int)(sizeof(profile_ctor_ce_gate_sites) / sizeof(profile_ctor_ce_gate_sites[0])),
                    ARM64_MOV_W0_WZR, "profile-ctor-ce-gate2");
 
-    /* Region dropdown hide attempt (NOP'd BL 0xbbf9e4 -> builder 0xa6cc2c) was
-     * reverted: it crash-looped on profile open on Xiaomi Pad 6. The builder
-     * at 0xa6cc2c initializes parent-object state that subsequent code in
-     * the profile ctor (or the panel's later event-dispatch path) reads and
-     * dereferences. Call-site NOP is unsafe without further RE of what state
-     * 0xa6cc2c sets on x19/x27. Leaving the dropdown as-is; it is cosmetic
-     * only (Kindred = single GCP europe-west1 shard, region server-assigned
-     * from client IP, JWT signed). */
+    /* Hide the REGION dropdown (EU/NA/SA/EA/SEA) in the profile panel.
+     *
+     * Previous attempt NOP'd the BL at 0xbbf9e4 -> 0xa6cc2c. That crash-looped
+     * because 0xa6cc2c is NOT a "region dropdown builder" — it is the full
+     * profile top-sub-panel ctor that builds ~20 widgets including rename,
+     * logout, video record/stream, and the region dropdown. Skipping it
+     * leaves param[0x3a1..0x5074] uninitialized and later code segfaults.
+     *
+     * Correct surgical fix (verified via Ghidra decomp of FUN_00b6cc2c):
+     *   Line 803: *(uint *)(param_3 + 0x235e4) |= 4;   ← visibility bit 2 SET
+     * The dropdown widget is built fully, then this instruction shows it.
+     * Same pattern line 807 uses `& 0xfffffffb` to hide a different widget.
+     *
+     * Encoding at file offset 0xa6d76c:
+     *   mov  w8, #0x35e4          ; low 16 of 0x235e4
+     *   movk w8, #0x2, lsl #16    ; high 16
+     *   ldr  w9, [x19, x8]        ; x19 = self
+     *   orr  w9, w9, #4           ; <-- 0xa6d76c: SET bit 2 (visible)
+     *   str  w9, [x19, x8]
+     *
+     * Flip ORR → AND of ~4 so bit 2 is CLEARED (hidden) instead of set.
+     * Construction still runs, so no uninit memory, no crash. */
+    uint32_t *region_vis_set = (uint32_t *)(g_base + 0xa6d76c);
+    if (make_writable((uintptr_t)region_vis_set, sizeof(uint32_t)) == 0) {
+        LOG("[region-dropdown-hide] 0xa6d76c: 0x%08x -> 0x%08x (ORR->AND, clear bit 2)",
+            *region_vis_set, ARM64_AND_W9_W9_NOT4);
+        *region_vis_set = ARM64_AND_W9_W9_NOT4;
+        __builtin___clear_cache((char *)region_vis_set, (char *)(region_vis_set + 1));
+    }
+
+    /* Blank the "Region" header label above the hidden dropdown.
+     *
+     * The label widget plVar16 (at param_3+0x4bd3) is still constructed; only
+     * its text setter is skipped. Sequence at file offset 0xa6d7fc..0xa6d818:
+     *   adrp x0, ...              ; 0xa6d7fc
+     *   add  x0, x0, #0xd48       ; 0xa6d800 -> "MENU_PROFILE_REGION_DROPDOWN_REGION"
+     *   mov  w1, wzr              ; 0xa6d804
+     *   bl   FUN_00e6ce7c         ; 0xa6d808 -> string lookup, x0 = uVar22
+     *   mov  x1, x0               ; 0xa6d80c
+     *   mov  x0, x24              ; 0xa6d810 -> plVar16
+     *   bl   FUN_00f0d75c         ; 0xa6d814 -> sets label text  <-- NOP this
+     *
+     * NOP'ing 0xa6d814 leaves plVar16 fully built with font + flags but no
+     * text. Construction side effects (at param+offsets) still happen, so
+     * no uninit memory hazards. */
+    uint32_t *region_label_set = (uint32_t *)(g_base + 0xa6d814);
+    if (make_writable((uintptr_t)region_label_set, sizeof(uint32_t)) == 0) {
+        LOG("[region-label-blank] 0xa6d814: 0x%08x -> 0x%08x (BL FUN_00f0d75c -> NOP)",
+            *region_label_set, ARM64_NOP);
+        *region_label_set = ARM64_NOP;
+        __builtin___clear_cache((char *)region_label_set, (char *)(region_label_set + 1));
+    }
 
     /* Social-vs-Party branch: at 0xad75c8, the constructor calls 0x82e900.
      *   0xad75c8: bl   0x82e900      ; check flag (ALSO does important state setup)

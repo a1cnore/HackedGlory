@@ -162,7 +162,13 @@ try {
     Build-SharedLibrary -Compiler $compiler -StripTool $strip -WorkingDirectory $scriptDir -OutputFile $Output -Soname 'libvg_unlock.so' -SourceFiles @($Source) -ExtraArgs $compileArgs
 
     Write-Host "Building $LoaderOutput for arm64-v8a..."
-    Build-SharedLibrary -Compiler $compiler -StripTool $strip -WorkingDirectory $scriptDir -OutputFile $LoaderOutput -Soname 'libGameKindred.so' -SourceFiles @($LoaderSource, $LoaderAsmSource) -ExtraArgs $loaderCompileArgs
+    # Deliberately give the loader shim a distinct DT_SONAME so bionic's
+    # soname-based dlopen() dedup doesn't return the shim's own handle when
+    # it later dlopen()s libGameKindred_real.so (which still ships with
+    # DT_SONAME "libGameKindred.so"). Without a distinct shim SONAME, the
+    # real lib's dlsym("JNI_OnLoad") resolves back to the shim's JNI_OnLoad
+    # and the process blows its stack via unbounded recursion.
+    Build-SharedLibrary -Compiler $compiler -StripTool $strip -WorkingDirectory $scriptDir -OutputFile $LoaderOutput -Soname 'libvgshim_GameKindred.so' -SourceFiles @($LoaderSource, $LoaderAsmSource) -ExtraArgs $loaderCompileArgs
 }
 finally {
     Pop-Location
