@@ -25,6 +25,16 @@ DEBUG_ALIAS = "androiddebugkey"
 DEBUG_PASS = "android"
 DEBUG_DNAME = "CN=Android Debug,O=Android,C=US"
 
+GPGS_SMALI_PATH = (
+    "smali/com/superevilmegacorp/nuogameentry/google/NuoGooglePlayApiImpl.smali"
+)
+GPGS_SMALI_NEEDLE = (
+    "sget-boolean v0, "
+    "Lcom/superevilmegacorp/nuogameentry/NuoBuildConfiguration;"
+    "->ENABLE_GOOGLE_PLAY_LOGIN:Z"
+)
+GPGS_SMALI_REPLACEMENT = "const/4 v0, 0x0"
+
 
 @dataclass
 class ToolPaths:
@@ -104,6 +114,20 @@ def parse_args() -> argparse.Namespace:
         "--sign-debug",
         action="store_true",
         help="Debug-sign the patched APK with ~/.android/debug.keystore semantics",
+    )
+    parser.add_argument(
+        "--disable-gpgs-prompt",
+        action="store_true",
+        help=(
+            "Patch NuoGooglePlayApiImpl.onCreate to skip the Google Play Games "
+            "sign-in prompt that appears on every launch. Requires apktool.jar."
+        ),
+    )
+    parser.add_argument(
+        "--apktool",
+        type=Path,
+        default=script_dir / "apktool.jar",
+        help="Path to apktool.jar (required when --disable-gpgs-prompt is set)",
     )
     parser.add_argument(
         "--keep-work",
@@ -277,6 +301,13 @@ def rewrite_apk_loader_shim(src_apk: Path, dst_apk: Path, loader_lib: Path, hook
                 continue
 
             if info.filename == ARM64_GAME_LIB:
+                # Rename the stock libGameKindred.so to libGameKindred_real.so.
+                # Do NOT rewrite its DT_SONAME here: lief.write() re-lays the
+                # ELF (shifts section offsets) and that invalidates every
+                # `g_base + 0xXXXX` hook offset baked into libvg_unlock.so.
+                # The SONAME-collision problem (bionic soname dedup causing
+                # JNI_OnLoad recursion) is avoided by giving the loader shim
+                # a distinct DT_SONAME at build time (see build.ps1/build.sh).
                 original_bytes = src.read(info.filename)
                 original_info = clone_zip_info(info)
                 original_info.filename = ARM64_REAL_GAME_LIB
@@ -304,6 +335,43 @@ def rewrite_apk_loader_shim(src_apk: Path, dst_apk: Path, loader_lib: Path, hook
 
 def zipalign_apk(zipalign_path: Path, src_apk: Path, dst_apk: Path) -> None:
     run_checked([str(zipalign_path), "-p", "-f", "4", str(src_apk), str(dst_apk)])
+
+
+def disable_gpgs_prompt(apk_path: Path, work_root: Path, apktool_jar: Path) -> None:
+    """Short-circuit the Google Play Games sign-in gate in NuoGooglePlayApiImpl.
+
+    Rewrites one instruction so the auto sign-in flow returns before ever touching
+    GoogleApiClient. The class defaults mEnabled=false, so every public method
+    (connect/disconnect/forceRequestLogin/...) cleanly no-ops.
+    """
+    if not apktool_jar.exists():
+        raise RuntimeError(
+            f"apktool.jar not found at {apktool_jar}. Download from "
+            "https://github.com/iBotPeaches/Apktool/releases and pass --apktool."
+        )
+
+    decoded = work_root / "gpgs_decoded"
+    rebuilt = work_root / "gpgs_rebuilt.apk"
+    run_checked(["java", "-jar", str(apktool_jar), "d", "-f", str(apk_path), "-o", str(decoded)])
+
+    target = decoded / GPGS_SMALI_PATH
+    if not target.exists():
+        raise RuntimeError(f"Expected smali file missing: {target}")
+
+    content = target.read_text(encoding="utf-8")
+    if GPGS_SMALI_NEEDLE not in content:
+        if GPGS_SMALI_REPLACEMENT in content:
+            print("GPGS prompt: already patched, skipping")
+            return
+        raise RuntimeError(
+            f"GPGS sign-in gate not found in {target}. APK version may differ "
+            "from the known Vainglory 4.13.4 layout."
+        )
+
+    target.write_text(content.replace(GPGS_SMALI_NEEDLE, GPGS_SMALI_REPLACEMENT, 1), encoding="utf-8")
+    run_checked(["java", "-jar", str(apktool_jar), "b", str(decoded), "-o", str(rebuilt)])
+    shutil.copy2(rebuilt, apk_path)
+    print(f"GPGS prompt: suppressed (smali patch in NuoGooglePlayApiImpl.onCreate)")
 
 
 def ensure_debug_keystore(tools: ToolPaths, keystore_path: Path) -> Path:
@@ -449,6 +517,9 @@ def main() -> int:
             rewrite_apk_dt_needed(source_apk, rewritten_apk, patched_game_lib_path, hook_lib)
         else:
             rewrite_apk_loader_shim(source_apk, rewritten_apk, loader_lib, hook_lib)
+
+        if args.disable_gpgs_prompt:
+            disable_gpgs_prompt(rewritten_apk, work_root, args.apktool.resolve())
 
         final_apk = out_dir / f"{source_apk.stem}.patched.apk"
         current_apk = rewritten_apk

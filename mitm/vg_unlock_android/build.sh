@@ -88,7 +88,13 @@ echo "Building $OUT for arm64-v8a..."
 build_shared_library "$OUT" libvg_unlock.so "$SRC" $CFLAGS_EXTRA
 
 echo "Building $LOADER_OUT for arm64-v8a..."
-build_shared_library "$LOADER_OUT" libGameKindred.so "$LOADER_SRC" "$LOADER_ASM_SRC" $LOADER_CFLAGS_EXTRA
+# Deliberately give the loader shim a distinct DT_SONAME so bionic's
+# soname-based dlopen() dedup does not return the shim's own handle when it
+# later dlopens libGameKindred_real.so (which still ships with DT_SONAME
+# "libGameKindred.so"). Without a distinct shim SONAME, the real lib's
+# dlsym("JNI_OnLoad") resolves back to the shim's JNI_OnLoad and the process
+# blows its stack via unbounded recursion.
+build_shared_library "$LOADER_OUT" libvgshim_GameKindred.so "$LOADER_SRC" "$LOADER_ASM_SRC" $LOADER_CFLAGS_EXTRA
 
 echo "Built: $OUT ($(wc -c < "$OUT") bytes)"
 echo "Built: $LOADER_OUT ($(wc -c < "$LOADER_OUT") bytes)"
