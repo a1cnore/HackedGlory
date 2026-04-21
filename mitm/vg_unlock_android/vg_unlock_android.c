@@ -95,7 +95,7 @@ static uintptr_t g_base = 0;
 #define FPTR_SET_TAB_VISIBLE           0x0  /* NEEDS_RE: field offset differs */
 
 /* Layer 4: Trophy panel + profile data/layout */
-#define FPTR_TROPHY_PANEL              0x26d4df8  /* [CONFIRMED] func 0xa67e3c — trophy panel refresh, visibility at self+0x209c/+0x21fc */
+#define FPTR_TROPHY_PANEL              0x26e4df8  /* [CONFIRMED via rela.dyn scan] func 0xa67e3c — trophy panel refresh, visibility at self+0x209c/+0x21fc. Previously had 0x26d4df8 which hit a shared 2-float-setter stub (0x81ad78) referenced by 644 vtable slots. */
 #define FPTR_PROFILE_DATA              0x26dc200  /* [MEDIUM] func 0xa0c2f8 — real prologue */
 #define FPTR_PROFILE_LAYOUT            0x0  /* NEEDS_RE: shift -> stub (0x81ad94) */
 
@@ -651,12 +651,16 @@ static uint32_t stub_has_account(void *self, void *out_str) {
 
 /* ========== Layer 8: CE gate caller hooks ========== */
 
-/* Profile ranked tabs */
-typedef void (*profile_ranked_fn)(void *self);
+/* Profile ranked tabs.
+ * Real fn 0xa02b60 reads BOTH x0 (self) and x1 (other — dereferenced via
+ * `ldr s1,[x1]` at 0xa02b70). Declaring the hook with a single arg lets the
+ * compiler clobber x1 before the `orig(self)` call, so the real function then
+ * derefs garbage and segfaults. Keep `other` so the register passes through. */
+typedef void (*profile_ranked_fn)(void *self, void *other);
 static profile_ranked_fn orig_profile_ranked = NULL;
-static void hook_profile_ranked(void *self) {
+static void hook_profile_ranked(void *self, void *other) {
     ensure_ranked_kv_written();
-    orig_profile_ranked(self);
+    orig_profile_ranked(self, other);
 
     *(uint32_t *)((uint8_t *)self + 0x2853c) |= 0x4;
     *(uint32_t *)((uint8_t *)self + 0x2866c) |= 0x4;
@@ -735,15 +739,14 @@ static void hook_profile_body(void *self, void *data) {
     if (!log_once) { log_once = 1; LOG("[ce-gate] profile card SHOWN"); }
 }
 
-/* Profile data loader */
-typedef void (*profile_loader_fn)(void *self, int show);
+/* Profile data loader.
+ * Real fn 0xae08f8 treats x1 as a pointer (`ldr w8, [x1, #0x28]`), not an int.
+ * The previous `int show` signature truncated x1 to w1 on orig-forward, zeroing
+ * the upper 32 bits and turning a valid pointer into an unmapped address. */
+typedef void (*profile_loader_fn)(void *self, void *arg1);
 static profile_loader_fn orig_profile_loader = NULL;
-static void hook_profile_loader(void *self, int show) {
-    orig_profile_loader(self, show);
-    /* Field offset fixups disabled — iOS offsets (0x21a1c, 0x20b04) differ
-     * on Android (profile alloc shifted +0xa8: 0x28848 → 0x288f0).
-     * CE gate call-site patches at 0xae0920 already bypass the gate in the
-     * original function, so these fixups are redundant. */
+static void hook_profile_loader(void *self, void *arg1) {
+    orig_profile_loader(self, arg1);
     static int log_once = 0;
     if (!log_once) { log_once = 1; LOG("[ce-gate] profile loader hook fired"); }
 }
@@ -757,15 +760,19 @@ static void hook_season_handler(void *self, int param2) {
     if (!log_once) { log_once = 1; LOG("[ce-gate] season handler fired (param2=%d)", param2); }
 }
 
-/* Season update */
-typedef void (*season_update_fn)(void *self, int param2);
+/* Season update.
+ * Real fn 0xe01c54 reads w1, w2, w3, w4 (bool masks). Dropping any of them in
+ * the hook signature leaves those registers with stale compiler state on
+ * orig-forward, so the function's conditional logic acts on garbage flags —
+ * generally not fatal, but enough to corrupt follow-up UI state. */
+typedef void (*season_update_fn)(void *self, int a, int b, int c, int d);
 static season_update_fn orig_season_update = NULL;
-static void hook_season_update(void *self, int param2) {
+static void hook_season_update(void *self, int a, int b, int c, int d) {
     do_sidebar_fix();
     ensure_ranked_kv_written();
-    orig_season_update(self, param2);
+    orig_season_update(self, a, b, c, d);
     static int log_once = 0;
-    if (!log_once) { log_once = 1; LOG("[ce-gate] season update fired (param2=%d)", param2); }
+    if (!log_once) { log_once = 1; LOG("[ce-gate] season update fired (%d,%d,%d,%d)", a, b, c, d); }
 }
 
 /* Social panel feature */
@@ -781,45 +788,56 @@ static void hook_social_feat(void *self) {
     }
 }
 
-/* Skill tier display */
-typedef void (*skill_tier_fn)(void *self);
+/* Skill tier display.
+ * Real fn 0xe020b4 writes float results through x1 (`stp s2,s3,[x21]` where
+ * x21=x1) and x2 (`stp s0,s1,[x19]` where x19=x2), with input floats arriving
+ * in s0/s1. A single-arg hook signature meant orig() was dispatched with x1,
+ * x2, s0, s1 all clobbered by compiler locals — the two `stp` instructions
+ * then wrote floats to whatever garbage happened to be in x1/x2, corrupting
+ * unrelated memory until a segv fired a few frames later. */
+typedef void (*skill_tier_fn)(void *self, void *out_rotated, void *out_translated, float f0, float f1);
 static skill_tier_fn orig_skill_tier = NULL;
-static void hook_skill_tier(void *self) {
-    orig_skill_tier(self);
+static void hook_skill_tier(void *self, void *out_rotated, void *out_translated, float f0, float f1) {
+    orig_skill_tier(self, out_rotated, out_translated, f0, f1);
 }
 
-/* Data fetch/sync */
+/* Data fetch/sync.
+ *
+ * The iOS variant read `*(void **)(self + 0x278)` and re-fired CODE_EXTRA_FETCH
+ * on it. On Android (BVL-N49, 4.13.4 147219) `self+0x278` is not a valid
+ * pointer slot in this object — the read SIGSEGVs on the first invocation,
+ * auto-restarts the activity, and produces the "logo flicker, then eventually
+ * connects" bootloop. Bisected 2026-04-21: removing just this extra-fetch
+ * block makes the full experimental hook set stable on that device.
+ *
+ * Keep the hook as a plain pass-through until the correct Android field
+ * offset and the set of call sites for CODE_EXTRA_FETCH are re-RE'd. */
 typedef void (*data_fetch_fn)(void *self, void *data);
 static data_fetch_fn orig_data_fetch = NULL;
 static void hook_data_fetch(void *self, void *data) {
     orig_data_fetch(self, data);
-
-    if (CODE_EXTRA_FETCH != 0) {
-        void *fetch_target = *(void **)((uint8_t *)self + 0x278);
-        if (fetch_target) {
-            typedef void (*fetch_fn)(void *);
-            fetch_fn do_fetch = (fetch_fn)(g_base + CODE_EXTRA_FETCH);
-            do_fetch((void *)((uint8_t *)self + 0x278));
-            static int log_once = 0;
-            if (!log_once) { log_once = 1; LOG("[ce-gate] extra data fetch at +0x278 ENABLED"); }
-        }
-    }
 }
 
-/* Tab system init */
-typedef void (*tab_init_fn)(void *self, void *data);
+/* Tab system init.
+ * Real fn 0xe02408 reads x1 (`str x1, [x0, #0x20]`, `ldr x8, [x1, #0x28]`)
+ * and w2 (`tbz w2, #0, ...`). The `flag` arg gates a list-insert path; drop it
+ * and the function picks a random branch based on whatever junk is in w2. */
+typedef void (*tab_init_fn)(void *self, void *arg1, int flag);
 static tab_init_fn orig_tab_init = NULL;
-static void hook_tab_init(void *self, void *data) {
-    orig_tab_init(self, data);
+static void hook_tab_init(void *self, void *arg1, int flag) {
+    orig_tab_init(self, arg1, flag);
     static int log_once = 0;
     if (!log_once) { log_once = 1; LOG("[ce-gate] tab init hook fired"); }
 }
 
-/* Market panel tabs */
-typedef void (*market_tabs_fn)(void *self);
+/* Market panel tabs.
+ * Real fn 0xad676c derefs x1 (`ldr w8, [x1, #0x28]`). Keep it in the signature
+ * so the pointer isn't clobbered on orig-forward. Same class of bug as
+ * profile_loader/profile_ranked. */
+typedef void (*market_tabs_fn)(void *self, void *arg1);
 static market_tabs_fn orig_market_tabs = NULL;
-static void hook_market_tabs(void *self) {
-    orig_market_tabs(self);
+static void hook_market_tabs(void *self, void *arg1) {
+    orig_market_tabs(self, arg1);
     static int log_once = 0;
     if (!log_once) { log_once = 1; LOG("[ce-gate] market tabs hook fired"); }
 }
@@ -987,6 +1005,15 @@ static void bypass_ce_gate_calls(void) {
     patch_bl_sites(profile_ctor_ce_gate_sites,
                    (int)(sizeof(profile_ctor_ce_gate_sites) / sizeof(profile_ctor_ce_gate_sites[0])),
                    ARM64_MOV_W0_WZR, "profile-ctor-ce-gate2");
+
+    /* Region dropdown hide attempt (NOP'd BL 0xbbf9e4 -> builder 0xa6cc2c) was
+     * reverted: it crash-looped on profile open on Xiaomi Pad 6. The builder
+     * at 0xa6cc2c initializes parent-object state that subsequent code in
+     * the profile ctor (or the panel's later event-dispatch path) reads and
+     * dereferences. Call-site NOP is unsafe without further RE of what state
+     * 0xa6cc2c sets on x19/x27. Leaving the dropdown as-is; it is cosmetic
+     * only (Kindred = single GCP europe-west1 shard, region server-assigned
+     * from client IP, JWT signed). */
 
     /* Social-vs-Party branch: at 0xad75c8, the constructor calls 0x82e900.
      *   0xad75c8: bl   0x82e900      ; check flag (ALSO does important state setup)

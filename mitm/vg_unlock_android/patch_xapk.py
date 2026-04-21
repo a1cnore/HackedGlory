@@ -25,6 +25,16 @@ DEBUG_ALIAS = "androiddebugkey"
 DEBUG_PASS = "android"
 DEBUG_DNAME = "CN=Android Debug,O=Android,C=US"
 
+GPGS_SMALI_PATH = (
+    "smali/com/superevilmegacorp/nuogameentry/google/NuoGooglePlayApiImpl.smali"
+)
+GPGS_SMALI_NEEDLE = (
+    "sget-boolean v0, "
+    "Lcom/superevilmegacorp/nuogameentry/NuoBuildConfiguration;"
+    "->ENABLE_GOOGLE_PLAY_LOGIN:Z"
+)
+GPGS_SMALI_REPLACEMENT = "const/4 v0, 0x0"
+
 
 @dataclass
 class ToolPaths:
@@ -104,6 +114,20 @@ def parse_args() -> argparse.Namespace:
         "--sign-debug",
         action="store_true",
         help="Debug-sign the patched APK with ~/.android/debug.keystore semantics",
+    )
+    parser.add_argument(
+        "--disable-gpgs-prompt",
+        action="store_true",
+        help=(
+            "Patch NuoGooglePlayApiImpl.onCreate to skip the Google Play Games "
+            "sign-in prompt that appears on every launch. Requires apktool.jar."
+        ),
+    )
+    parser.add_argument(
+        "--apktool",
+        type=Path,
+        default=script_dir / "apktool.jar",
+        help="Path to apktool.jar (required when --disable-gpgs-prompt is set)",
     )
     parser.add_argument(
         "--keep-work",
@@ -233,6 +257,51 @@ def patch_game_library(src_path: Path, dst_path: Path, dependency_name: str) -> 
     binary.write(str(dst_path))
 
 
+def rewrite_soname(blob: bytes, new_soname: str) -> bytes:
+    """Rewrite DT_SONAME in an ELF blob.
+
+    The stock libGameKindred.so and the loader shim both carry
+    DT_SONAME = "libGameKindred.so". Bionic's namespace-aware dlopen()
+    deduplicates loaded libraries by soname, so a subsequent
+    dlopen("libGameKindred_real.so") from the shim can return the shim's own
+    handle — which makes dlsym(handle, "JNI_OnLoad") resolve to the shim's
+    JNI_OnLoad and blows the stack with unbounded recursion.
+    Give the renamed real library its own soname so the two stay distinct.
+    """
+    if lief is None:
+        raise RuntimeError("Missing dependency 'lief'. Install it with: pip install lief")
+
+    tmp_in = Path(tempfile.mkstemp(prefix="vg_soname_in_", suffix=".so")[1])
+    tmp_out = Path(tempfile.mkstemp(prefix="vg_soname_out_", suffix=".so")[1])
+    try:
+        tmp_in.write_bytes(blob)
+        binary = lief.parse(str(tmp_in))
+        if binary is None:
+            raise RuntimeError("lief failed to parse embedded libGameKindred.so for SONAME rewrite")
+
+        soname_entry = None
+        for entry in binary.dynamic_entries:
+            if entry.tag == lief.ELF.DynamicEntry.TAG.SONAME:
+                soname_entry = entry
+                break
+
+        if soname_entry is None:
+            raise RuntimeError("DT_SONAME missing in embedded libGameKindred.so")
+
+        if str(soname_entry.name) == new_soname:
+            return blob
+
+        soname_entry.name = new_soname
+        binary.write(str(tmp_out))
+        return tmp_out.read_bytes()
+    finally:
+        for path in (tmp_in, tmp_out):
+            try:
+                path.unlink()
+            except OSError:
+                pass
+
+
 def ensure_zip_entry(
     dst: zipfile.ZipFile,
     entry_name: str,
@@ -278,9 +347,10 @@ def rewrite_apk_loader_shim(src_apk: Path, dst_apk: Path, loader_lib: Path, hook
 
             if info.filename == ARM64_GAME_LIB:
                 original_bytes = src.read(info.filename)
+                renamed_bytes = rewrite_soname(original_bytes, "libGameKindred_real.so")
                 original_info = clone_zip_info(info)
                 original_info.filename = ARM64_REAL_GAME_LIB
-                dst.writestr(original_info, original_bytes, compress_type=original_info.compress_type)
+                dst.writestr(original_info, renamed_bytes, compress_type=original_info.compress_type)
 
                 loader_info = clone_zip_info(info)
                 loader_info.filename = ARM64_GAME_LIB
@@ -304,6 +374,43 @@ def rewrite_apk_loader_shim(src_apk: Path, dst_apk: Path, loader_lib: Path, hook
 
 def zipalign_apk(zipalign_path: Path, src_apk: Path, dst_apk: Path) -> None:
     run_checked([str(zipalign_path), "-p", "-f", "4", str(src_apk), str(dst_apk)])
+
+
+def disable_gpgs_prompt(apk_path: Path, work_root: Path, apktool_jar: Path) -> None:
+    """Short-circuit the Google Play Games sign-in gate in NuoGooglePlayApiImpl.
+
+    Rewrites one instruction so the auto sign-in flow returns before ever touching
+    GoogleApiClient. The class defaults mEnabled=false, so every public method
+    (connect/disconnect/forceRequestLogin/...) cleanly no-ops.
+    """
+    if not apktool_jar.exists():
+        raise RuntimeError(
+            f"apktool.jar not found at {apktool_jar}. Download from "
+            "https://github.com/iBotPeaches/Apktool/releases and pass --apktool."
+        )
+
+    decoded = work_root / "gpgs_decoded"
+    rebuilt = work_root / "gpgs_rebuilt.apk"
+    run_checked(["java", "-jar", str(apktool_jar), "d", "-f", str(apk_path), "-o", str(decoded)])
+
+    target = decoded / GPGS_SMALI_PATH
+    if not target.exists():
+        raise RuntimeError(f"Expected smali file missing: {target}")
+
+    content = target.read_text(encoding="utf-8")
+    if GPGS_SMALI_NEEDLE not in content:
+        if GPGS_SMALI_REPLACEMENT in content:
+            print("GPGS prompt: already patched, skipping")
+            return
+        raise RuntimeError(
+            f"GPGS sign-in gate not found in {target}. APK version may differ "
+            "from the known Vainglory 4.13.4 layout."
+        )
+
+    target.write_text(content.replace(GPGS_SMALI_NEEDLE, GPGS_SMALI_REPLACEMENT, 1), encoding="utf-8")
+    run_checked(["java", "-jar", str(apktool_jar), "b", str(decoded), "-o", str(rebuilt)])
+    shutil.copy2(rebuilt, apk_path)
+    print(f"GPGS prompt: suppressed (smali patch in NuoGooglePlayApiImpl.onCreate)")
 
 
 def ensure_debug_keystore(tools: ToolPaths, keystore_path: Path) -> Path:
@@ -449,6 +556,9 @@ def main() -> int:
             rewrite_apk_dt_needed(source_apk, rewritten_apk, patched_game_lib_path, hook_lib)
         else:
             rewrite_apk_loader_shim(source_apk, rewritten_apk, loader_lib, hook_lib)
+
+        if args.disable_gpgs_prompt:
+            disable_gpgs_prompt(rewritten_apk, work_root, args.apktool.resolve())
 
         final_apk = out_dir / f"{source_apk.stem}.patched.apk"
         current_apk = rewritten_apk

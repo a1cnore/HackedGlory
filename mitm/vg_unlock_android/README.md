@@ -107,6 +107,22 @@ If you explicitly want the older injection mode for comparison testing, pass bot
 
 That legacy ELF rewrite path is blocked by default because it is known to crash around launch on some Android devices.
 
+## Suppress the Google Play Games sign-in prompt
+
+On devices signed into Google Play Games, Vainglory (stock and patched) opens a "Select a Play Games profile" dialog on every cold launch. The trigger is `NuoGooglePlayApiImpl.onCreate` → `GoogleApiClient(Games.API).connect()`; GmsCore then shows `SignInActivity` in the game's task.
+
+Pass `--disable-gpgs-prompt` to `patch_xapk.py` to skip that flow. The patcher rewrites one smali instruction so `onCreate` returns immediately; `mEnabled` stays false, which makes every public method on the class (`connect`, `disconnect`, `forceRequestLogin`, `onActivityResult`, …) no-op cleanly. Achievements and leaderboards stop working — the sign-in prompt stops with them.
+
+```powershell
+d:/HackedGlory/.venv/Scripts/python.exe mitm/vg_unlock_android/patch_xapk.py `
+  "C:\Users\nilas\Downloads\Vainglory_4.13.4 (147219)_APKPure.xapk" `
+  --sign-debug --disable-gpgs-prompt --apktool mitm/vg_unlock_android/apktool.jar
+```
+
+The flag requires `apktool.jar` (tested with 2.9.3) and a JDK on `PATH`. Download from https://github.com/iBotPeaches/Apktool/releases and drop it next to `patch_xapk.py`, or pass `--apktool <path>`. If you do not set the flag, the patcher never touches smali and the stock behavior is preserved.
+
+Known-good on `com.superevilmegacorp.game` 4.13.4 (147219). If Super Evil ever reshipped the APK the patcher will abort with a clear error instead of producing a broken build.
+
 ## Remaining Android RE blockers
 
 These still need Ghidra verification before the experimental hook set is safe:

@@ -15,8 +15,16 @@ mitm/vg_unlock_android/libvg_unlock.so
 
 *.zip
 
+mitm/vg_unlock_android/apktool.jar
+mitm/vg_unlock_android/xapk_extract/
+mitm/vg_unlock_android/obb_tmp/
+
 install/
 
 Payload
 Payload/
 *.gbf
+
+.claude/
+mitm/vg_unlock_android/*.png
+mitm/vg_unlock_android/*.xml
